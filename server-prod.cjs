@@ -19,7 +19,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// 株価取得API
+// 株価取得API（server.tsと同一ロジック・cheerio使用）
 app.get('/api/fetch-price', async (req, res) => {
   try {
     const code = req.query.code;
@@ -35,16 +35,95 @@ app.get('/api/fetch-price', async (req, res) => {
     if (!response.ok) return res.status(response.status).json({ error: 'Failed to fetch from Kabutan' });
 
     const html = await response.text();
+    const cheerio = require('cheerio');
+    const $ = cheerio.load(html);
+    
+    let closePrice = null;
+    const kobLeft = $('#kobetsu_left');
+    if (kobLeft.length > 0) {
+        const ft = kobLeft.find('table').length > 0 ? kobLeft.find('table') : kobLeft;
+        ft.find('tr').each((_, tr) => {
+            const th = $(tr).find('th');
+            const td = $(tr).find('td');
+            if (th.length > 0 && td.length > 0) {
+                if (th.text().trim() === '終値') {
+                    closePrice = td.text().trim().split(/\s/)[0];
+                }
+            }
+        });
+    }
 
-    // 終値を取得（簡易パース）
-    let price = '?';
-    const match = html.match(/終値[^<]*<\/th>[^<]*<td[^>]*>([0-9,\.]+)/);
-    if (match) price = match[1];
+    let price = null;
+    const i1 = $('#stockinfo_i1');
+    
+    // Phase 1: Try to find the price in #stockinfo_i1 
+    if (i1.length > 0) {
+        const valElements = i1.find('td.val, dd.val, span.val');
+        valElements.each((_, el) => {
+          if (price) return;
+          const row = $(el).closest('tr, dl, div');
+          if (row.length > 0 && /PTS|夜間|ナイト/.test(row.text())) return;
+          
+          const text = $(el).text().trim();
+          const cleanText = text.replace(/[^\d,.]/g, '');
+          if (cleanText.length >= 2) {
+              price = text;
+          }
+        });
+    }
 
-    res.json({ price });
+    // Phase 2: Try alternative ways if not found
+    if (!price) {
+      $('th, dt, td').each((_, el) => {
+          if (price) return;
+          const text = $(el).text().trim();
+          if (/^(現在値|現値|株価)$/.test(text)) {
+              const nextEl = $(el).next();
+              if (nextEl.length > 0) {
+                  const row = $(el).closest('tr, dl, div');
+                  if (row.length > 0 && /PTS|夜間|ナイト/.test(row.text())) return;
+                  const nextText = nextEl.text().trim();
+                  const numMatch = nextText.match(/[\d,.]+/);
+                  if (numMatch) {
+                      price = numMatch[0];
+                  }
+              }
+          }
+      });
+    }
+
+    // Phase 3: Final fallback using regex on the raw HTML
+    if (!price) {
+      const i1h = i1.length > 0 ? i1.html() || html : html;
+      const pi = i1h.search(/PTS|夜間|ナイト/);
+      const sh = pi > 0 ? i1h.substring(0, pi) : i1h;
+      const nums = sh.replace(/<[^>]+>/g, ' ').match(/[\d]{1,5}[,\d]*\.[\d]+|[\d,]{4,}/g);
+      if (nums) {
+          const cn = code.replace(/[^0-9]/g, '');
+          for (let ni = 0; ni < nums.length; ni++) {
+              const n = nums[ni].replace(/,/g, '');
+              if (cn && n === cn) continue;
+              if (parseFloat(n) >= 100) { 
+                  price = nums[ni]; 
+                  break; 
+              }
+          }
+      }
+    }
+
+    const finalPrice = closePrice || price;
+    
+    // Clean up finalPrice
+    let cleanFinalPrice = '?';
+    if (finalPrice) {
+        const m = finalPrice.match(/[\d,.]+/);
+        if (m) cleanFinalPrice = m[0];
+    }
+
+    res.json({ price: cleanFinalPrice });
   } catch (error) {
     console.error('Error fetching stock:', error);
-    res.status(500).json({ error: 'Failed to fetch stock price' });
+    res.status(500).json({ error: "Failed to fetch stock price" });
   }
 });
 
