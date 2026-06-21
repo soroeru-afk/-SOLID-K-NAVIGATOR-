@@ -175,6 +175,7 @@ export default function App() {
         
     setFetchProgress({ current: 0, total: allStocks.length });
     
+    let serverWarned = false;
     for (let i = 0; i < allStocks.length; i++) {
         const st = allStocks[i];
         try {
@@ -197,6 +198,15 @@ export default function App() {
             }
         } catch (error) {
             console.error(error);
+            if (!serverWarned) {
+                serverWarned = true;
+                alert(
+                    language === 'EN' 
+                    ? "【CONNECTION ERROR】\nCannot connect to local server.\nPlease run 'プレビュー.bat' (Preview) or '開発スタート.bat' (Dev Start) first."
+                    : "【接続エラー】\nローカルサーバーが起動していないため、株価の取得ができません。\n先にフォルダ内の「プレビュー.bat」または「開発スタート.bat」を起動してください。"
+                );
+                break;
+            }
         }
         setFetchProgress((prev) => ({ ...prev, current: i + 1 }));
         await new Promise(r => setTimeout(r, 800)); // sleep to prevent server overload
