@@ -1,10 +1,21 @@
 // 本番プレビュー専用サーバー（Vite不使用）
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args)).catch(() => globalThis.fetch(...args));
 
 const app = express();
 const PORT = 3000;
+
+// CORS: GitHub PagesのPWAからのアクセスを許可
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://soroeru-afk.github.io',
+  ],
+  credentials: false
+}));
 
 app.use(express.json());
 

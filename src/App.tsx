@@ -9,6 +9,11 @@ import { Language, i18n } from './i18n';
 import { initialGroups } from './data';
 import { initialData } from './importData';
 
+// GitHub Pages上で動作する場合はローカルサーバーのAPIを使用
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''
+  : 'http://localhost:3000';
+
 export type Theme = 'light' | 'dark' | 'black';
 
 export default function App() {
@@ -173,7 +178,7 @@ export default function App() {
     for (let i = 0; i < allStocks.length; i++) {
         const st = allStocks[i];
         try {
-            const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(st.code)}`);
+            const res = await fetch(`${API_BASE}/api/fetch-price?code=${encodeURIComponent(st.code)}`);
             if (res.ok) {
                 const data = await res.json();
                 const price = data.price;
