@@ -25,14 +25,32 @@ export default function App() {
     return localStorage.getItem('knav_compact_mode') === 'true';
   });
 
+  const lastFullWindowSize = useRef({ width: 1440, height: 900 });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isCompactMode) {
+        lastFullWindowSize.current = {
+          width: window.outerWidth,
+          height: window.outerHeight
+        };
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isCompactMode]);
+
   useEffect(() => {
     localStorage.setItem('knav_compact_mode', String(isCompactMode));
     if (isCompactMode) {
-      // ミニパネル（コンパクトビュー）のサイズにリサイズ (横: 380px, 縦: 780px程度)
+      // ミニパネル（コンパクトビュー）のサイズにリサイズ (横: 395px, 縦: 820px程度)
       window.resizeTo(395, 820);
     } else {
-      // 通常のフル画面サイズに復元 (横: 1200px, 縦: 800px程度)
-      window.resizeTo(1200, 850);
+      // 通常のフル画面サイズに復元 (最後に開いていたフル画面サイズ、なければデフォルトの 1440x900)
+      const prev = lastFullWindowSize.current;
+      const restoreWidth = Math.max(1400, prev.width);
+      const restoreHeight = Math.max(880, prev.height);
+      window.resizeTo(restoreWidth, restoreHeight);
     }
   }, [isCompactMode]);
 
