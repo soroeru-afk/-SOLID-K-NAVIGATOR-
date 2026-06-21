@@ -14,16 +14,12 @@ if not exist "dist" (
 )
 
 echo サーバーを起動しています...
-:: cmd /k を使って起動することで、サーバーが落ちてもコンソールを閉じずにエラーを残す
-start "K-NAVIGATOR Server" cmd /k "node server-prod.cjs"
-
-echo サーバー起動待ち（3秒）...
-timeout /t 3 /nobreak > nul
-
-echo ブラウザを開いています...
-start "" "http://localhost:3000"
+:: startを使わず直接実行し、落ちたらその場にエラーを残すように変更
+node server-prod.cjs
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo [エラー] サーバーが異常終了しました。
+)
 
 echo.
-echo [起動完了] http://localhost:3000 でアクセスできます。
-echo サーバーを止めるには「K-NAVIGATOR Server」ウィンドウを閉じてください。
 pause
