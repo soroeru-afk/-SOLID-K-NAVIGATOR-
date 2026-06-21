@@ -14,8 +14,11 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
+        const swPath = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+          ? '/sw.js'
+          : '/-SOLID-K-NAVIGATOR-/sw.js';
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
+          navigator.serviceWorker.register(swPath)
             .then(reg => console.log('SW registered:', reg.scope))
             .catch(err => console.warn('SW registration failed:', err));
         });
