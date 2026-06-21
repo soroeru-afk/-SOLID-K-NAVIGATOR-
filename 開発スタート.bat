@@ -6,7 +6,8 @@ echo  SOLID K-NAVIGATOR - 開発サーバー起動
 echo ========================================
 echo.
 echo 開発サーバーを起動しています...
-start "K-NAVIGATOR Dev" npm run dev
+:: cmd /k を使用して、開発サーバーがクラッシュした際もログを表示し続ける
+start "K-NAVIGATOR Dev" cmd /k "npm run dev"
 
 echo サーバー起動待ち（4秒）...
 timeout /t 4 /nobreak > nul

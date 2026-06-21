@@ -7,13 +7,13 @@ echo ========================================
 echo.
 echo 本番用ビルドを実行しています...
 echo.
-npm run build
+call npm run build
 if %ERRORLEVEL% == 0 (
     echo.
     echo [成功] ビルドが完了しました。distフォルダを確認してください。
 ) else (
     echo.
-    echo [エラー] ビルドに失敗しました。
+    echo [エラー] ビルドに失敗しました。エラーメッセージを確認してください。
 )
 echo.
 pause

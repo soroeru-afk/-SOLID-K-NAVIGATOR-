@@ -14,7 +14,8 @@ if not exist "dist" (
 )
 
 echo サーバーを起動しています...
-start "K-NAVIGATOR Server" node server-prod.cjs
+:: cmd /k を使って起動することで、サーバーが落ちてもコンソールを閉じずにエラーを残す
+start "K-NAVIGATOR Server" cmd /k "node server-prod.cjs"
 
 echo サーバー起動待ち（3秒）...
 timeout /t 3 /nobreak > nul
