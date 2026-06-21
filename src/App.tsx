@@ -107,7 +107,7 @@ export default function App() {
     return initialStocks;
   });
   
-  const [activeCategoryId, setActiveCategoryId] = useState<string | null>('MARKET_LINKS');
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [isFetchingAll, setIsFetchingAll] = useState(false);
   const [fetchProgress, setFetchProgress] = useState({ current: 0, total: 0 });
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
