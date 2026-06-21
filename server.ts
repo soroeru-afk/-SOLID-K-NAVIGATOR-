@@ -2,10 +2,21 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import * as cheerio from "cheerio";
+import { exec } from "child_process";
+import cors from "cors";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  app.use(cors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'https://soroeru-afk.github.io',
+    ],
+    credentials: false
+  }));
 
   app.use(express.json());
 
@@ -149,6 +160,10 @@ async function startServer() {
     }
   });
 
+  app.get("/api/ping", (req, res) => {
+    res.json({ pong: true });
+  });
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -163,9 +178,23 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  function startListen(port: number) {
+    const server = app.listen(port, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${port}`);
+      exec(`start http://localhost:${port}/-SOLID-K-NAVIGATOR-/`);
+    });
+
+    server.on("error", (err: any) => {
+      if (err.code === "EADDRINUSE") {
+        console.log(`Port ${port} is in use, trying port ${port + 1}...`);
+        startListen(port + 1);
+      } else {
+        console.error("Server error:", err);
+      }
+    });
+  }
+
+  startListen(PORT);
 }
 
 startServer();

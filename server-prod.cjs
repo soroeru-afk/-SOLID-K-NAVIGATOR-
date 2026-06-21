@@ -152,6 +152,11 @@ app.get('/api/fetch-title', async (req, res) => {
   }
 });
 
+// Ping API
+app.get('/api/ping', (req, res) => {
+  res.json({ pong: true });
+});
+
 // distフォルダを静的配信
 const distPath = path.join(__dirname, 'dist');
 app.use(express.static(distPath));
@@ -159,9 +164,24 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n========================================`);
-  console.log(` SOLID K-NAVIGATOR`);
-  console.log(` http://localhost:${PORT}`);
-  console.log(`========================================\n`);
-});
+function startListen(port) {
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log(`\n========================================`);
+    console.log(` SOLID K-NAVIGATOR`);
+    console.log(` http://localhost:${port}`);
+    console.log(`========================================\n`);
+    const { exec } = require('child_process');
+    exec(`start http://localhost:${port}/-SOLID-K-NAVIGATOR-/`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is in use, trying port ${port + 1}...`);
+      startListen(port + 1);
+    } else {
+      console.error('Server error:', err);
+    }
+  });
+}
+
+startListen(PORT);
