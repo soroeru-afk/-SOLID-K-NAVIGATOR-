@@ -1,6 +1,6 @@
 import { Theme } from '../App';
 import { Language, i18n } from '../i18n';
-import { PanelLeft, PanelRight } from 'lucide-react';
+import { PanelLeft, PanelRight, Minimize2 } from 'lucide-react';
 
 interface Props {
   theme: Theme;
@@ -11,9 +11,10 @@ interface Props {
   onSidebarPosChange: (pos: 'left' | 'right') => void;
   fontSize: number;
   onFontSizeChange: (size: number) => void;
+  onToggleCompactMode: () => void;
 }
 
-export default function Header({ theme, onThemeChange, language, onLanguageChange, sidebarPos, onSidebarPosChange, fontSize, onFontSizeChange }: Props) {
+export default function Header({ theme, onThemeChange, language, onLanguageChange, sidebarPos, onSidebarPosChange, fontSize, onFontSizeChange, onToggleCompactMode }: Props) {
   const t = i18n[language];
 
   return (
@@ -82,6 +83,13 @@ export default function Header({ theme, onThemeChange, language, onLanguageChang
                     className="p-1.5 border border-border-main rounded text-text-dim hover:text-text-normal hover:bg-border-main/50 transition-colors"
                 >
                     {sidebarPos === 'left' ? <PanelLeft size={16} /> : <PanelRight size={16} />}
+                </button>
+                <button
+                    onClick={onToggleCompactMode}
+                    title="Compact Mode"
+                    className="p-1.5 border border-border-main rounded text-text-dim hover:text-[#58a6ff] hover:bg-border-main/50 transition-colors ml-2"
+                >
+                    <Minimize2 size={16} />
                 </button>
             </div>
         </div>

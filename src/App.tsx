@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import AddStockForm from './components/AddStockForm';
 import StockList from './components/StockList';
 import Header from './components/Header';
+import CompactView from './components/CompactView';
 import { Category, Stock, MarketLink } from './types';
 import { Language, i18n } from './i18n';
 import { initialGroups } from './data';
@@ -14,6 +15,14 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem('knav_theme') as Theme) || 'black'
   );
+
+  const [isCompactMode, setIsCompactMode] = useState<boolean>(() => {
+    return localStorage.getItem('knav_compact_mode') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('knav_compact_mode', String(isCompactMode));
+  }, [isCompactMode]);
 
   const [language, setLanguage] = useState<Language>(
     () => (localStorage.getItem('knav_language') as Language) || 'JP'
@@ -422,6 +431,21 @@ export default function App() {
       ? stocks.filter(st => st.categoryId === activeCategoryId)
       : stocks;
 
+  if (isCompactMode) {
+    return (
+      <CompactView
+        categories={categories}
+        stocks={filteredStocks}
+        totalStocks={stocks.length}
+        marketLinks={marketLinks}
+        activeCategory={activeCategoryId}
+        onSelectCategory={setActiveCategoryId}
+        language={language}
+        onToggleMode={() => setIsCompactMode(false)}
+      />
+    );
+  }
+
   return (
     <div className={`min-h-screen bg-base-bg flex flex-col ${sidebarPos === 'right' ? 'md:flex-row-reverse' : 'md:flex-row'} text-[10px] md:text-xs uppercase tracking-wider relative h-screen overflow-hidden`}>
       <div style={{ width: sidebarWidth }} className={`shrink-0 md:flex flex-col ${sidebarPos === 'right' ? 'border-l' : 'border-r'} border-border-main hidden z-10 relative h-full`}>
@@ -489,6 +513,7 @@ export default function App() {
           onSidebarPosChange={setSidebarPos}
           fontSize={fontSize}
           onFontSizeChange={setFontSize}
+          onToggleCompactMode={() => setIsCompactMode(true)}
         />
         <AddStockForm categories={categories} onAdd={addStocks} language={language} />
         <StockList 

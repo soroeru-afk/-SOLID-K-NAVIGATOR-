@@ -98,14 +98,26 @@ export default function Sidebar({ categories, stocksLength, onAddCategory, onUpd
           {t.systemStatus}
         </div>
         <div className="flex flex-col gap-2 text-[10px] text-text-dim mt-2">
-          <div className="flex justify-between">
-            <span>{t.coreNode}</span>
-            <span className="text-text-normal">{t.online}</span>
+          <div className="flex justify-between items-center">
+            <span>DIR COUNT:</span>
+            <span className="text-text-normal font-mono font-bold text-xs">{categories.length}</span>
           </div>
-          <div className="flex justify-between">
-            <span>{t.dbConnection}</span>
-            <span className="text-text-normal">{t.established}</span>
+          <div className="flex justify-between items-center">
+            <span>{t.totalStocks}:</span>
+            <span className="text-text-normal font-mono font-bold text-xs">{stocksLength}</span>
           </div>
+
+          <button 
+            onClick={onFetchAll} 
+            disabled={isFetchingAll}
+            className="mt-2 w-full h-8 flex items-center justify-center gap-2 border border-border-main text-[#58a6ff] hover:text-[#58a6ff] bg-base-bg hover:bg-border-main/50 transition-colors disabled:opacity-50 font-bold"
+          >
+              {isFetchingAll ? (
+                <><Activity size={12} className="animate-pulse" /> {t.fetching} {fetchProgress?.current}/{fetchProgress?.total}</>
+              ) : (
+                <><Activity size={12} /> {t.fetchAll}</>
+              )}
+          </button>
         </div>
       </div>
 
@@ -282,30 +294,9 @@ export default function Sidebar({ categories, stocksLength, onAddCategory, onUpd
           </div>
         </div>
 
-        <div className="mt-auto pt-4 border-t border-border-main text-[10px] flex justify-between text-text-dim">
-          <span>{t.dirCount}:</span>
-          <span className="text-text-bright">{categories.length}</span>
-        </div>
-        <div className="pt-2 text-[10px] flex justify-between text-text-dim">
-          <span>全銘柄数:</span>
-          <span className="text-text-bright">{stocksLength}</span>
-        </div>
-
         <div className="mt-4 pt-4 border-t border-border-main flex flex-col gap-2">
             <div className="text-[10px] text-text-dim mb-1 font-bold">{t.dataManagement}</div>
             
-            <button 
-              onClick={onFetchAll} 
-              disabled={isFetchingAll}
-              className="w-full h-8 flex items-center justify-start px-3 gap-3 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors disabled:opacity-50"
-            >
-                {isFetchingAll ? (
-                  <><Activity size={12} className="animate-pulse" /> {t.fetching} {fetchProgress?.current}/{fetchProgress?.total}</>
-                ) : (
-                  <><Activity size={12} /> {t.fetchAll}</>
-                )}
-            </button>
-
             <button onClick={onExportJson} className="w-full h-8 flex items-center justify-start px-3 gap-3 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors">
                 <Download size={12} /> {t.exportJson}
             </button>
