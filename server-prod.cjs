@@ -41,8 +41,10 @@ app.get('/api/fetch-price', async (req, res) => {
     let closePrice = null;
     const kobLeft = $('#kobetsu_left');
     if (kobLeft.length > 0) {
-        const ft = kobLeft.find('table').length > 0 ? kobLeft.find('table') : kobLeft;
-        ft.find('tr').each((_, tr) => {
+        const tables = kobLeft.find('table').filter((_, el) => {
+            return $(el).closest('.stock_pts_div').length === 0;
+        });
+        tables.find('tr').each((_, tr) => {
             const th = $(tr).find('th');
             const td = $(tr).find('td');
             if (th.length > 0 && td.length > 0) {
