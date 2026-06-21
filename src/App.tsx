@@ -25,18 +25,35 @@ export default function App() {
     return localStorage.getItem('knav_compact_mode') === 'true';
   });
 
-  const lastFullWindowSize = useRef({ width: 1440, height: 900 });
+  const lastFullWindowSize = useRef<{ width: number, height: number }>((() => {
+    try {
+      const saved = localStorage.getItem('knav_last_full_size');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return { width: 1440, height: 900 };
+  })());
 
   useEffect(() => {
     const handleResize = () => {
       if (!isCompactMode) {
-        lastFullWindowSize.current = {
+        const size = {
           width: window.outerWidth,
           height: window.outerHeight
         };
+        lastFullWindowSize.current = size;
+        localStorage.setItem('knav_last_full_size', JSON.stringify(size));
       }
     };
     window.addEventListener('resize', handleResize);
+    
+    // アプリ起動時の初期リサイズ処理 (初回レンダリングで前回の閉じたサイズに復元)
+    if (!isCompactMode) {
+      const prev = lastFullWindowSize.current;
+      window.resizeTo(Math.max(1400, prev.width), Math.max(880, prev.height));
+    } else {
+      window.resizeTo(395, 820);
+    }
+
     return () => window.removeEventListener('resize', handleResize);
   }, [isCompactMode]);
 
