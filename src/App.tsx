@@ -27,6 +27,13 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('knav_compact_mode', String(isCompactMode));
+    if (isCompactMode) {
+      // ミニパネル（コンパクトビュー）のサイズにリサイズ (横: 380px, 縦: 780px程度)
+      window.resizeTo(395, 820);
+    } else {
+      // 通常のフル画面サイズに復元 (横: 1200px, 縦: 800px程度)
+      window.resizeTo(1200, 850);
+    }
   }, [isCompactMode]);
 
   const [language, setLanguage] = useState<Language>(
