@@ -447,13 +447,20 @@ export default function App() {
       : stocks;
 
   if (isCompactMode) {
+    const compactActiveCat = activeCategoryId === null ? 'MARKET_LINKS' : activeCategoryId;
+    const compactFiltered = compactActiveCat === 'UNASSIGNED'
+      ? stocks.filter(st => !st.categoryId)
+      : compactActiveCat === 'MARKET_LINKS'
+        ? []
+        : stocks.filter(st => st.categoryId === compactActiveCat);
+
     return (
       <CompactView
         categories={categories}
-        stocks={filteredStocks}
+        stocks={compactFiltered}
         totalStocks={stocks.length}
         marketLinks={marketLinks}
-        activeCategory={activeCategoryId}
+        activeCategory={compactActiveCat}
         onSelectCategory={setActiveCategoryId}
         language={language}
         onToggleMode={() => {
@@ -531,10 +538,7 @@ export default function App() {
           onSidebarPosChange={setSidebarPos}
           fontSize={fontSize}
           onFontSizeChange={setFontSize}
-          onToggleCompactMode={() => {
-            setIsCompactMode(true);
-            setActiveCategoryId('MARKET_LINKS');
-          }}
+          onToggleCompactMode={() => setIsCompactMode(true)}
         />
         <AddStockForm categories={categories} onAdd={addStocks} language={language} />
         <StockList 
