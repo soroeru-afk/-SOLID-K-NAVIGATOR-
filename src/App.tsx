@@ -107,7 +107,7 @@ export default function App() {
     return initialStocks;
   });
   
-  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>('MARKET_LINKS');
   const [isFetchingAll, setIsFetchingAll] = useState(false);
   const [fetchProgress, setFetchProgress] = useState({ current: 0, total: 0 });
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
@@ -456,7 +456,10 @@ export default function App() {
         activeCategory={activeCategoryId}
         onSelectCategory={setActiveCategoryId}
         language={language}
-        onToggleMode={() => setIsCompactMode(false)}
+        onToggleMode={() => {
+          setIsCompactMode(false);
+          setActiveCategoryId(null);
+        }}
       />
     );
   }
