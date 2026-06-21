@@ -531,7 +531,10 @@ export default function App() {
           onSidebarPosChange={setSidebarPos}
           fontSize={fontSize}
           onFontSizeChange={setFontSize}
-          onToggleCompactMode={() => setIsCompactMode(true)}
+          onToggleCompactMode={() => {
+            setIsCompactMode(true);
+            setActiveCategoryId('MARKET_LINKS');
+          }}
         />
         <AddStockForm categories={categories} onAdd={addStocks} language={language} />
         <StockList 
