@@ -495,20 +495,19 @@ export default function App() {
 
   const handleResetData = () => {
     if (window.confirm(i18n[language].confirmReset)) {
-      setCategories(initialGroups.map(g => ({ id: g.id, name: g.name })));
-      const initialStocks: Stock[] = [];
-      initialGroups.forEach(g => {
-        g.stocks.forEach((s, index) => {
-          initialStocks.push({
-            id: `${g.id}_${s.code}`,
-            code: s.code,
-            name: s.name,
-            categoryId: g.id,
-            createdAt: Date.now() + index
-          });
-        });
-      });
-      setStocks(initialStocks);
+      setCategories([]);
+      setStocks([]);
+      localStorage.setItem('knav_categories_v2', '[]');
+      localStorage.setItem('knav_stocks_v2', '[]');
+      
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('KNAV_SX_') || key.startsWith('knav_sx_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
     }
   };
 
