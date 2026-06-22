@@ -59,11 +59,11 @@ export default function AddStockForm({ categories, onAdd, language }: Props) {
   };
 
   return (
-    <div className={`flex flex-col relative w-full shrink-0 transition-all ${isOpen ? 'border border-border-main bg-panel-bg p-4' : 'border-transparent bg-transparent p-0 mb-[-12px]'}`}>
+    <div className="border border-border-main bg-panel-bg p-4 flex flex-col relative w-full shrink-0">
       <button 
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`${isOpen ? 'absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4' : 'relative self-start bg-base-bg px-2 py-1 ml-2'} text-[10px] text-text-dim font-bold tracking-widest flex items-center gap-1 hover:text-text-normal transition-colors focus:outline-none`}
+        className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold tracking-widest flex items-center gap-1 hover:text-text-normal transition-colors focus:outline-none"
       >
         {t.intakeModule} {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
       </button>
