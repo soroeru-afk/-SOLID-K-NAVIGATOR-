@@ -59,7 +59,7 @@ export default function AddStockForm({ categories, onAdd, language }: Props) {
   };
 
   return (
-    <div className="border border-border-main bg-panel-bg p-4 flex flex-col relative w-full shrink-0">
+    <div className={`flex flex-col relative w-full shrink-0 transition-all ${isOpen ? 'border border-border-main bg-panel-bg p-4' : 'border border-transparent bg-transparent p-0 h-0'}`}>
       <button 
         type="button"
         onClick={() => setIsOpen(!isOpen)}
