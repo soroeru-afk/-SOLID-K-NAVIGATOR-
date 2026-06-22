@@ -274,8 +274,8 @@ export default function App() {
                 serverWarned = true;
                 alert(
                     language === 'EN' 
-                    ? "【CONNECTION ERROR】\nCannot connect to local server.\nPlease run 'プレビュー.bat' (Preview) or '開発スタート.bat' (Dev Start) first."
-                    : "【接続エラー】\nローカルサーバーが起動していないため、株価の取得ができません。\n先にフォルダ内の「プレビュー.bat」または「開発スタート.bat」を起動してください。"
+                    ? "【CONNECTION ERROR】\nLocal server is not running.\nPlease use the \"CHOOSE & RUN BATCH\" button in the sidebar to start the server."
+                    : "【接続エラー】\nローカルサーバーが起動していないため、株価の取得ができません。\nサイドバーの「バッチ選択・起動を開く」ボタンからサーバーを起動してください。"
                 );
                 break;
             }

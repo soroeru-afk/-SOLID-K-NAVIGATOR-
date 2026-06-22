@@ -65,6 +65,9 @@ export const i18n = {
     marketLinksManage: "MANAGE MARKET LINKS",
     close: "CLOSE",
     save: "SAVE",
+    serverLauncher: "SERVER LAUNCH HELP",
+    launchServer: "CHOOSE & RUN BATCH [📁]",
+    regHelp: "Opens file dialog in last used folder. Right-click 'プレビュー.bat' (Preview) or '開発スタート.bat' (Dev Start) and select 'Open' to start server.",
   },
   JP: {
     appTitle: "SOLID K-NAVIGATOR",
@@ -130,5 +133,8 @@ export const i18n = {
     marketLinksManage: "リンク管理",
     close: "閉じる",
     save: "保存",
+    serverLauncher: "サーバー起動用フォルダ",
+    launchServer: "バッチ選択・起動を開く [📁]",
+    regHelp: "ダイアログを開き、フォルダ内の『プレビュー.bat』または『開発スタート.bat』を右クリックし、『開く』（または『管理者として実行』）を選択して起動してください。",
   }
 };
