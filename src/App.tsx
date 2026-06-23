@@ -340,12 +340,49 @@ export default function App() {
   };
 
   const addStocks = (items: {code: string, name: string, categoryId: string}[]) => {
-    const newStocks = items.map((item, index) => ({
+    const existingCodes = new Set(stocks.map(s => s.code));
+    const uniqueNewItems: {code: string, name: string, categoryId: string}[] = [];
+    const seenNewCodes = new Set<string>();
+    const skippedCodes: string[] = [];
+
+    items.forEach(item => {
+      const codeClean = item.code.trim();
+      if (existingCodes.has(codeClean) || seenNewCodes.has(codeClean)) {
+        skippedCodes.push(codeClean);
+      } else {
+        seenNewCodes.add(codeClean);
+        uniqueNewItems.push({
+          ...item,
+          code: codeClean
+        });
+      }
+    });
+
+    if (uniqueNewItems.length === 0) {
+      if (skippedCodes.length > 0) {
+        alert(
+          language === 'EN'
+            ? `Stock(s) already registered: ${skippedCodes.join(', ')}`
+            : `登録済みの銘柄です: ${skippedCodes.join(', ')}`
+        );
+      }
+      return;
+    }
+
+    const newStocks = uniqueNewItems.map((item, index) => ({
       id: Date.now().toString() + index,
       ...item,
       createdAt: Date.now()
     }));
     setStocks([...newStocks, ...stocks]);
+
+    if (skippedCodes.length > 0) {
+      alert(
+        language === 'EN'
+          ? `Registered new stocks. Skipped duplicates: ${skippedCodes.join(', ')}`
+          : `新規銘柄を登録しました。既に登録済みの以下の銘柄はスキップされました: ${skippedCodes.join(', ')}`
+      );
+    }
   };
   
   const deleteStocks = (ids: string[]) => {
