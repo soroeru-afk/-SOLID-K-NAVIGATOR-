@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Database, FileText, Trash2, CheckSquare, Square, Pencil, ExternalLink, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
+import { Database, FileText, Trash2, CheckSquare, Square, Pencil, ExternalLink, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, X } from 'lucide-react';
 import { Stock, Category } from '../types';
 import { Language, i18n } from '../i18n';
 
@@ -89,14 +89,23 @@ export default function StockList({ stocks, allStocks, categories, onDelete, onU
         {t.dataBanks}
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 relative flex items-center">
         <input 
           type="text" 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t.search}
-          className="w-full h-9 px-3 bg-base-bg border border-border-main text-text-normal placeholder:text-text-dim/50 focus:outline-none focus:border-border-light transition-colors"
+          className="w-full h-9 pl-3 pr-8 bg-base-bg border border-border-main text-text-normal placeholder:text-text-dim/50 focus:outline-none focus:border-border-light transition-colors"
         />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-2.5 p-1 text-text-dim hover:text-text-bright transition-colors"
+            title={language === 'EN' ? 'Clear search' : '検索クリア'}
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       <div className="flex items-center justify-between text-[10px] text-text-dim border-b border-border-main pb-2 mb-2 px-2 shrink-0">
