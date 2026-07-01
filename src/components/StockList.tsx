@@ -5,6 +5,7 @@ import { Language, i18n } from '../i18n';
 
 interface Props {
   stocks: Stock[];
+  allStocks: Stock[];
   categories: Category[];
   onDelete: (ids: string[]) => void;
   onUpdate: (id: string, updates: Partial<Stock>) => void;
@@ -14,7 +15,7 @@ interface Props {
   fontSize: number;
 }
 
-export default function StockList({ stocks, categories, onDelete, onUpdate, onMoveStock, onMoveStocksToCategory, language, fontSize }: Props) {
+export default function StockList({ stocks, allStocks, categories, onDelete, onUpdate, onMoveStock, onMoveStocksToCategory, language, fontSize }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -25,10 +26,12 @@ export default function StockList({ stocks, categories, onDelete, onUpdate, onMo
 
   const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || t.unassigned;
 
-  const filteredStocks = stocks.filter(st => 
-    st.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    st.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStocks = searchQuery.trim() !== ''
+    ? allStocks.filter(st => 
+        st.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        st.code.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : stocks;
 
   const formatDate = (ms: number) => {
     const d = new Date(ms);

@@ -340,17 +340,19 @@ export default function App() {
   };
 
   const addStocks = (items: {code: string, name: string, categoryId: string}[]) => {
-    const existingCodes = new Set(stocks.map(s => s.code));
     const uniqueNewItems: {code: string, name: string, categoryId: string}[] = [];
-    const seenNewCodes = new Set<string>();
+    const seenNewKeys = new Set<string>();
     const skippedCodes: string[] = [];
 
     items.forEach(item => {
       const codeClean = item.code.trim();
-      if (existingCodes.has(codeClean) || seenNewCodes.has(codeClean)) {
+      const key = `${codeClean}_${item.categoryId}`;
+      const isAlreadyRegistered = stocks.some(s => s.code === codeClean && s.categoryId === item.categoryId);
+
+      if (isAlreadyRegistered || seenNewKeys.has(key)) {
         skippedCodes.push(codeClean);
       } else {
-        seenNewCodes.add(codeClean);
+        seenNewKeys.add(key);
         uniqueNewItems.push({
           ...item,
           code: codeClean
@@ -362,8 +364,8 @@ export default function App() {
       if (skippedCodes.length > 0) {
         alert(
           language === 'EN'
-            ? `Stock(s) already registered: ${skippedCodes.join(', ')}`
-            : `登録済みの銘柄です: ${skippedCodes.join(', ')}`
+            ? `Stock(s) already registered in this category: ${skippedCodes.join(', ')}`
+            : `このカテゴリーに登録済みの銘柄です: ${skippedCodes.join(', ')}`
         );
       }
       return;
@@ -379,8 +381,8 @@ export default function App() {
     if (skippedCodes.length > 0) {
       alert(
         language === 'EN'
-          ? `Registered new stocks. Skipped duplicates: ${skippedCodes.join(', ')}`
-          : `新規銘柄を登録しました。既に登録済みの以下の銘柄はスキップされました: ${skippedCodes.join(', ')}`
+          ? `Registered new stocks. Skipped duplicates in this category: ${skippedCodes.join(', ')}`
+          : `新規銘柄を登録しました。同一カテゴリー内に既に登録済みの以下の銘柄はスキップされました: ${skippedCodes.join(', ')}`
       );
     }
   };
@@ -651,6 +653,7 @@ export default function App() {
         <AddStockForm categories={categories} onAdd={addStocks} language={language} />
         <StockList 
           stocks={filteredStocks} 
+          allStocks={stocks}
           categories={categories} 
           onDelete={deleteStocks} 
           onUpdate={updateStock}
