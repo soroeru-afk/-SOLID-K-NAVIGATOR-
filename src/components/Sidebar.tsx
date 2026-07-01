@@ -236,25 +236,6 @@ export default function Sidebar({ categories, stocksLength, onAddCategory, onUpd
             <span style={{ fontSize: fontSize }}>[ {t.allData} ]</span>
           </button>
           
-          <button 
-            onClick={() => onSelectCategory('UNASSIGNED')}
-            className={`w-full flex items-center justify-start px-3 py-1.5 gap-3 border ${activeCategory === 'UNASSIGNED' ? 'border-border-light bg-border-main text-text-bright' : 'border-transparent text-text-dim hover:text-text-normal'} transition-colors group/unassigned`}
-          >
-            <FolderOpen size={12} className={`shrink-0 ${activeCategory === 'UNASSIGNED' ? 'text-text-bright' : 'text-text-dim'}`} />
-            <span className="truncate flex-1 text-left" style={{ fontSize: fontSize }}>[ {t.unassigned} ]</span>
-            <div className="opacity-0 group-hover/unassigned:opacity-100 flex items-center gap-2">
-                {onFetchCategory && (
-                <span 
-                    onClick={(e) => { e.stopPropagation(); onFetchCategory('UNASSIGNED'); }} 
-                    className="text-text-dim hover:text-[#58a6ff]"
-                    title={t.reacquire}
-                >
-                    <Activity size={12} />
-                </span>
-                )}
-            </div>
-          </button>
-
           <div className="flex flex-col gap-1 mt-2 mx-1 overflow-y-auto">
             {categories.map(c => (
               <div key={c.id} className="relative group/cat">
@@ -328,6 +309,25 @@ export default function Sidebar({ categories, stocksLength, onAddCategory, onUpd
                 )}
               </div>
             ))}
+
+            <button 
+              onClick={() => onSelectCategory('UNASSIGNED')}
+              className={`w-full flex items-center justify-start px-3 py-1.5 gap-3 border ${activeCategory === 'UNASSIGNED' ? 'border-border-light bg-border-main text-text-bright' : 'border-transparent text-text-dim hover:text-text-normal'} transition-colors group/unassigned`}
+            >
+              <FolderOpen size={12} className={`shrink-0 ${activeCategory === 'UNASSIGNED' ? 'text-text-bright' : 'text-text-dim'}`} />
+              <span className="truncate flex-1 text-left" style={{ fontSize: fontSize }}>{t.unassigned}</span>
+              <div className="opacity-0 group-hover/unassigned:opacity-100 flex items-center gap-2">
+                  {onFetchCategory && (
+                  <span 
+                      onClick={(e) => { e.stopPropagation(); onFetchCategory('UNASSIGNED'); }} 
+                      className="text-text-dim hover:text-[#58a6ff]"
+                      title={t.reacquire}
+                  >
+                      <Activity size={12} />
+                  </span>
+                  )}
+              </div>
+            </button>
           </div>
         </div>
 

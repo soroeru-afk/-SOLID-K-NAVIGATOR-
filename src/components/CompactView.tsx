@@ -62,6 +62,7 @@ export default function CompactView({ categories, stocks, totalStocks, marketLin
           {categories.map(c => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
+          <option value="UNASSIGNED">{t.unassigned}</option>
         </select>
       </div>
 

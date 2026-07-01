@@ -136,10 +136,10 @@ export default function StockList({ stocks, allStocks, categories, onDelete, onU
                         }}
                      >
                        <option value="">{language === 'EN' ? '-- Move to --' : '-- 移動先 --'}</option>
-                       <option value="UNASSIGNED">{t.unassigned}</option>
                        {categories.map(c => (
                          <option key={c.id} value={c.id}>{c.name}</option>
                        ))}
+                       <option value="UNASSIGNED">{t.unassigned}</option>
                      </select>
                    )}
                    <button 
