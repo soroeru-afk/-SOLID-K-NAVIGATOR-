@@ -3,6 +3,7 @@ import { LayoutGrid, Folders, Plus, FolderOpen, Download, Upload, FileCode, Penc
 import { Category, MarketLink } from '../types';
 import { Language, i18n } from '../i18n';
 import MarketLinkEditor from './MarketLinkEditor';
+
 interface Props {
   categories: Category[];
   stocksLength: number;
@@ -78,29 +79,6 @@ export default function Sidebar({ categories, stocksLength, onAddCategory, onUpd
     e.target.value = '';
   };
 
-  const handleOpenFilePicker = async () => {
-    try {
-      if ('showOpenFilePicker' in window) {
-        await (window as any).showOpenFilePicker({
-          id: 'knav-launcher-picker',
-          types: [{
-            description: 'Batch Files',
-            accept: {
-              'application/x-msdos-program': ['.bat', '.cmd']
-            }
-          }]
-        });
-      } else {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.bat,.cmd';
-        input.click();
-      }
-    } catch (e) {
-      // User cancelled or not supported
-    }
-  };
-
   return (
     <>
       <aside className="w-full h-full md:h-screen border-b md:border-b-0 md:border-r border-border-main bg-base-bg flex flex-col p-4 gap-6 overflow-y-auto z-10">
@@ -122,11 +100,11 @@ export default function Sidebar({ categories, stocksLength, onAddCategory, onUpd
         <div className="flex flex-col gap-2 text-[10px] text-text-dim mt-2">
           <div className="flex justify-between items-center">
             <span>DIR COUNT:</span>
-            <span className="text-text-normal font-mono font-bold text-xs">{categories.length}</span>
+            <span className="text-text-normal tabular-nums font-bold text-xs">{categories.length}</span>
           </div>
           <div className="flex justify-between items-center">
             <span>{t.totalStocks}:</span>
-            <span className="text-text-normal font-mono font-bold text-xs">{stocksLength}</span>
+            <span className="text-text-normal tabular-nums font-bold text-xs">{stocksLength}</span>
           </div>
 
           <button 
@@ -140,21 +118,6 @@ export default function Sidebar({ categories, stocksLength, onAddCategory, onUpd
                 <><Activity size={12} /> {t.fetchAll}</>
               )}
           </button>
-        </div>
-      </div>
-
-      <div className="border border-border-main bg-panel-bg p-4 relative flex flex-col gap-2">
-        <div className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold">
-          {t.serverLauncher}
-        </div>
-        <div className="flex flex-col gap-2 text-[10px] mt-2">
-          <button 
-            onClick={handleOpenFilePicker} 
-            className="w-full h-8 flex items-center justify-center gap-2 border border-border-light hover:bg-border-main text-text-bright transition-colors font-bold"
-          >
-            <FolderOpen size={12} /> {t.launchServer}
-          </button>
-          <p className="text-[9px] text-text-dim leading-relaxed">{t.regHelp}</p>
         </div>
       </div>
 
@@ -309,10 +272,9 @@ export default function Sidebar({ categories, stocksLength, onAddCategory, onUpd
                 )}
               </div>
             ))}
-
             <button 
               onClick={() => onSelectCategory('UNASSIGNED')}
-              className={`w-full flex items-center justify-start px-3 py-1.5 gap-3 border ${activeCategory === 'UNASSIGNED' ? 'border-border-light bg-border-main text-text-bright' : 'border-transparent text-text-dim hover:text-text-normal'} transition-colors group/unassigned`}
+              className={`w-full flex items-center justify-start px-3 py-1.5 gap-3 border ${activeCategory === 'UNASSIGNED' ? 'border-border-light bg-border-main text-text-bright' : 'border-transparent text-text-dim hover:text-text-normal'} transition-colors group/unassigned mt-1`}
             >
               <FolderOpen size={12} className={`shrink-0 ${activeCategory === 'UNASSIGNED' ? 'text-text-bright' : 'text-text-dim'}`} />
               <span className="truncate flex-1 text-left" style={{ fontSize: fontSize }}>{t.unassigned}</span>

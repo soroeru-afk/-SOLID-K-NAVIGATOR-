@@ -1,10 +1,12 @@
-import { Theme } from '../App';
+import { Theme, FontType } from '../App';
 import { Language, i18n } from '../i18n';
-import { PanelLeft, PanelRight, Minimize2 } from 'lucide-react';
+import { PanelLeft, PanelRight, Minimize2, Type } from 'lucide-react';
 
 interface Props {
   theme: Theme;
   onThemeChange: (theme: Theme) => void;
+  fontType: FontType;
+  onFontTypeChange: (fontType: FontType) => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
   sidebarPos: 'left' | 'right';
@@ -14,7 +16,7 @@ interface Props {
   onToggleCompactMode: () => void;
 }
 
-export default function Header({ theme, onThemeChange, language, onLanguageChange, sidebarPos, onSidebarPosChange, fontSize, onFontSizeChange, onToggleCompactMode }: Props) {
+export default function Header({ theme, onThemeChange, fontType, onFontTypeChange, language, onLanguageChange, sidebarPos, onSidebarPosChange, fontSize, onFontSizeChange, onToggleCompactMode }: Props) {
   const t = i18n[language];
 
   return (
@@ -27,7 +29,7 @@ export default function Header({ theme, onThemeChange, language, onLanguageChang
         </div>
         <div className="flex items-center gap-6 text-[10px] ml-auto">
             <div className="flex items-center gap-2">
-                <span className="text-text-dim mr-2 hidden md:inline">FONT:</span>
+                <span className="text-text-dim mr-2 hidden md:inline">SIZE:</span>
                 <input 
                   type="range" 
                   min="10" 
@@ -35,13 +37,27 @@ export default function Header({ theme, onThemeChange, language, onLanguageChang
                   step="1"
                   value={fontSize} 
                   onChange={(e) => onFontSizeChange(Number(e.target.value))}
-                  className="w-24"
+                  className="w-20"
                 />
                 <span className="text-text-dim w-4 text-right">{fontSize}</span>
             </div>
 
             <div className="flex items-center gap-2">
-                <span className="text-text-dim mr-2 hidden md:inline">{t.theme}</span>
+                <span className="text-text-dim mr-2 hidden md:inline">FONT:</span>
+                <select
+                  value={fontType}
+                  onChange={(e) => onFontTypeChange(e.target.value as FontType)}
+                  className="bg-base-bg border border-border-main text-text-bright px-2 py-1 outline-none focus:border-border-light cursor-pointer"
+                >
+                  <option value="gothic">GOTHIC</option>
+                  <option value="maru">MARU GOTHIC</option>
+                  <option value="meiryo">MEIRYO</option>
+                  <option value="mono">MONO</option>
+                </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+                <span className="text-text-dim mr-2 hidden xl:inline">{t.theme}</span>
                 <button 
                     onClick={() => onThemeChange('dark')}
                     className={`px-3 py-1 border transition-colors ${theme === 'dark' ? 'border-border-light bg-border-main text-text-bright' : 'border-border-main text-text-dim hover:text-text-normal'}`}
@@ -58,7 +74,7 @@ export default function Header({ theme, onThemeChange, language, onLanguageChang
                     onClick={() => onThemeChange('black')}
                     className={`px-3 py-1 border transition-colors ${theme === 'black' ? 'border-border-light bg-[#262626] text-[#ffffff]' : 'border-border-main text-text-dim hover:text-text-normal'}`}
                 >
-                    {(t as any).blackTheme}
+                    {(t as any).blackTheme || 'ONYX BLACK'}
                 </button>
             </div>
             

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import AddStockForm from './components/AddStockForm';
 import StockList from './components/StockList';
@@ -9,96 +9,24 @@ import { Language, i18n } from './i18n';
 import { initialGroups } from './data';
 import { initialData } from './importData';
 
-// GitHub Pages上で動作する場合はローカルサーバーのAPIを使用
-let API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? ''
-  : 'http://localhost:3000';
-
 export type Theme = 'light' | 'dark' | 'black';
+export type FontType = 'mono' | 'gothic' | 'meiryo' | 'maru';
 
 export default function App() {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem('knav_theme') as Theme) || 'black'
   );
 
+  const [fontType, setFontType] = useState<FontType>(
+    () => (localStorage.getItem('knav_font_type') as FontType) || 'gothic'
+  );
+
   const [isCompactMode, setIsCompactMode] = useState<boolean>(() => {
     return localStorage.getItem('knav_compact_mode') === 'true';
   });
 
-  const lastFullWindowSize = useRef<{ width: number, height: number }>((() => {
-    try {
-      const saved = localStorage.getItem('knav_last_full_size');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return { width: 1440, height: 900 };
-  })());
-
-  useEffect(() => {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return;
-    }
-
-    const probeLocalServer = async () => {
-      const ports = Array.from({ length: 16 }, (_, i) => 3000 + i);
-      for (const port of ports) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 120);
-          const res = await fetch(`http://localhost:${port}/api/ping`, { signal: controller.signal });
-          clearTimeout(timeoutId);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.pong) {
-              API_BASE = `http://localhost:${port}`;
-              console.log(`Successfully connected to local proxy on http://localhost:${port}`);
-              break;
-            }
-          }
-        } catch (e) {
-          // ignore error and try next port
-        }
-      }
-    };
-
-    probeLocalServer();
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (!isCompactMode) {
-        const size = {
-          width: window.outerWidth,
-          height: window.outerHeight
-        };
-        lastFullWindowSize.current = size;
-        localStorage.setItem('knav_last_full_size', JSON.stringify(size));
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    
-    // アプリ起動時の初期リサイズ処理 (初回レンダリングで前回の閉じたサイズに復元)
-    if (!isCompactMode) {
-      const prev = lastFullWindowSize.current;
-      window.resizeTo(Math.max(1400, prev.width), Math.max(880, prev.height));
-    } else {
-      window.resizeTo(395, 820);
-    }
-
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isCompactMode]);
-
   useEffect(() => {
     localStorage.setItem('knav_compact_mode', String(isCompactMode));
-    if (isCompactMode) {
-      // ミニパネル（コンパクトビュー）のサイズにリサイズ (横: 395px, 縦: 820px程度)
-      window.resizeTo(395, 820);
-    } else {
-      // 通常のフル画面サイズに復元 (最後に開いていたフル画面サイズ、なければデフォルトの 1440x900)
-      const prev = lastFullWindowSize.current;
-      const restoreWidth = Math.max(1400, prev.width);
-      const restoreHeight = Math.max(880, prev.height);
-      window.resizeTo(restoreWidth, restoreHeight);
-    }
   }, [isCompactMode]);
 
   const [language, setLanguage] = useState<Language>(
@@ -247,11 +175,10 @@ export default function App() {
         
     setFetchProgress({ current: 0, total: allStocks.length });
     
-    let serverWarned = false;
     for (let i = 0; i < allStocks.length; i++) {
         const st = allStocks[i];
         try {
-            const res = await fetch(`${API_BASE}/api/fetch-price?code=${encodeURIComponent(st.code)}`);
+            const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(st.code)}`);
             if (res.ok) {
                 const data = await res.json();
                 const price = data.price;
@@ -270,15 +197,6 @@ export default function App() {
             }
         } catch (error) {
             console.error(error);
-            if (!serverWarned) {
-                serverWarned = true;
-                alert(
-                    language === 'EN' 
-                    ? "【CONNECTION ERROR】\nLocal server is not running.\nPlease use the \"CHOOSE & RUN BATCH\" button in the sidebar to start the server."
-                    : "【接続エラー】\nローカルサーバーが起動していないため、株価の取得ができません。\nサイドバーの「バッチ選択・起動を開く」ボタンからサーバーを起動してください。"
-                );
-                break;
-            }
         }
         setFetchProgress((prev) => ({ ...prev, current: i + 1 }));
         await new Promise(r => setTimeout(r, 800)); // sleep to prevent server overload
@@ -292,6 +210,10 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('knav_theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('knav_font_type', fontType);
+  }, [fontType]);
 
   useEffect(() => {
     localStorage.setItem('knav_language', language);
@@ -340,51 +262,12 @@ export default function App() {
   };
 
   const addStocks = (items: {code: string, name: string, categoryId: string}[]) => {
-    const uniqueNewItems: {code: string, name: string, categoryId: string}[] = [];
-    const seenNewKeys = new Set<string>();
-    const skippedCodes: string[] = [];
-
-    items.forEach(item => {
-      const codeClean = item.code.trim();
-      const key = `${codeClean}_${item.categoryId}`;
-      const isAlreadyRegistered = stocks.some(s => s.code === codeClean && s.categoryId === item.categoryId);
-
-      if (isAlreadyRegistered || seenNewKeys.has(key)) {
-        skippedCodes.push(codeClean);
-      } else {
-        seenNewKeys.add(key);
-        uniqueNewItems.push({
-          ...item,
-          code: codeClean
-        });
-      }
-    });
-
-    if (uniqueNewItems.length === 0) {
-      if (skippedCodes.length > 0) {
-        alert(
-          language === 'EN'
-            ? `Stock(s) already registered in this category: ${skippedCodes.join(', ')}`
-            : `このカテゴリーに登録済みの銘柄です: ${skippedCodes.join(', ')}`
-        );
-      }
-      return;
-    }
-
-    const newStocks = uniqueNewItems.map((item, index) => ({
+    const newStocks = items.map((item, index) => ({
       id: Date.now().toString() + index,
       ...item,
       createdAt: Date.now()
     }));
     setStocks([...newStocks, ...stocks]);
-
-    if (skippedCodes.length > 0) {
-      alert(
-        language === 'EN'
-          ? `Registered new stocks. Skipped duplicates in this category: ${skippedCodes.join(', ')}`
-          : `新規銘柄を登録しました。同一カテゴリー内に既に登録済みの以下の銘柄はスキップされました: ${skippedCodes.join(', ')}`
-      );
-    }
   };
   
   const deleteStocks = (ids: string[]) => {
@@ -534,19 +417,20 @@ export default function App() {
 
   const handleResetData = () => {
     if (window.confirm(i18n[language].confirmReset)) {
-      setCategories([]);
-      setStocks([]);
-      localStorage.setItem('knav_categories_v2', '[]');
-      localStorage.setItem('knav_stocks_v2', '[]');
-      
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('KNAV_SX_') || key.startsWith('knav_sx_'))) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach(key => localStorage.removeItem(key));
+      setCategories(initialGroups.map(g => ({ id: g.id, name: g.name })));
+      const initialStocks: Stock[] = [];
+      initialGroups.forEach(g => {
+        g.stocks.forEach((s, index) => {
+          initialStocks.push({
+            id: `${g.id}_${s.code}`,
+            code: s.code,
+            name: s.name,
+            categoryId: g.id,
+            createdAt: Date.now() + index
+          });
+        });
+      });
+      setStocks(initialStocks);
     }
   };
 
@@ -557,32 +441,24 @@ export default function App() {
       : stocks;
 
   if (isCompactMode) {
-    const compactActiveCat = activeCategoryId === null ? 'MARKET_LINKS' : activeCategoryId;
-    const compactFiltered = compactActiveCat === 'UNASSIGNED'
-      ? stocks.filter(st => !st.categoryId)
-      : compactActiveCat === 'MARKET_LINKS'
-        ? []
-        : stocks.filter(st => st.categoryId === compactActiveCat);
-
     return (
-      <CompactView
-        categories={categories}
-        stocks={compactFiltered}
-        totalStocks={stocks.length}
-        marketLinks={marketLinks}
-        activeCategory={compactActiveCat}
-        onSelectCategory={setActiveCategoryId}
-        language={language}
-        onToggleMode={() => {
-          setIsCompactMode(false);
-          setActiveCategoryId(null);
-        }}
-      />
+      <div className={`font-type-${fontType}`}>
+        <CompactView
+          categories={categories}
+          stocks={filteredStocks}
+          totalStocks={stocks.length}
+          marketLinks={marketLinks}
+          activeCategory={activeCategoryId}
+          onSelectCategory={setActiveCategoryId}
+          language={language}
+          onToggleMode={() => setIsCompactMode(false)}
+        />
+      </div>
     );
   }
 
   return (
-    <div className={`min-h-screen bg-base-bg flex flex-col ${sidebarPos === 'right' ? 'md:flex-row-reverse' : 'md:flex-row'} text-[10px] md:text-xs uppercase tracking-wider relative h-screen overflow-hidden`}>
+    <div className={`font-type-${fontType} min-h-screen bg-base-bg flex flex-col ${sidebarPos === 'right' ? 'md:flex-row-reverse' : 'md:flex-row'} text-[10px] md:text-xs uppercase tracking-wider relative h-screen overflow-hidden`}>
       <div style={{ width: sidebarWidth }} className={`shrink-0 md:flex flex-col ${sidebarPos === 'right' ? 'border-l' : 'border-r'} border-border-main hidden z-10 relative h-full`}>
         <Sidebar 
           categories={categories} 
@@ -641,7 +517,9 @@ export default function App() {
       <main className="flex-1 p-4 md:p-6 flex flex-col gap-6 max-h-screen overflow-hidden">
         <Header 
           theme={theme} 
-          onThemeChange={setTheme} 
+          onThemeChange={setTheme}
+          fontType={fontType}
+          onFontTypeChange={setFontType}
           language={language} 
           onLanguageChange={setLanguage} 
           sidebarPos={sidebarPos}
@@ -653,7 +531,6 @@ export default function App() {
         <AddStockForm categories={categories} onAdd={addStocks} language={language} />
         <StockList 
           stocks={filteredStocks} 
-          allStocks={stocks}
           categories={categories} 
           onDelete={deleteStocks} 
           onUpdate={updateStock}

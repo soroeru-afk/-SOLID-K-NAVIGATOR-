@@ -42,11 +42,11 @@ export default function CompactView({ categories, stocks, totalStocks, marketLin
         <div className="flex flex-col gap-1.5 text-[10px] text-text-dim mt-1">
           <div className="flex justify-between">
             <span>DIR COUNT:</span>
-            <span className="text-text-normal font-mono font-bold text-xs">{categories.length}</span>
+            <span className="text-text-normal tabular-nums font-bold text-xs">{categories.length}</span>
           </div>
           <div className="flex justify-between items-end">
             <span>{t.totalStocks}:</span>
-            <span className="text-text-normal font-mono font-bold text-xs">{totalStocks}</span>
+            <span className="text-text-normal tabular-nums font-bold text-xs">{totalStocks}</span>
           </div>
         </div>
       </div>
@@ -59,10 +59,10 @@ export default function CompactView({ categories, stocks, totalStocks, marketLin
         >
           <option value="MARKET_LINKS">[ STOCK MARKET DATA ]</option>
           <option value="">[ {t.allData} ]</option>
-          <option value="UNASSIGNED">{t.unassigned}</option>
           {categories.map(c => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
+          <option value="UNASSIGNED">{t.unassigned}</option>
         </select>
       </div>
 
@@ -109,11 +109,11 @@ export default function CompactView({ categories, stocks, totalStocks, marketLin
                     rel="noreferrer"
                     className="text-text-bright hover:text-[#58a6ff] text-sm truncate font-bold transition-colors"
                   >
-                    {stock.name} <span className="text-text-dim text-[10px] font-mono ml-1">{stock.code}</span>
+                    {stock.name} <span className="text-text-dim text-[10px] tabular-nums ml-1">{stock.code}</span>
                   </a>
                 </div>
                 <div className="flex items-center gap-4 shrink-0 pl-2">
-                  <span className={`font-mono text-sm text-right ${trendColor} font-bold`}>
+                  <span className={`tabular-nums text-sm text-right ${trendColor} font-bold`}>
                     {stock.price !== '?' ? `¥${stock.price}` : stock.price}
                   </span>
                 </div>
