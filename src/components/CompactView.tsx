@@ -2,6 +2,7 @@ import React from 'react';
 import { Category, Stock, MarketLink } from '../types';
 import { Maximize2, ExternalLink, FileText, LayoutGrid } from 'lucide-react';
 import { Language, i18n } from '../i18n';
+import { Theme } from '../App';
 
 interface Props {
   categories: Category[];
@@ -12,9 +13,13 @@ interface Props {
   onSelectCategory: (id: string | null) => void;
   language: Language;
   onToggleMode: () => void;
+  priceFontSize?: number;
+  priceColor?: string;
+  theme: Theme;
+  fontSize?: number;
 }
 
-export default function CompactView({ categories, stocks, totalStocks, marketLinks, activeCategory, onSelectCategory, language, onToggleMode }: Props) {
+export default function CompactView({ categories, stocks, totalStocks, marketLinks, activeCategory, onSelectCategory, language, onToggleMode, priceFontSize, priceColor, theme, fontSize }: Props) {
   const t = i18n[language];
   const isMarketLinks = activeCategory === 'MARKET_LINKS';
 
@@ -108,12 +113,19 @@ export default function CompactView({ categories, stocks, totalStocks, marketLin
                     target="_blank"
                     rel="noreferrer"
                     className="text-text-bright hover:text-[#58a6ff] text-sm truncate font-bold transition-colors"
+                    style={{ fontSize: fontSize }}
                   >
-                    {stock.name} <span className="text-text-dim text-[10px] tabular-nums ml-1">{stock.code}</span>
+                    {stock.name} <span className={`tabular-nums ml-1 ${theme === 'light' ? 'text-black' : 'text-white'}`} style={{ fontSize: fontSize ? Math.max(10, Math.round(fontSize * 0.85)) : undefined }}>{stock.code}</span>
                   </a>
                 </div>
                 <div className="flex items-center gap-4 shrink-0 pl-2">
-                  <span className={`tabular-nums text-sm text-right ${trendColor} font-bold`}>
+                  <span 
+                    className="text-text-bright tabular-nums text-right font-bold"
+                    style={{ 
+                      fontSize: priceFontSize || undefined, 
+                      color: priceColor === 'red' ? '#C41414' : undefined 
+                    }}
+                  >
                     {stock.price !== '?' ? `¥${stock.price}` : stock.price}
                   </span>
                 </div>

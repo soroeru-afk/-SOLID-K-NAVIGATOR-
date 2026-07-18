@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Database, FileText, Trash2, CheckSquare, Square, Pencil, ExternalLink, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, X } from 'lucide-react';
 import { Stock, Category } from '../types';
 import { Language, i18n } from '../i18n';
+import { Theme } from '../App';
 
 interface Props {
   stocks: Stock[];
@@ -12,9 +13,12 @@ interface Props {
   onMoveStocksToCategory?: (ids: string[], categoryId: string) => void;
   language: Language;
   fontSize: number;
+  priceFontSize: number;
+  priceColor: string;
+  theme: Theme;
 }
 
-export default function StockList({ stocks, categories, onDelete, onUpdate, onMoveStock, onMoveStocksToCategory, language, fontSize }: Props) {
+export default function StockList({ stocks, categories, onDelete, onUpdate, onMoveStock, onMoveStocksToCategory, language, fontSize, priceFontSize, priceColor, theme }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -186,7 +190,8 @@ export default function StockList({ stocks, categories, onDelete, onUpdate, onMo
                   href={`https://kabutan.jp/stock/?code=${st.code}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-16 shrink-0 md:min-w-[80px] font-bold tracking-widest text-[#ef4444] hover:underline"
+                  className={`w-16 shrink-0 md:min-w-[80px] font-bold tracking-widest hover:underline ${theme === 'light' ? 'text-black' : 'text-white'}`}
+                  style={{ fontSize: Math.max(10, Math.round(fontSize * 0.85)) }}
                 >
                   {st.code}
                 </a>
@@ -231,10 +236,16 @@ export default function StockList({ stocks, categories, onDelete, onUpdate, onMo
                               {st.name}
                           </a>
                           {st.price && st.price !== '?' && (
-                             <span className="text-text-bright tabular-nums bg-border-main/30 px-2 py-0.5 border border-border-main/50 rounded-sm shrink-0 font-bold ml-1">
+                             <span 
+                               className="text-text-bright tabular-nums bg-border-main/30 px-2 py-0.5 border border-border-main/50 rounded-sm shrink-0 font-bold ml-1"
+                               style={{ 
+                                 fontSize: priceFontSize, 
+                                 color: priceColor === 'red' ? '#C41414' : undefined 
+                               }}
+                             >
                                 ¥{st.price}
                              </span>
-                          )}
+                           )}
                       </div>
                   )}
                 </div>

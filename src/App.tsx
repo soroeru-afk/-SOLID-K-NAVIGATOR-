@@ -73,7 +73,18 @@ export default function App() {
   );
 
   const [fontSize, setFontSize] = useState<number>(
-    () => parseInt(localStorage.getItem('knav_font_size') || '12')
+    () => parseInt(localStorage.getItem('knav_font_size') || '16')
+  );
+
+  const [priceFontSize, setPriceFontSize] = useState<number>(
+    () => parseInt(localStorage.getItem('knav_price_font_size') || '16')
+  );
+
+  const [priceColor, setPriceColor] = useState<string>(
+    () => {
+      const saved = localStorage.getItem('knav_price_color');
+      return saved === 'red' ? 'red' : 'default';
+    }
   );
 
   useEffect(() => {
@@ -83,6 +94,14 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('knav_font_size', fontSize.toString());
   }, [fontSize]);
+
+  useEffect(() => {
+    localStorage.setItem('knav_price_font_size', priceFontSize.toString());
+  }, [priceFontSize]);
+
+  useEffect(() => {
+    localStorage.setItem('knav_price_color', priceColor);
+  }, [priceColor]);
 
   useEffect(() => {
     // Initialize caches from initialData if they don't exist
@@ -506,6 +525,10 @@ export default function App() {
           onSelectCategory={setActiveCategoryId}
           language={language}
           onToggleMode={() => setIsCompactMode(false)}
+          priceFontSize={priceFontSize}
+          priceColor={priceColor}
+          theme={theme}
+          fontSize={fontSize}
         />
       </div>
     );
@@ -580,6 +603,10 @@ export default function App() {
           onSidebarPosChange={setSidebarPos}
           fontSize={fontSize}
           onFontSizeChange={setFontSize}
+          priceFontSize={priceFontSize}
+          onPriceFontSizeChange={setPriceFontSize}
+          priceColor={priceColor}
+          onPriceColorChange={setPriceColor}
           onToggleCompactMode={() => setIsCompactMode(true)}
         />
         <AddStockForm categories={categories} onAdd={addStocks} language={language} />
@@ -592,6 +619,9 @@ export default function App() {
           onMoveStocksToCategory={moveStocksToCategory}
           language={language} 
           fontSize={fontSize}
+          priceFontSize={priceFontSize}
+          priceColor={priceColor}
+          theme={theme}
         />
       </main>
     </div>

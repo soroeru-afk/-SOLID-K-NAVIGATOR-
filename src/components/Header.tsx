@@ -1,6 +1,6 @@
 import { Theme, FontType } from '../App';
 import { Language, i18n } from '../i18n';
-import { PanelLeft, PanelRight, Minimize2, Type } from 'lucide-react';
+import { PanelLeft, PanelRight, Minimize2, Type, Palette } from 'lucide-react';
 
 interface Props {
   theme: Theme;
@@ -13,10 +13,14 @@ interface Props {
   onSidebarPosChange: (pos: 'left' | 'right') => void;
   fontSize: number;
   onFontSizeChange: (size: number) => void;
+  priceFontSize: number;
+  onPriceFontSizeChange: (size: number) => void;
+  priceColor: string;
+  onPriceColorChange: (color: string) => void;
   onToggleCompactMode: () => void;
 }
 
-export default function Header({ theme, onThemeChange, fontType, onFontTypeChange, language, onLanguageChange, sidebarPos, onSidebarPosChange, fontSize, onFontSizeChange, onToggleCompactMode }: Props) {
+export default function Header({ theme, onThemeChange, fontType, onFontTypeChange, language, onLanguageChange, sidebarPos, onSidebarPosChange, fontSize, onFontSizeChange, priceFontSize, onPriceFontSizeChange, priceColor, onPriceColorChange, onToggleCompactMode }: Props) {
   const t = i18n[language];
 
   return (
@@ -33,13 +37,33 @@ export default function Header({ theme, onThemeChange, fontType, onFontTypeChang
                 <input 
                   type="range" 
                   min="10" 
-                  max="16" 
+                  max="20" 
                   step="1"
                   value={fontSize} 
                   onChange={(e) => onFontSizeChange(Number(e.target.value))}
-                  className="w-20"
+                  className="w-16"
                 />
                 <span className="text-text-dim w-4 text-right">{fontSize}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+                <span className="text-text-dim mr-2 hidden md:inline">PRICE:</span>
+                <button
+                    onClick={() => onPriceColorChange(priceColor === 'red' ? 'default' : 'red')}
+                    className="w-[120px] px-3 py-1 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors mr-1 text-center"
+                >
+                    COLOR: {priceColor === 'red' ? 'RED' : 'THEME'}
+                </button>
+                <input 
+                  type="range" 
+                  min="10" 
+                  max="24" 
+                  step="1"
+                  value={priceFontSize} 
+                  onChange={(e) => onPriceFontSizeChange(Number(e.target.value))}
+                  className="w-16"
+                />
+                <span className="text-text-dim w-4 text-right">{priceFontSize}</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -57,24 +81,15 @@ export default function Header({ theme, onThemeChange, fontType, onFontTypeChang
             </div>
 
             <div className="flex items-center gap-2">
-                <span className="text-text-dim mr-2 hidden xl:inline">{t.theme}</span>
-                <button 
-                    onClick={() => onThemeChange('dark')}
-                    className={`px-3 py-1 border transition-colors ${theme === 'dark' ? 'border-border-light bg-border-main text-text-bright' : 'border-border-main text-text-dim hover:text-text-normal'}`}
+                <button
+                    onClick={() => {
+                      const next = theme === 'black' ? 'dark' : theme === 'dark' ? 'light' : 'black';
+                      onThemeChange(next);
+                    }}
+                    className="w-[180px] px-3 py-1 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors flex items-center justify-center gap-2 uppercase font-bold"
                 >
-                    {t.navyDark}
-                </button>
-                <button 
-                    onClick={() => onThemeChange('light')}
-                    className={`px-3 py-1 border transition-colors ${theme === 'light' ? 'border-border-light bg-border-main text-text-bright' : 'border-border-main text-text-dim hover:text-text-normal'}`}
-                >
-                    {t.paperLight}
-                </button>
-                <button 
-                    onClick={() => onThemeChange('black')}
-                    className={`px-3 py-1 border transition-colors ${theme === 'black' ? 'border-border-light bg-[#262626] text-[#ffffff]' : 'border-border-main text-text-dim hover:text-text-normal'}`}
-                >
-                    {(t as any).blackTheme || 'ONYX BLACK'}
+                    <Palette size={14} className="text-text-dim shrink-0" />
+                    <span className="truncate">THEME: {theme === 'black' ? ((t as any).blackTheme || 'ONYX BLACK') : theme === 'dark' ? t.navyDark : t.paperLight}</span>
                 </button>
             </div>
             
