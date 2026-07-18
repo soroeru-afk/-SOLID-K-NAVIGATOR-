@@ -210,6 +210,8 @@ export default function App() {
         
     setFetchProgress({ current: 0, total: allStocks.length });
     
+    let serverWarned = false;
+    
     for (let i = 0; i < allStocks.length; i++) {
         const st = allStocks[i];
         try {
@@ -229,9 +231,26 @@ export default function App() {
                     price: price, 
                     priceUpdatedAt: Date.now() 
                 } : s));
+            } else {
+                if (!serverWarned) {
+                    serverWarned = true;
+                    alert(
+                        language === 'EN' 
+                        ? "【CONNECTION ERROR】\nLocal server is not running.\nPlease use the \"CHOOSE & RUN BATCH\" button in the sidebar to start the server."
+                        : "【接続エラー】\nローカルサーバーが起動していないため、株価の取得ができません。\nサイドバーの「バッチ選択・起動を開く」ボタンからサーバーを起動してください。"
+                    );
+                }
             }
         } catch (error) {
             console.error(error);
+            if (!serverWarned) {
+                serverWarned = true;
+                alert(
+                    language === 'EN' 
+                    ? "【CONNECTION ERROR】\nLocal server is not running.\nPlease use the \"CHOOSE & RUN BATCH\" button in the sidebar to start the server."
+                    : "【接続エラー】\nローカルサーバーが起動していないため、株価の取得ができません。\nサイドバーの「バッチ選択・起動を開く」ボタンからサーバーを起動してください。"
+                );
+            }
         }
         setFetchProgress((prev) => ({ ...prev, current: i + 1 }));
         await new Promise(r => setTimeout(r, 800)); // sleep to prevent server overload
