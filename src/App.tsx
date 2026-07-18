@@ -9,6 +9,11 @@ import { Language, i18n } from './i18n';
 import { initialGroups } from './data';
 import { initialData } from './importData';
 
+// GitHub Pages上で動作する場合はローカルサーバーのAPIを使用
+let API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''
+  : 'http://localhost:3000';
+
 export type Theme = 'light' | 'dark' | 'black';
 export type FontType = 'mono' | 'gothic' | 'meiryo' | 'maru';
 
@@ -16,6 +21,36 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem('knav_theme') as Theme) || 'black'
   );
+
+  useEffect(() => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return;
+    }
+
+    const probeLocalServer = async () => {
+      const ports = Array.from({ length: 16 }, (_, i) => 3000 + i);
+      for (const port of ports) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 120);
+          const res = await fetch(`http://localhost:${port}/api/ping`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.pong) {
+              API_BASE = `http://localhost:${port}`;
+              console.log(`Successfully connected to local proxy on http://localhost:${port}`);
+              break;
+            }
+          }
+        } catch (e) {
+          // ignore error and try next port
+        }
+      }
+    };
+
+    probeLocalServer();
+  }, []);
 
   const [fontType, setFontType] = useState<FontType>(
     () => (localStorage.getItem('knav_font_type') as FontType) || 'gothic'
@@ -178,7 +213,7 @@ export default function App() {
     for (let i = 0; i < allStocks.length; i++) {
         const st = allStocks[i];
         try {
-            const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(st.code)}`);
+            const res = await fetch(`${API_BASE}/api/fetch-price?code=${encodeURIComponent(st.code)}`);
             if (res.ok) {
                 const data = await res.json();
                 const price = data.price;
