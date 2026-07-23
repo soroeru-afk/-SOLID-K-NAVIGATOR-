@@ -524,7 +524,12 @@ export default function App() {
           activeCategory={activeCategoryId}
           onSelectCategory={setActiveCategoryId}
           language={language}
-          onToggleMode={() => setIsCompactMode(false)}
+          onToggleMode={() => {
+            setIsCompactMode(false);
+            const w = parseInt(localStorage.getItem('knav_original_width') || '1200');
+            const h = parseInt(localStorage.getItem('knav_original_height') || '800');
+            window.resizeTo(w, h);
+          }}
           priceFontSize={priceFontSize}
           priceColor={priceColor}
           theme={theme}
@@ -607,7 +612,12 @@ export default function App() {
           onPriceFontSizeChange={setPriceFontSize}
           priceColor={priceColor}
           onPriceColorChange={setPriceColor}
-          onToggleCompactMode={() => setIsCompactMode(true)}
+          onToggleCompactMode={() => {
+            setIsCompactMode(true);
+            localStorage.setItem('knav_original_width', String(window.outerWidth));
+            localStorage.setItem('knav_original_height', String(window.outerHeight));
+            window.resizeTo(400, window.outerHeight);
+          }}
         />
         <AddStockForm categories={categories} onAdd={addStocks} language={language} />
         <StockList 
