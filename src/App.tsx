@@ -526,6 +526,9 @@ export default function App() {
           language={language}
           onToggleMode={() => {
             setIsCompactMode(false);
+            if (activeCategoryId === 'MARKET_LINKS') {
+              setActiveCategoryId(null);
+            }
             const w = parseInt(localStorage.getItem('knav_original_width') || '1200');
             const h = parseInt(localStorage.getItem('knav_original_height') || '800');
             window.resizeTo(w, h);
@@ -614,6 +617,7 @@ export default function App() {
           onPriceColorChange={setPriceColor}
           onToggleCompactMode={() => {
             setIsCompactMode(true);
+            setActiveCategoryId('MARKET_LINKS');
             localStorage.setItem('knav_original_width', String(window.outerWidth));
             localStorage.setItem('knav_original_height', String(window.outerHeight));
             window.resizeTo(400, window.outerHeight);
