@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Category, Stock, MarketLink } from '../types';
 import { 
   Maximize2, ExternalLink, FileText, LayoutGrid, LineChart, 
-  ChevronDown, ChevronRight, RefreshCw, Newspaper, GripHorizontal
+  ChevronDown, ChevronRight, GripHorizontal
 } from 'lucide-react';
 import { Language, i18n } from '../i18n';
 import { Theme } from '../App';
@@ -42,7 +42,7 @@ export default function CompactView({
 
   // STOCK MARKET DATA の開閉状態
   const [isMarketDataOpen, setIsMarketDataOpen] = useState(true);
-  const [marketTab, setMarketTab] = useState<'links' | 'news' | 'tanken'>('links');
+  const [marketTab, setMarketTab] = useState<'links' | 'tanken'>('links');
   const [tankenSubTab, setTankenSubTab] = useState<'fundamentals' | 'technicals'>('fundamentals');
 
   // 銘柄探検の文字サイズ・行間（大・中・小 ＆ LocalStorage記憶）
@@ -102,32 +102,6 @@ export default function CompactView({
       onSelectCategory(categories[0].id);
     }
   }, [categories]);
-
-  // 株探ニュース取得状態
-  const [newsItems, setNewsItems] = useState<Array<{ id: string; time: string; category: string; title: string; url: string }>>([]);
-  const [isLoadingNews, setIsLoadingNews] = useState(false);
-  const [newsError, setNewsError] = useState<string | null>(null);
-
-  const fetchNews = async () => {
-    setIsLoadingNews(true);
-    setNewsError(null);
-    try {
-      const res = await fetch('/api/market-news');
-      if (!res.ok) throw new Error('ニュースの取得に失敗しました');
-      const d = await res.json();
-      setNewsItems(d.items || []);
-    } catch (err: any) {
-      setNewsError(err.message || 'ニュースを取得できませんでした');
-    } finally {
-      setIsLoadingNews(false);
-    }
-  };
-
-  useEffect(() => {
-    if (marketTab === 'news' && newsItems.length === 0) {
-      fetchNews();
-    }
-  }, [marketTab]);
 
   // ドラッグリサイズ処理
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -240,8 +214,8 @@ export default function CompactView({
 
           {isMarketDataOpen && (
             <div className="p-2 flex-1 min-h-0 flex flex-col">
-              {/* Tab Buttons: [リンク] [株探・ニュース] [探検] */}
-              <div className="grid grid-cols-3 gap-1 mb-2 border-b border-border-main/60 pb-1.5 text-[10px] shrink-0">
+              {/* Tab Buttons: [リンク] [探検] */}
+              <div className="grid grid-cols-2 gap-1 mb-2 border-b border-border-main/60 pb-1.5 text-[10px] shrink-0">
                 <button
                   type="button"
                   onClick={() => setMarketTab('links')}
@@ -252,21 +226,6 @@ export default function CompactView({
                   }`}
                 >
                   リンク
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMarketTab('news');
-                    if (newsItems.length === 0) fetchNews();
-                  }}
-                  className={`py-1 text-center font-bold transition-colors rounded-xs flex items-center justify-center gap-1 ${
-                    marketTab === 'news'
-                      ? 'bg-border-main text-[#58a6ff] border border-border-light/50 shadow-xs'
-                      : 'text-text-dim hover:text-text-normal bg-base-bg'
-                  }`}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#58a6ff] animate-pulse" />
-                  株探・ニュース
                 </button>
                 <button
                   type="button"
@@ -306,69 +265,7 @@ export default function CompactView({
                 </div>
               )}
 
-              {/* Content for TAB 2: 株探・ニュース (高さいっぱいにスクロール可能) */}
-              {marketTab === 'news' && (
-                <div className="flex-1 min-h-0 overflow-y-auto pr-1 scrollbar-thin flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between px-1 text-[9px] text-text-dim pb-1 border-b border-border-main/30 shrink-0">
-                    <span className="flex items-center gap-1">
-                      <Newspaper size={10} />
-                      <span>リアルタイム株探速報</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={fetchNews}
-                      disabled={isLoadingNews}
-                      className="flex items-center gap-0.5 hover:text-[#58a6ff] transition-colors disabled:opacity-50"
-                    >
-                      <RefreshCw size={9} className={isLoadingNews ? 'animate-spin' : ''} />
-                      <span>更新</span>
-                    </button>
-                  </div>
-
-                  {isLoadingNews ? (
-                    <div className="py-8 text-center text-text-dim text-[10px] animate-pulse">
-                      ニュースを取得中...
-                    </div>
-                  ) : newsError ? (
-                    <div className="py-6 text-center text-red-400 text-[10px]">
-                      {newsError}
-                    </div>
-                  ) : newsItems.length === 0 ? (
-                    <div className="py-8 text-center text-text-dim text-[10px]">
-                      ニュースがありません
-                    </div>
-                  ) : (
-                    newsItems.map(item => (
-                      <a
-                        key={item.id}
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          openExternalWindow(item.url);
-                        }}
-                        className="group flex flex-col gap-0.5 px-2 py-1.5 bg-base-bg/50 hover:bg-border-main/50 border border-border-main/40 rounded-xs transition-colors"
-                        title={`${item.title}（別ウィンドウで開く）`}
-                      >
-                        <div className="flex items-center justify-between text-[9px] text-text-dim">
-                          <span className="font-mono text-[#58a6ff]">{item.time}</span>
-                          {item.category && (
-                            <span className="px-1 py-0.2 bg-panel-bg border border-border-main text-[8px] rounded-2xs">
-                              {item.category}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-text-bright group-hover:text-[#58a6ff] line-clamp-2 leading-snug font-medium transition-colors">
-                          {item.title}
-                        </div>
-                      </a>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {/* Content for TAB 3: 銘柄探検 (高さいっぱいにスクロール可能) */}
+              {/* Content for TAB 2: 銘柄探検 (高さいっぱいにスクロール可能) */}
               {marketTab === 'tanken' && (() => {
                 const sizeConfig = {
                   sm: {

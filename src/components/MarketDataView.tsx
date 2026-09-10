@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   ExternalLink, Plus, Trash2, ArrowUp, ArrowDown, Pencil, Check, X, 
   LineChart, Folder, ChevronRight, Globe, Link2, Sparkles, Compass, 
-  Newspaper, RefreshCw, Search, Tag, Clock, AlertCircle, LayoutGrid, List
+  Search, Tag, LayoutGrid, List
 } from 'lucide-react';
 import { MarketLink } from '../types';
 import { Language, i18n } from '../i18n';
 import { Theme } from '../App';
 import { tankenCategories } from '../data/tankenData';
-import NewsDigestModal from './NewsDigestModal';
 import { openExternalWindow } from '../lib/windowUtils';
 
 interface Props {
@@ -28,7 +27,7 @@ export default function MarketDataView({
   theme,
   fontSize
 }: Props) {
-  const [activeTab, setActiveTab] = useState<'links' | 'tanken' | 'news'>('links');
+  const [activeTab, setActiveTab] = useState<'links' | 'tanken'>('links');
   
   // Custom Links state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -50,13 +49,6 @@ export default function MarketDataView({
   // Tanken state
   const [tankenQuery, setTankenQuery] = useState('');
 
-  // News state
-  const [newsItems, setNewsItems] = useState<Array<{ id: string; time: string; category: string; title: string; url: string }>>([]);
-  const [isLoadingNews, setIsLoadingNews] = useState(false);
-  const [newsError, setNewsError] = useState<string | null>(null);
-  const [selectedNews, setSelectedNews] = useState<{ id: string; title: string; time: string; category: string; url: string } | null>(null);
-  const [newsFilterQuery, setNewsFilterQuery] = useState('');
-
   const t = i18n[language];
   const [customFontSize, setCustomFontSize] = useState<number>(() => {
     const saved = localStorage.getItem('KNAV_MARKET_VIEW_FONT_SIZE');
@@ -70,27 +62,6 @@ export default function MarketDataView({
       return next;
     });
   };
-
-  const fetchNews = async () => {
-    setIsLoadingNews(true);
-    setNewsError(null);
-    try {
-      const res = await fetch('/api/market-news');
-      if (!res.ok) throw new Error('ニュースの取得に失敗しました');
-      const d = await res.json();
-      setNewsItems(d.items || []);
-    } catch (err: any) {
-      setNewsError(err.message || 'ニュースを取得できませんでした');
-    } finally {
-      setIsLoadingNews(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'news' && newsItems.length === 0) {
-      fetchNews();
-    }
-  }, [activeTab]);
 
   const handleStartEdit = (link: MarketLink) => {
     setEditingId(link.id);
@@ -145,12 +116,6 @@ export default function MarketDataView({
     l.url.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredNews = newsItems.filter(item => 
-    !newsFilterQuery || 
-    item.title.toLowerCase().includes(newsFilterQuery.toLowerCase()) || 
-    item.category.toLowerCase().includes(newsFilterQuery.toLowerCase())
-  );
-
   return (
     <div className="border border-border-main bg-panel-bg p-3 md:p-4 relative w-full flex-1 flex flex-col min-h-0 overflow-hidden shadow-sm">
       {/* Top Navigation & Breadcrumbs */}
@@ -198,24 +163,6 @@ export default function MarketDataView({
             >
               <Compass size={12} />
               <span>銘柄探検 (31条件)</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setActiveTab('news');
-                if (newsItems.length === 0) fetchNews();
-              }}
-              className={`px-3 py-1 font-bold transition-colors rounded-xs flex items-center gap-1.5 ${
-                activeTab === 'news'
-                  ? 'bg-border-main text-[#58a6ff] border border-border-light shadow-xs'
-                  : 'text-text-dim hover:text-text-normal'
-              }`}
-            >
-              <Newspaper size={12} />
-              <span className="flex items-center gap-1">
-                <span>主要ニュース</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#58a6ff] animate-pulse" />
-              </span>
             </button>
           </div>
 
@@ -744,115 +691,6 @@ export default function MarketDataView({
             </div>
           </div>
         </div>
-      )}
-
-      {/* TAB 3: 主要ニュース (News Feed & Digest) */}
-      {activeTab === 'news' && (
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
-            <div className="text-xs text-text-dim flex items-center gap-1.5">
-              <Newspaper size={13} className="text-[#58a6ff]" />
-              <span>株探 市場ニュース速報（クリックで要約ダイジェスト表示）</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="relative w-48 sm:w-64">
-                <input 
-                  type="text" 
-                  value={newsFilterQuery}
-                  onChange={(e) => setNewsFilterQuery(e.target.value)}
-                  placeholder="ニュースを検索 (例: 上方修正, トヨタ)..."
-                  className="w-full h-7 px-2.5 pr-7 bg-base-bg border border-border-main text-text-normal text-[11px] placeholder:text-text-dim/50 focus:outline-none focus:border-border-light transition-colors"
-                />
-                {newsFilterQuery && (
-                  <button
-                    onClick={() => setNewsFilterQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text-dim hover:text-text-bright"
-                  >
-                    <X size={11} />
-                  </button>
-                )}
-              </div>
-
-              <button
-                onClick={fetchNews}
-                disabled={isLoadingNews}
-                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold border border-border-main hover:border-border-light bg-base-bg text-[#58a6ff] hover:text-[#79c0ff] transition-colors disabled:opacity-50"
-              >
-                <RefreshCw size={11} className={isLoadingNews ? 'animate-spin' : ''} />
-                <span>最新情報を取得</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto pr-1">
-            {isLoadingNews && newsItems.length === 0 ? (
-              <div className="py-16 flex flex-col items-center justify-center gap-2 text-text-dim">
-                <RefreshCw size={20} className="animate-spin text-[#58a6ff]" />
-                <span className="text-xs">最新の市場ニュースを取得中...</span>
-              </div>
-            ) : newsError && newsItems.length === 0 ? (
-              <div className="p-4 bg-[#f85149]/10 border border-[#f85149]/30 rounded text-[#ff7b72] flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <AlertCircle size={14} />
-                  <span>{newsError}</span>
-                </div>
-                <button onClick={fetchNews} className="underline text-[#58a6ff]">再試行</button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filteredNews.map((item, idx) => (
-                  <div
-                    key={item.id || idx}
-                    onClick={() => setSelectedNews(item)}
-                    className="p-3 bg-panel-bg hover:bg-border-main/50 border border-border-main hover:border-border-light cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs group"
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <span className={`px-2 py-0.5 text-[10px] font-bold border rounded-xs shrink-0 ${
-                        item.category.includes('材料') ? 'bg-[#1f6feb]/20 text-[#58a6ff] border-[#1f6feb]/40' :
-                        item.category.includes('市況') ? 'bg-[#238636]/20 text-[#3fb950] border-[#238636]/40' :
-                        item.category.includes('決算') ? 'bg-[#d29922]/20 text-[#e3b341] border-[#d29922]/40' :
-                        'bg-border-main text-text-dim border-border-main'
-                      }`}>
-                        {item.category}
-                      </span>
-                      <span 
-                        className="text-text-bright group-hover:text-[#58a6ff] font-bold truncate transition-colors"
-                        style={{ fontSize: `${customFontSize}px` }}
-                      >
-                        {item.title}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-[11px] text-text-dim shrink-0 justify-between sm:justify-end">
-                      <span className="font-mono flex items-center gap-1">
-                        <Clock size={11} />
-                        {item.time}
-                      </span>
-                      <span className="text-[10px] text-[#58a6ff] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 font-bold">
-                        <span>ダイジェスト</span>
-                        <ChevronRight size={11} />
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* News Digest Modal */}
-      {selectedNews && (
-        <NewsDigestModal
-          newsId={selectedNews.id}
-          newsTitle={selectedNews.title}
-          newsTime={selectedNews.time}
-          newsCategory={selectedNews.category}
-          newsUrl={selectedNews.url}
-          onClose={() => setSelectedNews(null)}
-          theme={theme}
-        />
       )}
     </div>
   );

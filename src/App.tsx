@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import AddStockForm from './components/AddStockForm';
 import StockList from './components/StockList';
@@ -11,6 +11,7 @@ import { initialGroups } from './data';
 import { initialData } from './importData';
 import { enrichedPreset } from './data/enrichedPreset';
 import { getAllDescendantCategoryIds } from './lib/categoryUtils';
+import { safeFetch } from './lib/apiUtils';
 
 export type Theme = 'light' | 'dark' | 'black';
 export type FontType = 'mono' | 'gothic' | 'meiryo' | 'maru';
@@ -151,7 +152,14 @@ export default function App() {
 
   const [isFetchingAll, setIsFetchingAll] = useState(false);
   const [fetchProgress, setFetchProgress] = useState({ current: 0, total: 0 });
+  const cancelFetchRef = useRef(false);
   const [refreshingCode, setRefreshingCode] = useState<string | null>(null);
+
+  const handleStopFetch = () => {
+    if (isFetchingAll) {
+      cancelFetchRef.current = true;
+    }
+  };
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(370);
 
@@ -237,13 +245,9 @@ export default function App() {
     setRefreshingCode(code);
     try {
       const url = getPriceFetchUrl(code);
-      const isCustom = Boolean(customUrl);
-
-      const res = await fetch(url, {
-        credentials: isCustom ? 'omit' : 'include',
-        cache: 'no-store',
+      const res = await safeFetch(url, {
         headers: { 'Accept': 'application/json' }
-      });
+      }, 10000);
       
       const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
@@ -303,6 +307,7 @@ export default function App() {
     }
 
     setIsFetchingAll(true);
+    cancelFetchRef.current = false;
     
     const allStocks = categoryId 
         ? (categoryId === 'UNASSIGNED' ? stocks.filter(s => !s.categoryId) : stocks.filter(s => s.categoryId === categoryId))
@@ -313,21 +318,24 @@ export default function App() {
     let successCount = 0;
     let failCount = 0;
     let authRequired = false;
+    let isCancelled = false;
 
-    // Concurrency pool (batch of 3 parallel requests for smooth & fast fetching)
-    const BATCH_SIZE = 3;
+    // Concurrency pool (2 parallel requests for GAS to prevent Google rate-limits, 3 for local)
     const isCustom = Boolean(customUrl);
+    const BATCH_SIZE = isCustom ? 2 : 3;
 
     for (let i = 0; i < allStocks.length; i += BATCH_SIZE) {
+      if (cancelFetchRef.current) {
+        isCancelled = true;
+        break;
+      }
       const batch = allStocks.slice(i, i + BATCH_SIZE);
       await Promise.all(batch.map(async (st) => {
         try {
           const url = getPriceFetchUrl(st.code);
-          const res = await fetch(url, {
-            credentials: isCustom ? 'omit' : 'include',
-            cache: 'no-store',
+          const res = await safeFetch(url, {
             headers: { 'Accept': 'application/json' }
-          });
+          }, 7000);
 
           const contentType = res.headers.get('content-type') || '';
           if (!contentType.includes('application/json')) {
@@ -366,12 +374,22 @@ export default function App() {
       }));
       
       setFetchProgress({ current: Math.min(i + batch.length, allStocks.length), total: allStocks.length });
-      // Gentle sleep between small batches
-      await new Promise(r => setTimeout(r, 250));
+      if (cancelFetchRef.current) {
+        isCancelled = true;
+        break;
+      }
+      // Gentle sleep between small batches (400ms for GAS to respect quota, 250ms for local)
+      await new Promise(r => setTimeout(r, isCustom ? 400 : 250));
     }
     
     setIsFetchingAll(false);
     setTimeout(() => setFetchProgress({ current: 0, total: 0 }), 3000);
+
+    // Provide clear, helpful outcome notification
+    if (isCancelled) {
+      alert(`株価取得を停止しました。（更新完了: ${successCount}件）`);
+      return;
+    }
 
     // Provide clear, helpful outcome notification
     if (allStocks.length > 0) {
@@ -710,6 +728,7 @@ export default function App() {
           onResetData={handleResetData}
           isFetchingAll={isFetchingAll}
           fetchProgress={fetchProgress}
+          onStopFetch={handleStopFetch}
           listFontSize={listFontSize}
           marketLinks={marketLinks}
           onMarketLinksChange={setMarketLinks}
@@ -744,6 +763,7 @@ export default function App() {
           onResetData={handleResetData}
           isFetchingAll={isFetchingAll}
           fetchProgress={fetchProgress}
+          onStopFetch={handleStopFetch}
           listFontSize={listFontSize}
           marketLinks={marketLinks}
           onMarketLinksChange={setMarketLinks}

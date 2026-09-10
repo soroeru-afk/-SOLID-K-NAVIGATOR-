@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ExternalLink, X, Clock, Tag, RefreshCw, AlertCircle } from 'lucide-react';
 import { Theme } from '../App';
 import { openExternalWindow } from '../lib/windowUtils';
+import { getNewsDetailUrl, safeFetch } from '../lib/apiUtils';
 
 interface Props {
   newsId: string;
@@ -50,8 +51,8 @@ export default function NewsDigestModal({
     setLoading(true);
     setError(null);
 
-    const urlParam = encodeURIComponent(newsUrl);
-    fetch(`/api/news-detail?b=${newsId}&url=${urlParam}`)
+    const detailUrl = getNewsDetailUrl(newsId, newsUrl);
+    safeFetch(detailUrl)
       .then(res => {
         if (!res.ok) throw new Error('ニュース詳細の取得に失敗しました');
         return res.json();

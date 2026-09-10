@@ -2,15 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   LayoutGrid, Folders, Plus, Folder, FolderOpen, FolderPlus, Download, 
   FileCode, Pencil, Trash2, ArrowUp, ArrowDown, Activity, ChevronDown, 
-  ChevronRight, LineChart, ExternalLink, Settings, Compass, Newspaper, 
-  RefreshCw, Maximize2, Sparkles, AlertTriangle, X, Globe 
+  ChevronRight, LineChart, ExternalLink, Settings, Compass, 
+  RefreshCw, Maximize2, Sparkles, AlertTriangle, X, Globe, Square
 } from 'lucide-react';
 import { Category, MarketLink, Stock } from '../types';
 import { Language, i18n } from '../i18n';
 import MarketLinkEditor from './MarketLinkEditor';
 import { getChildCategories, countStocksInCategory, getFlattenedCategoryTree } from '../lib/categoryUtils';
 import { tankenCategories } from '../data/tankenData';
-import NewsDigestModal from './NewsDigestModal';
 import TankenExplorerModal from './TankenExplorerModal';
 import ProxySettingsModal from './ProxySettingsModal';
 import { openExternalWindow } from '../lib/windowUtils';
@@ -33,6 +32,7 @@ interface Props {
   onResetData?: () => void;
   isFetchingAll?: boolean;
   fetchProgress?: { current: number, total: number };
+  onStopFetch?: () => void;
   listFontSize: number;
   marketLinks: MarketLink[];
   onMarketLinksChange: (links: MarketLink[]) => void;
@@ -58,6 +58,7 @@ export default function Sidebar({
   onResetData,
   isFetchingAll,
   fetchProgress,
+  onStopFetch,
   listFontSize,
   marketLinks,
   onMarketLinksChange,
@@ -71,37 +72,12 @@ export default function Sidebar({
   const [editCatName, setEditCatName] = useState('');
   const [isMarketDataOpen, setIsMarketDataOpen] = useState(false);
   const [isMarketLinkEditorOpen, setIsMarketLinkEditorOpen] = useState(false);
-  const [marketTab, setMarketTab] = useState<'links' | 'tanken' | 'news'>('links');
+  const [marketTab, setMarketTab] = useState<'links' | 'tanken'>('links');
   const [tankenSubTab, setTankenSubTab] = useState<'fundamentals' | 'technicals'>('fundamentals');
   const [isTankenModalOpen, setIsTankenModalOpen] = useState(false);
-  const [newsItems, setNewsItems] = useState<Array<{ id: string; time: string; category: string; title: string; url: string }>>([]);
-  const [isLoadingNews, setIsLoadingNews] = useState(false);
-  const [newsError, setNewsError] = useState<string | null>(null);
-  const [selectedNewsForDigest, setSelectedNewsForDigest] = useState<{ id: string; title: string; time: string; category: string; url: string } | null>(null);
   const [collapsedCatIds, setCollapsedCatIds] = useState<Set<string>>(new Set());
   const [isRestoreConfirmOpen, setIsRestoreConfirmOpen] = useState(false);
   const [isProxyModalOpen, setIsProxyModalOpen] = useState(false);
-  
-  const fetchNews = async () => {
-    setIsLoadingNews(true);
-    setNewsError(null);
-    try {
-      const res = await fetch('/api/market-news');
-      if (!res.ok) throw new Error('ニュースの取得に失敗しました');
-      const d = await res.json();
-      setNewsItems(d.items || []);
-    } catch (err: any) {
-      setNewsError(err.message || 'ニュースを取得できませんでした');
-    } finally {
-      setIsLoadingNews(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isMarketDataOpen && marketTab === 'news' && newsItems.length === 0) {
-      fetchNews();
-    }
-  }, [isMarketDataOpen, marketTab]);
   
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const t = i18n[language];
@@ -358,17 +334,32 @@ export default function Sidebar({
               <span className="text-text-normal tabular-nums font-bold text-xs">{stocksLength}</span>
             </div>
 
-            <button 
-              onClick={onFetchAll} 
-              disabled={isFetchingAll}
-              className="mt-1.5 w-full h-7 flex items-center justify-center gap-2 border border-border-main text-[#58a6ff] hover:text-[#58a6ff] bg-base-bg hover:bg-border-main/50 transition-colors disabled:opacity-50 font-bold text-[11px]"
-            >
-              {isFetchingAll ? (
-                <><Activity size={12} className="animate-pulse" /> {t.fetching} {fetchProgress?.current}/{fetchProgress?.total}</>
-              ) : (
-                <><Activity size={12} /> {t.fetchAll}</>
-              )}
-            </button>
+            {isFetchingAll ? (
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <div className="flex-1 h-7 flex items-center justify-center gap-1.5 border border-[#58a6ff]/40 text-[#58a6ff] bg-[#58a6ff]/10 font-bold text-[11px]">
+                  <Activity size={12} className="animate-pulse shrink-0" />
+                  <span className="truncate">{t.fetching} {fetchProgress?.current}/{fetchProgress?.total}</span>
+                </div>
+                {onStopFetch && (
+                  <button
+                    type="button"
+                    onClick={onStopFetch}
+                    className="h-7 px-2.5 flex items-center justify-center gap-1 border border-[#ff7b72] text-[#ff7b72] hover:bg-[#ff7b72]/20 font-bold text-[11px] transition-colors shrink-0"
+                    title="取得処理を停止"
+                  >
+                    <Square size={11} className="fill-current" />
+                    <span>{t.stopFetch}</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button 
+                onClick={onFetchAll} 
+                className="mt-1.5 w-full h-7 flex items-center justify-center gap-2 border border-border-main text-[#58a6ff] hover:text-[#58a6ff] bg-base-bg hover:bg-border-main/50 transition-colors font-bold text-[11px]"
+              >
+                <Activity size={12} /> {t.fetchAll}
+              </button>
+            )}
           </div>
         </div>
 
@@ -460,7 +451,7 @@ export default function Sidebar({
                 <div className="flex flex-col mt-1 mb-2 border border-border-main/60 bg-base-bg/60 p-2 rounded-xs">
                   {/* Top Bar with Main Screen Open Button */}
                   <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-border-main/50 text-[10px]">
-                    <span className="text-text-dim font-bold">市場データ・ニュース</span>
+                    <span className="text-text-dim font-bold">市場データ・リンク</span>
                     <button
                       onClick={() => onSelectCategory('MARKET_DATA')}
                       className="flex items-center gap-1 text-[#58a6ff] hover:underline font-bold"
@@ -470,8 +461,8 @@ export default function Sidebar({
                     </button>
                   </div>
 
-                  {/* Tab Selector: [リンク] [株探・ニュース] [銘柄探検] */}
-                  <div className="grid grid-cols-3 gap-1 mb-2 border-b border-border-main/60 pb-1.5 text-[10px]">
+                  {/* Tab Selector: [リンク] [銘柄探検] */}
+                  <div className="grid grid-cols-2 gap-1 mb-2 border-b border-border-main/60 pb-1.5 text-[10px]">
                     <button
                       onClick={() => setMarketTab('links')}
                       className={`py-1 text-center font-bold transition-colors rounded-xs ${
@@ -481,20 +472,6 @@ export default function Sidebar({
                       }`}
                     >
                       リンク
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMarketTab('news');
-                        if (newsItems.length === 0) fetchNews();
-                      }}
-                      className={`py-1 text-center font-bold transition-colors rounded-xs flex items-center justify-center gap-1 ${
-                        marketTab === 'news'
-                          ? 'bg-border-main text-[#58a6ff] border border-border-light/50 shadow-xs'
-                          : 'text-text-dim hover:text-text-normal bg-panel-bg'
-                      }`}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#58a6ff] animate-pulse" />
-                      株探・ニュース
                     </button>
                     <button
                       onClick={() => setMarketTab('tanken')}
@@ -541,60 +518,7 @@ export default function Sidebar({
                     </div>
                   )}
 
-                  {/* Tab 2: 株探・ニュース */}
-                  {marketTab === 'news' && (
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between text-[9px] text-text-dim px-1 pb-1 border-b border-border-main/40">
-                        <span>株探 最新ニュース ({newsItems.length})</span>
-                        <button
-                          onClick={fetchNews}
-                          disabled={isLoadingNews}
-                          className="flex items-center gap-1 text-[#58a6ff] hover:underline disabled:opacity-50"
-                        >
-                          <RefreshCw size={9} className={isLoadingNews ? 'animate-spin' : ''} />
-                          <span>更新</span>
-                        </button>
-                      </div>
-
-                      {isLoadingNews && newsItems.length === 0 ? (
-                        <div className="py-6 flex flex-col items-center justify-center gap-1.5 text-text-dim text-[11px]">
-                          <RefreshCw size={14} className="animate-spin text-[#58a6ff]" />
-                          <span>ニュース取得中...</span>
-                        </div>
-                      ) : newsError && newsItems.length === 0 ? (
-                        <div className="py-3 px-2 text-[10px] text-[#ff7b72] bg-[#f85149]/10 rounded border border-[#f85149]/30">
-                          {newsError}
-                          <button onClick={fetchNews} className="block mt-1 text-[#58a6ff] underline">再試行</button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-1 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin">
-                          {newsItems.map(item => (
-                            <div
-                              key={item.id}
-                              onClick={() => setSelectedNewsForDigest(item)}
-                              className="p-1.5 bg-panel-bg hover:bg-border-main/70 border border-border-main/60 hover:border-border-light/60 rounded-xs cursor-pointer transition-colors group flex flex-col gap-0.5"
-                            >
-                              <div className="flex items-center justify-between text-[9px]">
-                                <span className={`px-1 py-0.2 rounded-xs font-bold ${
-                                  item.category.includes('材料') ? 'bg-[#1f6feb]/20 text-[#58a6ff]' :
-                                  item.category.includes('市況') ? 'bg-[#238636]/20 text-[#3fb950]' :
-                                  'bg-border-main text-text-dim'
-                                }`}>
-                                  {item.category}
-                                </span>
-                                <span className="font-mono text-text-dim/70">{item.time}</span>
-                              </div>
-                              <div className="text-text-normal group-hover:text-text-bright font-medium line-clamp-2 leading-snug" style={{ fontSize: Math.max(11, sidebarFontSize - 1) }}>
-                                {item.title}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Tab 3: 銘柄探検 */}
+                  {/* Tab 2: 銘柄探検 */}
                   {marketTab === 'tanken' && (
                     <div className="flex flex-col gap-1.5">
                       {/* Sub tab & Fullscreen button */}
@@ -782,17 +706,6 @@ export default function Sidebar({
           onSave={handleSaveMarketLinks}
           onClose={() => setIsMarketLinkEditorOpen(false)}
           language={language}
-        />
-      )}
-
-      {selectedNewsForDigest && (
-        <NewsDigestModal
-          newsId={selectedNewsForDigest.id}
-          newsTitle={selectedNewsForDigest.title}
-          newsTime={selectedNewsForDigest.time}
-          newsCategory={selectedNewsForDigest.category}
-          newsUrl={selectedNewsForDigest.url}
-          onClose={() => setSelectedNewsForDigest(null)}
         />
       )}
 
