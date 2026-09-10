@@ -211,7 +211,22 @@ export default function App() {
     if (refreshingCode) return;
     setRefreshingCode(code);
     try {
-      const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(code)}`);
+      const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(code)}`, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await res.text();
+        if (text.includes('__cookie_check') || text.includes('302 Found')) {
+          alert(`【PWAセッション確認】銘柄(${code})の株価取得に失敗しました。\nPWAのセッション認証を更新するため、PWA画面を一度再読み込み（リロード）してください。`);
+          return;
+        }
+        throw new Error(`Invalid content-type: ${contentType}`);
+      }
+
       if (res.ok) {
         const data = await res.json();
         const price = data.price;
@@ -225,10 +240,15 @@ export default function App() {
             price: price, 
             priceUpdatedAt: Date.now() 
           } : s));
+        } else {
+          alert(`銘柄(${code})の現在値が見つかりませんでした。`);
         }
+      } else {
+        alert(`銘柄(${code})の株価取得に失敗しました (ステータス: ${res.status})。`);
       }
     } catch (error) {
-      console.error(error);
+      console.error(`Error fetching single price for ${code}:`, error);
+      alert(`銘柄(${code})の通信エラーが発生しました。接続状況をご確認ください。`);
     } finally {
       setRefreshingCode(null);
     }
@@ -244,13 +264,32 @@ export default function App() {
         
     setFetchProgress({ current: 0, total: allStocks.length });
     
+    let successCount = 0;
+    let failCount = 0;
+    let authRequired = false;
+
     // Concurrency pool (batch of 3 parallel requests for smooth & fast fetching)
     const BATCH_SIZE = 3;
     for (let i = 0; i < allStocks.length; i += BATCH_SIZE) {
       const batch = allStocks.slice(i, i + BATCH_SIZE);
       await Promise.all(batch.map(async (st) => {
         try {
-          const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(st.code)}`);
+          const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(st.code)}`, {
+            credentials: 'include',
+            cache: 'no-store',
+            headers: { 'Accept': 'application/json' }
+          });
+
+          const contentType = res.headers.get('content-type') || '';
+          if (!contentType.includes('application/json')) {
+            const text = await res.text();
+            if (text.includes('__cookie_check') || text.includes('302 Found')) {
+              authRequired = true;
+            }
+            failCount++;
+            return;
+          }
+
           if (res.ok) {
             const data = await res.json();
             const price = data.price;
@@ -264,10 +303,16 @@ export default function App() {
                 price: price, 
                 priceUpdatedAt: Date.now() 
               } : s));
+              successCount++;
+            } else {
+              failCount++;
             }
+          } else {
+            failCount++;
           }
         } catch (error) {
-          console.error(error);
+          console.error(`Error fetching price for ${st.code}:`, error);
+          failCount++;
         }
       }));
       
@@ -278,6 +323,17 @@ export default function App() {
     
     setIsFetchingAll(false);
     setTimeout(() => setFetchProgress({ current: 0, total: 0 }), 3000);
+
+    // Provide clear, helpful outcome notification
+    if (allStocks.length > 0) {
+      if (authRequired || successCount === 0) {
+        alert(`【株価取得のご案内】\n株価の取得ができませんでした（成功: ${successCount}件 / 失敗: ${failCount}件）。\n\nPWA環境でのセッション確認が必要な可能性があります。PWA画面（またはブラウザ）を一度再読み込み（リロード）して再試行してください。`);
+      } else if (failCount > 0) {
+        alert(`株価の更新が完了しました。\n成功: ${successCount}件 / 取得不可: ${failCount}件`);
+      } else {
+        alert(`全${successCount}件の最新株価を正常に取得・更新しました。`);
+      }
+    }
   };
 
   useEffect(() => {
