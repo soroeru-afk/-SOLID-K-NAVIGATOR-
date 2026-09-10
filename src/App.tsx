@@ -1,18 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import AddStockForm from './components/AddStockForm';
 import StockList from './components/StockList';
 import Header from './components/Header';
 import CompactView from './components/CompactView';
+import MarketDataView from './components/MarketDataView';
 import { Category, Stock, MarketLink } from './types';
 import { Language, i18n } from './i18n';
 import { initialGroups } from './data';
 import { initialData } from './importData';
-
-// GitHub Pages上で動作する場合はローカルサーバーのAPIを使用
-let API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? ''
-  : 'http://localhost:3000';
+import { getAllDescendantCategoryIds } from './lib/categoryUtils';
 
 export type Theme = 'light' | 'dark' | 'black';
 export type FontType = 'mono' | 'gothic' | 'meiryo' | 'maru';
@@ -21,36 +18,6 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem('knav_theme') as Theme) || 'black'
   );
-
-  useEffect(() => {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return;
-    }
-
-    const probeLocalServer = async () => {
-      const ports = Array.from({ length: 16 }, (_, i) => 3000 + i);
-      for (const port of ports) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 120);
-          const res = await fetch(`http://localhost:${port}/api/ping`, { signal: controller.signal });
-          clearTimeout(timeoutId);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.pong) {
-              API_BASE = `http://localhost:${port}`;
-              console.log(`Successfully connected to local proxy on http://localhost:${port}`);
-              break;
-            }
-          }
-        } catch (e) {
-          // ignore error and try next port
-        }
-      }
-    };
-
-    probeLocalServer();
-  }, []);
 
   const [fontType, setFontType] = useState<FontType>(
     () => (localStorage.getItem('knav_font_type') as FontType) || 'gothic'
@@ -72,8 +39,12 @@ export default function App() {
     () => (localStorage.getItem('knav_sidebar_pos') as any) || 'left'
   );
 
-  const [fontSize, setFontSize] = useState<number>(
-    () => parseInt(localStorage.getItem('knav_font_size') || '16')
+  const [listFontSize, setListFontSize] = useState<number>(
+    () => parseInt(localStorage.getItem('knav_list_font_size') || localStorage.getItem('knav_font_size') || '13')
+  );
+
+  const [stockFontSize, setStockFontSize] = useState<number>(
+    () => parseInt(localStorage.getItem('knav_stock_font_size') || '16')
   );
 
   const [priceFontSize, setPriceFontSize] = useState<number>(
@@ -92,8 +63,12 @@ export default function App() {
   }, [sidebarPos]);
 
   useEffect(() => {
-    localStorage.setItem('knav_font_size', fontSize.toString());
-  }, [fontSize]);
+    localStorage.setItem('knav_list_font_size', listFontSize.toString());
+  }, [listFontSize]);
+
+  useEffect(() => {
+    localStorage.setItem('knav_stock_font_size', stockFontSize.toString());
+  }, [stockFontSize]);
 
   useEffect(() => {
     localStorage.setItem('knav_price_font_size', priceFontSize.toString());
@@ -164,6 +139,7 @@ export default function App() {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [isFetchingAll, setIsFetchingAll] = useState(false);
   const [fetchProgress, setFetchProgress] = useState({ current: 0, total: 0 });
+  const [refreshingCode, setRefreshingCode] = useState<string | null>(null);
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(370);
 
@@ -219,6 +195,33 @@ export default function App() {
     };
   }, [isDraggingSidebar, sidebarPos]);
 
+  const fetchSinglePrice = async (code: string) => {
+    if (refreshingCode) return;
+    setRefreshingCode(code);
+    try {
+      const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(code)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const price = data.price;
+        if (price && price !== '?') {
+          localStorage.setItem('KNAV_SX_CLOSE_' + code, JSON.stringify({
+            price: price,
+            date: new Date().toLocaleDateString('ja-JP')
+          }));
+          setStocks(prev => prev.map(s => s.code === code ? { 
+            ...s, 
+            price: price, 
+            priceUpdatedAt: Date.now() 
+          } : s));
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRefreshingCode(null);
+    }
+  };
+
   const fetchAllPrices = async (categoryId?: string) => {
     if (isFetchingAll) return;
     setIsFetchingAll(true);
@@ -229,50 +232,36 @@ export default function App() {
         
     setFetchProgress({ current: 0, total: allStocks.length });
     
-    let serverWarned = false;
-    
-    for (let i = 0; i < allStocks.length; i++) {
-        const st = allStocks[i];
+    // Concurrency pool (batch of 3 parallel requests for smooth & fast fetching)
+    const BATCH_SIZE = 3;
+    for (let i = 0; i < allStocks.length; i += BATCH_SIZE) {
+      const batch = allStocks.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(async (st) => {
         try {
-            const res = await fetch(`${API_BASE}/api/fetch-price?code=${encodeURIComponent(st.code)}`);
-            if (res.ok) {
-                const data = await res.json();
-                const price = data.price;
-                if (price && price !== '?') {
-                    // Update Local Storage for Tampermonkey compatibility
-                    localStorage.setItem('KNAV_SX_CLOSE_' + st.code, JSON.stringify({
-                        price: price,
-                        date: new Date().toLocaleDateString('ja-JP')
-                    }));
-                }
-                setStocks(prev => prev.map(s => s.id === st.id ? { 
-                    ...s, 
-                    price: price, 
-                    priceUpdatedAt: Date.now() 
-                } : s));
-            } else {
-                if (!serverWarned) {
-                    serverWarned = true;
-                    alert(
-                        language === 'EN' 
-                        ? "【CONNECTION ERROR】\nLocal server is not running.\nPlease use the \"CHOOSE & RUN BATCH\" button in the sidebar to start the server."
-                        : "【接続エラー】\nローカルサーバーが起動していないため、株価の取得ができません。\nサイドバーの「バッチ選択・起動を開く」ボタンからサーバーを起動してください。"
-                    );
-                }
+          const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(st.code)}`);
+          if (res.ok) {
+            const data = await res.json();
+            const price = data.price;
+            if (price && price !== '?') {
+              localStorage.setItem('KNAV_SX_CLOSE_' + st.code, JSON.stringify({
+                price: price,
+                date: new Date().toLocaleDateString('ja-JP')
+              }));
+              setStocks(prev => prev.map(s => s.id === st.id ? { 
+                ...s, 
+                price: price, 
+                priceUpdatedAt: Date.now() 
+              } : s));
             }
+          }
         } catch (error) {
-            console.error(error);
-            if (!serverWarned) {
-                serverWarned = true;
-                alert(
-                    language === 'EN' 
-                    ? "【CONNECTION ERROR】\nLocal server is not running.\nPlease use the \"CHOOSE & RUN BATCH\" button in the sidebar to start the server."
-                    : "【接続エラー】\nローカルサーバーが起動していないため、株価の取得ができません。\nサイドバーの「バッチ選択・起動を開く」ボタンからサーバーを起動してください。"
-                );
-            }
+          console.error(error);
         }
-        setFetchProgress((prev) => ({ ...prev, current: i + 1 }));
-        await new Promise(r => setTimeout(r, 800)); // sleep to prevent server overload
+      }));
+      
+      setFetchProgress({ current: Math.min(i + batch.length, allStocks.length), total: allStocks.length });
+      // Shorter, gentle sleep between small batches
+      await new Promise(r => setTimeout(r, 250));
     }
     
     setIsFetchingAll(false);
@@ -300,9 +289,13 @@ export default function App() {
     localStorage.setItem('knav_stocks_v2', JSON.stringify(stocks));
   }, [stocks]);
 
-  const addCategory = (name: string) => {
-    const newCategory = { id: Date.now().toString(), name };
-    setCategories([...categories, newCategory]);
+  const addCategory = (name: string, parentId?: string | null) => {
+    const newCategory: Category = { 
+      id: Date.now().toString(), 
+      name, 
+      parentId: parentId || null 
+    };
+    setCategories(prev => [...prev, newCategory]);
   };
 
   const updateCategory = (id: string, name: string) => {
@@ -310,7 +303,10 @@ export default function App() {
   };
 
   const deleteCategory = (id: string) => {
-    setCategories(categories.filter(c => c.id !== id));
+    setCategories(prev => prev
+      .filter(c => c.id !== id)
+      .map(c => c.parentId === id ? { ...c, parentId: null } : c)
+    );
     setStocks(stocks.map(st => st.categoryId === id ? { ...st, categoryId: '' } : st));
     if (activeCategoryId === id) {
       setActiveCategoryId(null);
@@ -415,7 +411,7 @@ export default function App() {
     const groups = categories.map(c => ({
       id: c.id,
       name: c.name,
-      stocks: stocks.filter(st => st.categoryId === c.id).map(st => ({ code: st.code, name: st.name })),
+      stocks: stocks.filter(st => st.categoryId === c.id).map(st => ({ code: st.code, name: st.name, description: st.description })),
       collapsed: false
     }));
 
@@ -473,6 +469,7 @@ export default function App() {
                 name: s.name,
                 categoryId: g.id,
                 price: priceStr,
+                description: s.description || s.memo || undefined,
                 createdAt: Date.now() + index
               });
             });
@@ -485,6 +482,18 @@ export default function App() {
       }
     } catch (e) {
       console.error("Failed to parse JSON");
+    }
+  };
+
+  const handleLoadEnrichedPreset = async () => {
+    try {
+      const res = await fetch('/k-navigator-enriched.json');
+      if (!res.ok) throw new Error('Failed to load enriched data');
+      const text = await res.text();
+      handleImportJson(text);
+    } catch (e) {
+      console.error(e);
+      alert('228銘柄概要付きデータの読み込みに失敗しました');
     }
   };
 
@@ -507,11 +516,12 @@ export default function App() {
     }
   };
 
-  const filteredStocks = activeCategoryId === 'UNASSIGNED'
-    ? stocks.filter(st => !st.categoryId)
-    : activeCategoryId 
-      ? stocks.filter(st => st.categoryId === activeCategoryId)
-      : stocks;
+  const filteredStocks = useMemo(() => {
+    if (!activeCategoryId || activeCategoryId === 'MARKET_DATA' || activeCategoryId === 'MARKET_LINKS') return stocks;
+    if (activeCategoryId === 'UNASSIGNED') return stocks.filter(st => !st.categoryId);
+    const targetIds = new Set([activeCategoryId, ...getAllDescendantCategoryIds(activeCategoryId, categories)]);
+    return stocks.filter(st => st.categoryId && targetIds.has(st.categoryId));
+  }, [stocks, activeCategoryId, categories]);
 
   if (isCompactMode) {
     return (
@@ -524,19 +534,11 @@ export default function App() {
           activeCategory={activeCategoryId}
           onSelectCategory={setActiveCategoryId}
           language={language}
-          onToggleMode={() => {
-            setIsCompactMode(false);
-            if (activeCategoryId === 'MARKET_LINKS') {
-              setActiveCategoryId(null);
-            }
-            const w = parseInt(localStorage.getItem('knav_original_width') || '1200');
-            const h = parseInt(localStorage.getItem('knav_original_height') || '800');
-            window.resizeTo(w, h);
-          }}
+          onToggleMode={() => setIsCompactMode(false)}
           priceFontSize={priceFontSize}
           priceColor={priceColor}
           theme={theme}
-          fontSize={fontSize}
+          fontSize={listFontSize}
         />
       </div>
     );
@@ -548,6 +550,7 @@ export default function App() {
         <Sidebar 
           categories={categories} 
           stocksLength={stocks.length}
+          stocks={stocks}
           onAddCategory={addCategory} 
           onUpdateCategory={updateCategory}
           onDeleteCategory={deleteCategory}
@@ -562,9 +565,10 @@ export default function App() {
           onResetData={handleResetData}
           isFetchingAll={isFetchingAll}
           fetchProgress={fetchProgress}
-          fontSize={fontSize}
+          listFontSize={listFontSize}
           marketLinks={marketLinks}
           onMarketLinksChange={setMarketLinks}
+          onLoadEnrichedData={handleLoadEnrichedPreset}
         />
         <div 
            className={`absolute top-0 ${sidebarPos === 'right' ? 'left-0 -ml-1' : 'right-0'} w-2 h-full cursor-col-resize hover:bg-border-light/30 active:bg-border-light/50 transition-colors z-20`}
@@ -579,6 +583,7 @@ export default function App() {
         <Sidebar 
           categories={categories} 
           stocksLength={stocks.length}
+          stocks={stocks}
           onAddCategory={addCategory} 
           onUpdateCategory={updateCategory}
           onDeleteCategory={deleteCategory}
@@ -593,13 +598,14 @@ export default function App() {
           onResetData={handleResetData}
           isFetchingAll={isFetchingAll}
           fetchProgress={fetchProgress}
-          fontSize={fontSize}
+          listFontSize={listFontSize}
           marketLinks={marketLinks}
           onMarketLinksChange={setMarketLinks}
+          onLoadEnrichedData={handleLoadEnrichedPreset}
         />
       </div>
 
-      <main className="flex-1 p-4 md:p-6 flex flex-col gap-6 max-h-screen overflow-hidden">
+      <main className="flex-1 p-3 md:p-4 flex flex-col gap-3 md:gap-4 max-h-screen overflow-hidden">
         <Header 
           theme={theme} 
           onThemeChange={setTheme}
@@ -609,34 +615,49 @@ export default function App() {
           onLanguageChange={setLanguage} 
           sidebarPos={sidebarPos}
           onSidebarPosChange={setSidebarPos}
-          fontSize={fontSize}
-          onFontSizeChange={setFontSize}
+          listFontSize={listFontSize}
+          onListFontSizeChange={setListFontSize}
+          stockFontSize={stockFontSize}
+          onStockFontSizeChange={setStockFontSize}
           priceFontSize={priceFontSize}
           onPriceFontSizeChange={setPriceFontSize}
           priceColor={priceColor}
           onPriceColorChange={setPriceColor}
-          onToggleCompactMode={() => {
-            setIsCompactMode(true);
-            setActiveCategoryId('MARKET_LINKS');
-            localStorage.setItem('knav_original_width', String(window.outerWidth));
-            localStorage.setItem('knav_original_height', String(window.outerHeight));
-            window.resizeTo(400, window.outerHeight);
-          }}
+          onToggleCompactMode={() => setIsCompactMode(true)}
         />
-        <AddStockForm categories={categories} onAdd={addStocks} language={language} />
-        <StockList 
-          stocks={filteredStocks} 
-          categories={categories} 
-          onDelete={deleteStocks} 
-          onUpdate={updateStock}
-          onMoveStock={moveStock}
-          onMoveStocksToCategory={moveStocksToCategory}
-          language={language} 
-          fontSize={fontSize}
-          priceFontSize={priceFontSize}
-          priceColor={priceColor}
-          theme={theme}
-        />
+        {activeCategoryId === 'MARKET_DATA' ? (
+          <MarketDataView
+            links={marketLinks}
+            onUpdateLinks={setMarketLinks}
+            onBackToStocks={() => setActiveCategoryId(null)}
+            language={language}
+            theme={theme}
+            fontSize={listFontSize}
+          />
+        ) : (
+          <>
+            <AddStockForm categories={categories} onAdd={addStocks} language={language} />
+            <StockList 
+              stocks={filteredStocks} 
+              categories={categories} 
+              activeCategory={activeCategoryId}
+              onSelectCategory={setActiveCategoryId}
+              onDelete={deleteStocks} 
+              onUpdate={updateStock}
+              onMoveStock={moveStock}
+              onMoveStocksToCategory={moveStocksToCategory}
+              onAddCategory={addCategory}
+              onRefreshPrice={fetchSinglePrice}
+              refreshingCode={refreshingCode}
+              language={language} 
+              listFontSize={listFontSize}
+              stockFontSize={stockFontSize}
+              priceFontSize={priceFontSize}
+              priceColor={priceColor}
+              theme={theme}
+            />
+          </>
+        )}
       </main>
     </div>
   );

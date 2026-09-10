@@ -2,21 +2,10 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import * as cheerio from "cheerio";
-import { exec } from "child_process";
-import cors from "cors";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
-
-  app.use(cors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'https://soroeru-afk.github.io',
-    ],
-    credentials: false
-  }));
 
   app.use(express.json());
 
@@ -44,10 +33,8 @@ async function startServer() {
       let closePrice = null;
       const kobLeft = $('#kobetsu_left');
       if (kobLeft.length > 0) {
-          const tables = kobLeft.find('table').filter((_, el) => {
-              return $(el).closest('.stock_pts_div').length === 0;
-          });
-          tables.find('tr').each((_, tr) => {
+          const ft = kobLeft.find('table').length > 0 ? kobLeft.find('table') : kobLeft;
+          ft.find('tr').each((_, tr) => {
               const th = $(tr).find('th');
               const td = $(tr).find('td');
               if (th.length > 0 && td.length > 0) {
@@ -160,8 +147,93 @@ async function startServer() {
     }
   });
 
-  app.get("/api/ping", (req, res) => {
-    res.json({ pong: true });
+  app.get("/api/market-news", async (req, res) => {
+    try {
+      const response = await fetch("https://kabutan.jp/news/marketnews/", {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+
+      if (!response.ok) {
+        return res.status(response.status).json({ error: "Failed to fetch news from Kabutan" });
+      }
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+      const items: Array<{ id: string; time: string; category: string; title: string; url: string }> = [];
+
+      $("table tr").each((_, tr) => {
+        const timeEl = $(tr).find(".news_time time");
+        const ctgEl = $(tr).find(".newslist_ctg");
+        const aEl = $(tr).find("td a");
+        if (timeEl.length && aEl.length) {
+          const rawHref = aEl.attr("href") || "";
+          const url = rawHref.startsWith("http") ? rawHref : `https://kabutan.jp${rawHref.startsWith("/") ? "" : "/"}${rawHref}`;
+          const m = rawHref.match(/[?&]b=([a-zA-Z0-9]+)/);
+          const newsId = m ? m[1] : `news_${items.length}`;
+          const title = aEl.text().trim();
+          if (title) {
+            items.push({
+              id: newsId,
+              time: timeEl.text().replace(/\s+/g, " ").trim(),
+              category: ctgEl.text().trim() || "市況",
+              title,
+              url
+            });
+          }
+        }
+      });
+
+      res.json({ items });
+    } catch (error) {
+      console.error('Error fetching market news:', error);
+      res.status(500).json({ error: "Failed to fetch market news" });
+    }
+  });
+
+  app.get("/api/news-detail", async (req, res) => {
+    try {
+      const b = req.query.b as string;
+      const rawUrl = req.query.url as string;
+      const targetUrl = b ? `https://kabutan.jp/news/marketnews/?b=${b}` : rawUrl;
+
+      if (!targetUrl) {
+        return res.status(400).json({ error: "News ID or URL is required" });
+      }
+
+      const response = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+
+      if (!response.ok) {
+        return res.status(response.status).json({ error: "Failed to fetch news article" });
+      }
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      const title = $("h1, .news_title, #news_title").first().text().trim();
+      const time = $("time").first().text().trim();
+      const category = $(".newslist_ctg, .news_category").first().text().trim() || "ニュース";
+      
+      const bodyEl = $("div.body").first();
+      bodyEl.find("script, style, .kanren_news, .ad").remove();
+      const bodyText = bodyEl.text().trim();
+
+      res.json({
+        title,
+        time,
+        category,
+        body: bodyText,
+        url: targetUrl
+      });
+    } catch (error) {
+      console.error('Error fetching news detail:', error);
+      res.status(500).json({ error: "Failed to fetch news detail" });
+    }
   });
 
   if (process.env.NODE_ENV !== "production") {
@@ -178,23 +250,9 @@ async function startServer() {
     });
   }
 
-  function startListen(port: number) {
-    const server = app.listen(port, "0.0.0.0", () => {
-      console.log(`Server running on http://localhost:${port}`);
-      exec(`start http://localhost:${port}/-SOLID-K-NAVIGATOR-/`);
-    });
-
-    server.on("error", (err: any) => {
-      if (err.code === "EADDRINUSE") {
-        console.log(`Port ${port} is in use, trying port ${port + 1}...`);
-        startListen(port + 1);
-      } else {
-        console.error("Server error:", err);
-      }
-    });
-  }
-
-  startListen(PORT);
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
 }
 
 startServer();

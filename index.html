@@ -3,28 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0E1014" />
-    <meta name="description" content="SOLID K-NAVIGATOR - 株式ポートフォリオ管理ツール" />
-    <link rel="manifest" href="/manifest.json?v=4" />
-    <link rel="apple-touch-icon" href="/pwa-icon-192.png?v=4" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=4" />
-    <title>SOLID K-NAVIGATOR</title>
+    <title>■ SOLID K-NAVIGATOR +</title>
+    <meta name="description" content="リアルタイム株価自動取得、カテゴリー分類・階層管理、カード/リスト表示切替、株探各種指標・ニュース・適時開示連携、音声読み上げ(TTS)を備えた高機能株式ポートフォリオマネージャー" />
+    <meta property="og:title" content="■ SOLID K-NAVIGATOR +" />
+    <meta property="og:description" content="リアルタイム株価自動取得、カテゴリー分類・階層管理、カード/リスト表示切替、株探各種指標・ニュース・適時開示連携、音声読み上げ(TTS)を備えた高機能株式ポートフォリオマネージャー" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        const swPath = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-          ? '/sw.js'
-          : '/-SOLID-K-NAVIGATOR-/sw.js';
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register(swPath)
-            .then(reg => console.log('SW registered:', reg.scope))
-            .catch(err => console.warn('SW registration failed:', err));
-        });
-      }
-    </script>
   </body>
 </html>
 

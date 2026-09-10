@@ -1,6 +1,6 @@
 {
   "name": "■ SOLID K-NAVIGATOR +",
-  "description": "",
+  "description": "リアルタイム株価自動取得、カテゴリー分類・階層管理、カード/リスト表示切替、株探各種指標・ニュース・適時開示連携、音声読み上げ(TTS)を備えた高機能株式ポートフォリオマネージャー",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

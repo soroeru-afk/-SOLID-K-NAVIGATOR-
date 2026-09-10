@@ -51,15 +51,15 @@
 }
 
 [data-theme="black"] {
-  --theme-base-bg: #050505;
-  --theme-panel-bg: #0a0a0a;
-  --theme-border-main: #262626;
-  --theme-border-light: #404040;
-  --theme-text-dim: #737373;
-  --theme-text-normal: #d4d4d4;
-  --theme-text-bright: #ffffff;
-  --theme-accent-bg: #262626;
-  --theme-accent-text: #ffffff;
+  --theme-base-bg: #0a0d12;
+  --theme-panel-bg: #10141b;
+  --theme-border-main: #1f2530;
+  --theme-border-light: #2e3646;
+  --theme-text-dim: #768394;
+  --theme-text-normal: #c5d1de;
+  --theme-text-bright: #f0f6fc;
+  --theme-accent-bg: #1e2634;
+  --theme-accent-text: #58a6ff;
 }
 
 body {

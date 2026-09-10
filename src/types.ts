@@ -1,12 +1,25 @@
 export interface Category {
   id: string;
   name: string;
+  parentId?: string | null;
 }
 
 export interface MarketLink {
   id: string;
   title: string;
   url: string;
+}
+
+export interface StockMemo {
+  text: string;
+  targetPrice?: string;
+  savedAt?: string;
+}
+
+export interface StockBwp {
+  price: string;
+  comment?: string;
+  setAt?: string;
 }
 
 export interface Stock {
@@ -17,4 +30,6 @@ export interface Stock {
   createdAt: number;
   price?: string;
   priceUpdatedAt?: number;
+  description?: string;
 }
+

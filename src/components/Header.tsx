@@ -11,8 +11,10 @@ interface Props {
   onLanguageChange: (lang: Language) => void;
   sidebarPos: 'left' | 'right';
   onSidebarPosChange: (pos: 'left' | 'right') => void;
-  fontSize: number;
-  onFontSizeChange: (size: number) => void;
+  listFontSize: number;
+  onListFontSizeChange: (size: number) => void;
+  stockFontSize: number;
+  onStockFontSizeChange: (size: number) => void;
   priceFontSize: number;
   onPriceFontSizeChange: (size: number) => void;
   priceColor: string;
@@ -20,50 +22,88 @@ interface Props {
   onToggleCompactMode: () => void;
 }
 
-export default function Header({ theme, onThemeChange, fontType, onFontTypeChange, language, onLanguageChange, sidebarPos, onSidebarPosChange, fontSize, onFontSizeChange, priceFontSize, onPriceFontSizeChange, priceColor, onPriceColorChange, onToggleCompactMode }: Props) {
+export default function Header({ 
+  theme, 
+  onThemeChange, 
+  fontType, 
+  onFontTypeChange, 
+  language, 
+  onLanguageChange, 
+  sidebarPos, 
+  onSidebarPosChange, 
+  listFontSize, 
+  onListFontSizeChange, 
+  stockFontSize,
+  onStockFontSizeChange,
+  priceFontSize, 
+  onPriceFontSizeChange, 
+  priceColor, 
+  onPriceColorChange, 
+  onToggleCompactMode 
+}: Props) {
   const t = i18n[language];
 
   return (
-    <header className="flex justify-between items-center w-full shrink-0 border border-border-main bg-panel-bg p-4 relative flex-wrap gap-4">
+    <header className="flex justify-between items-center w-full shrink-0 border border-border-main bg-panel-bg px-3 py-2.5 md:p-3 relative flex-wrap gap-2 md:gap-4">
         <div className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold tracking-widest hidden md:block">
             {t.systemControl}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
             <span className="text-[10px] text-text-dim hidden md:inline">{t.canvasEnv}</span>
         </div>
-        <div className="flex items-center gap-6 text-[10px] ml-auto">
-            <div className="flex items-center gap-2">
-                <span className="text-text-dim mr-2 hidden md:inline">SIZE:</span>
+        <div className="flex items-center gap-4 md:gap-6 text-[10px] ml-auto flex-wrap">
+            {/* TEXT & LIST SIZE Slider */}
+            <div className="flex items-center gap-1.5">
+                <span className="text-text-dim hidden md:inline font-mono">TEXT SIZE:</span>
                 <input 
                   type="range" 
-                  min="10" 
-                  max="20" 
+                  min="11" 
+                  max="22" 
                   step="1"
-                  value={fontSize} 
-                  onChange={(e) => onFontSizeChange(Number(e.target.value))}
-                  className="w-16"
+                  value={listFontSize} 
+                  onChange={(e) => onListFontSizeChange(Number(e.target.value))}
+                  className="w-14 md:w-16 accent-border-light cursor-pointer"
+                  title={`Text / Folder / Info Size: ${listFontSize}px`}
                 />
-                <span className="text-text-dim w-4 text-right">{fontSize}</span>
+                <span className="text-text-dim w-7 text-right font-mono">{listFontSize}PX</span>
             </div>
 
-            <div className="flex items-center gap-2">
-                <span className="text-text-dim mr-2 hidden md:inline">PRICE:</span>
+            {/* STOCK SIZE Slider */}
+            <div className="flex items-center gap-1.5">
+                <span className="text-text-bright font-bold hidden md:inline font-mono">STOCK SIZE:</span>
+                <input 
+                  type="range" 
+                  min="12" 
+                  max="26" 
+                  step="1"
+                  value={stockFontSize} 
+                  onChange={(e) => onStockFontSizeChange(Number(e.target.value))}
+                  className="w-14 md:w-16 accent-border-light cursor-pointer"
+                  title={`Stock Name Size: ${stockFontSize}px`}
+                />
+                <span className="text-text-bright font-bold w-7 text-right font-mono">{stockFontSize}PX</span>
+            </div>
+
+            {/* PRICE Color and Size */}
+            <div className="flex items-center gap-1.5">
+                <span className="text-text-dim hidden md:inline font-mono">PRICE:</span>
                 <button
                     onClick={() => onPriceColorChange(priceColor === 'red' ? 'default' : 'red')}
-                    className="w-[120px] px-3 py-1 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors mr-1 text-center"
+                    className="px-2 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors text-center text-[9px] font-mono"
                 >
                     COLOR: {priceColor === 'red' ? 'RED' : 'THEME'}
                 </button>
                 <input 
                   type="range" 
                   min="10" 
-                  max="24" 
+                  max="26" 
                   step="1"
                   value={priceFontSize} 
                   onChange={(e) => onPriceFontSizeChange(Number(e.target.value))}
-                  className="w-16"
+                  className="w-14 md:w-16 accent-border-light cursor-pointer"
+                  title={`Price Font Size: ${priceFontSize}px`}
                 />
-                <span className="text-text-dim w-4 text-right">{priceFontSize}</span>
+                <span className="text-text-dim w-7 text-right font-mono">{priceFontSize}PX</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -86,7 +126,7 @@ export default function Header({ theme, onThemeChange, fontType, onFontTypeChang
                       const next = theme === 'black' ? 'dark' : theme === 'dark' ? 'light' : 'black';
                       onThemeChange(next);
                     }}
-                    className="w-[180px] px-3 py-1 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors flex items-center justify-center gap-2 uppercase font-bold"
+                    className="w-[180px] px-3 py-1 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors flex items-center justify-center gap-2 uppercase"
                 >
                     <Palette size={14} className="text-text-dim shrink-0" />
                     <span className="truncate">THEME: {theme === 'black' ? ((t as any).blackTheme || 'ONYX BLACK') : theme === 'dark' ? t.navyDark : t.paperLight}</span>
