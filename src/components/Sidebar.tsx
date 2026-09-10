@@ -36,6 +36,7 @@ interface Props {
   marketLinks: MarketLink[];
   onMarketLinksChange: (links: MarketLink[]) => void;
   onLoadEnrichedData?: () => void;
+  onDownloadEnrichedData?: () => void;
 }
 
 export default function Sidebar({
@@ -59,7 +60,8 @@ export default function Sidebar({
   listFontSize,
   marketLinks,
   onMarketLinksChange,
-  onLoadEnrichedData
+  onLoadEnrichedData,
+  onDownloadEnrichedData
 }: Props) {
   const [newCatName, setNewCatName] = useState('');
   const [newCatParentId, setNewCatParentId] = useState<string | null>(null);
@@ -369,8 +371,8 @@ export default function Sidebar({
         </div>
 
         {/* Directory Explorer Sets */}
-        <div className="border border-border-main bg-panel-bg p-3 relative flex flex-col flex-1 min-h-0 overflow-hidden">
-          <div className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold">
+        <div className="border border-border-main bg-panel-bg p-3 pt-3.5 relative flex flex-col flex-1 min-h-0">
+          <div className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold z-10 select-none">
             {t.directorySets}
           </div>
           
@@ -730,15 +732,15 @@ export default function Sidebar({
               <FileCode size={11} className="shrink-0 text-[#3fb950]" /> {t.importJson}
             </button>
 
-            <a 
-              href="/k-navigator-enriched.json" 
-              download="k-navigator-enriched.json"
-              className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs mt-1"
+            <button 
+              type="button"
+              onClick={onDownloadEnrichedData} 
+              className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs mt-1 cursor-pointer"
               title="228銘柄の概要付きJSONファイルを保存"
             >
               <Download size={11} className="shrink-0 text-[#f59e0b]" />
               <span>概要付JSONをダウンロード</span>
-            </a>
+            </button>
 
             {onLoadEnrichedData && (
               <button 

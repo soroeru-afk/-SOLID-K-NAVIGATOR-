@@ -9,6 +9,7 @@ import { Category, Stock, MarketLink } from './types';
 import { Language, i18n } from './i18n';
 import { initialGroups } from './data';
 import { initialData } from './importData';
+import { enrichedPreset } from './data/enrichedPreset';
 import { getAllDescendantCategoryIds } from './lib/categoryUtils';
 
 export type Theme = 'light' | 'dark' | 'black';
@@ -137,6 +138,17 @@ export default function App() {
   });
   
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+
+  // Safeguard: if activeCategoryId is set but no longer exists in categories, fallback to null (ALL DATA)
+  useEffect(() => {
+    if (activeCategoryId && activeCategoryId !== 'MARKET_DATA' && activeCategoryId !== 'MARKET_LINKS' && activeCategoryId !== 'UNASSIGNED') {
+      const exists = categories.some(c => c.id === activeCategoryId);
+      if (!exists) {
+        setActiveCategoryId(null);
+      }
+    }
+  }, [categories, activeCategoryId]);
+
   const [isFetchingAll, setIsFetchingAll] = useState(false);
   const [fetchProgress, setFetchProgress] = useState({ current: 0, total: 0 });
   const [refreshingCode, setRefreshingCode] = useState<string | null>(null);
@@ -437,6 +449,18 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+  const handleDownloadEnrichedJson = () => {
+    const blob = new Blob([JSON.stringify(enrichedPreset, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'k-navigator-enriched.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleImportJson = (content: string) => {
     try {
       const data = JSON.parse(content);
@@ -449,51 +473,62 @@ export default function App() {
       if (data.manualBwp) Object.keys(data.manualBwp).forEach(c => localStorage.setItem('KNAV_SX_BWP_' + c, JSON.stringify(data.manualBwp[c])));
       if (data.marketLinks) setMarketLinks(data.marketLinks);
 
-      if (data.categories && data.stocks && !Array.isArray(data.groups)) {
-        setCategories(data.categories);
-        setStocks(data.stocks);
+      let loadedCategories: Category[] = [];
+      let loadedStocks: Stock[] = [];
+
+      if (Array.isArray(data.categories) && Array.isArray(data.stocks) && data.categories.length > 0) {
+        loadedCategories = data.categories;
+        loadedStocks = data.stocks.map((s: any) => ({
+          ...s,
+          description: s.description || s.memo || undefined,
+          price: s.price || (data.closeCache && data.closeCache[s.code] ? data.closeCache[s.code]?.price : undefined)
+        }));
       } else if (data.groups && Array.isArray(data.groups)) {
-        const newCategories: Category[] = [];
-        const newStocks: Stock[] = [];
         data.groups.forEach((g: any) => {
-          newCategories.push({ id: g.id, name: g.name });
+          loadedCategories.push({ id: g.id, name: g.name, parentId: g.parentId || undefined });
           if (Array.isArray(g.stocks)) {
             g.stocks.forEach((s: any, index: number) => {
               let priceStr = undefined;
               if (data.closeCache && data.closeCache[s.code]) {
-                  priceStr = data.closeCache[s.code]?.price;
+                priceStr = data.closeCache[s.code]?.price;
               }
-              newStocks.push({
-                id: `${g.id}_${s.code}`,
+              loadedStocks.push({
+                id: s.id || `${g.id}_${s.code}`,
                 code: s.code,
                 name: s.name,
                 categoryId: g.id,
-                price: priceStr,
+                price: s.price || priceStr,
                 description: s.description || s.memo || undefined,
-                createdAt: Date.now() + index
+                createdAt: s.createdAt || (Date.now() + index)
               });
             });
           }
         });
-        setCategories(newCategories);
-        setStocks(newStocks);
+      }
+
+      if (loadedCategories.length > 0 || loadedStocks.length > 0) {
+        setCategories(loadedCategories);
+        setStocks(loadedStocks);
+        setActiveCategoryId(null);
+        alert(`${loadedCategories.length}個のフォルダー、${loadedStocks.length}件の銘柄データを正常に読み込みました。`);
       } else {
-        console.error("Unsupported JSON format");
+        alert('読み込み可能な銘柄データが見つかりませんでした。JSONの形式をご確認ください。');
       }
     } catch (e) {
-      console.error("Failed to parse JSON");
+      console.error("Failed to parse JSON", e);
+      alert('JSONファイルの解析に失敗しました。ファイルが破損していないか確認してください。');
     }
   };
 
-  const handleLoadEnrichedPreset = async () => {
+  const handleLoadEnrichedPreset = () => {
     try {
-      const res = await fetch('/k-navigator-enriched.json');
-      if (!res.ok) throw new Error('Failed to load enriched data');
-      const text = await res.text();
-      handleImportJson(text);
+      setCategories(enrichedPreset.categories);
+      setStocks(enrichedPreset.stocks);
+      setActiveCategoryId(null);
+      alert(`初期プリセット（228銘柄・概要付き、${enrichedPreset.categories.length}フォルダー）を正常に復元しました。`);
     } catch (e) {
-      console.error(e);
-      alert('228銘柄概要付きデータの読み込みに失敗しました');
+      console.error("Failed to restore preset", e);
+      alert('228銘柄概要付きデータの復元に失敗しました');
     }
   };
 
@@ -513,6 +548,7 @@ export default function App() {
         });
       });
       setStocks(initialStocks);
+      setActiveCategoryId(null);
     }
   };
 
@@ -569,6 +605,7 @@ export default function App() {
           marketLinks={marketLinks}
           onMarketLinksChange={setMarketLinks}
           onLoadEnrichedData={handleLoadEnrichedPreset}
+          onDownloadEnrichedData={handleDownloadEnrichedJson}
         />
         <div 
            className={`absolute top-0 ${sidebarPos === 'right' ? 'left-0 -ml-1' : 'right-0'} w-2 h-full cursor-col-resize hover:bg-border-light/30 active:bg-border-light/50 transition-colors z-20`}
@@ -602,6 +639,7 @@ export default function App() {
           marketLinks={marketLinks}
           onMarketLinksChange={setMarketLinks}
           onLoadEnrichedData={handleLoadEnrichedPreset}
+          onDownloadEnrichedData={handleDownloadEnrichedJson}
         />
       </div>
 
