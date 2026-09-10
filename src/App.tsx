@@ -207,12 +207,40 @@ export default function App() {
     };
   }, [isDraggingSidebar, sidebarPos]);
 
+  const getPriceFetchUrl = (code: string) => {
+    const customUrl = localStorage.getItem('KNAV_CUSTOM_API_URL')?.trim();
+    if (customUrl) {
+      return customUrl.includes('?') 
+        ? `${customUrl}&code=${encodeURIComponent(code)}`
+        : `${customUrl}?code=${encodeURIComponent(code)}`;
+    }
+    return `/api/fetch-price?code=${encodeURIComponent(code)}`;
+  };
+
   const fetchSinglePrice = async (code: string) => {
     if (refreshingCode) return;
+
+    const isGitHubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
+    const customUrl = localStorage.getItem('KNAV_CUSTOM_API_URL')?.trim();
+
+    if (isGitHubPages && !customUrl) {
+      alert(
+        `【GitHub Pages環境での株価取得について】\n` +
+        `GitHub Pagesは静的サイトのため、バックエンドサーバー（/api/fetch-price）が存在しません。\n\n` +
+        `以下のいずれかの方法をご利用ください：\n\n` +
+        `①【最も簡単・推奨】\nAI Studioのプレビュー画面で株価を一括取得（FETCH ALL）し、「JSONエクスポート」したファイルを、このPWAで「JSONインポート」する。\n\n` +
+        `②【直接取得したい場合】\nサイドバーの「外部株価API設定 (GitHub Pages用)」から、無料のGoogle Apps Script (GAS) 等のプロキシURLを設定する。`
+      );
+      return;
+    }
+
     setRefreshingCode(code);
     try {
-      const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(code)}`, {
-        credentials: 'include',
+      const url = getPriceFetchUrl(code);
+      const isCustom = Boolean(customUrl);
+
+      const res = await fetch(url, {
+        credentials: isCustom ? 'omit' : 'include',
         cache: 'no-store',
         headers: { 'Accept': 'application/json' }
       });
@@ -221,7 +249,7 @@ export default function App() {
       if (!contentType.includes('application/json')) {
         const text = await res.text();
         if (text.includes('__cookie_check') || text.includes('302 Found')) {
-          alert(`【PWAセッション確認】銘柄(${code})の株価取得に失敗しました。\nPWAのセッション認証を更新するため、PWA画面を一度再読み込み（リロード）してください。`);
+          alert(`【セッション確認】銘柄(${code})の株価取得に失敗しました。\nセッションを更新するため、画面を一度再読み込み（リロード）してください。`);
           return;
         }
         throw new Error(`Invalid content-type: ${contentType}`);
@@ -229,7 +257,7 @@ export default function App() {
 
       if (res.ok) {
         const data = await res.json();
-        const price = data.price;
+        const price = data?.price || data?.PRICE || (data?.data && (data.data.price || data.data.PRICE));
         if (price && price !== '?') {
           localStorage.setItem('KNAV_SX_CLOSE_' + code, JSON.stringify({
             price: price,
@@ -248,7 +276,7 @@ export default function App() {
       }
     } catch (error) {
       console.error(`Error fetching single price for ${code}:`, error);
-      alert(`銘柄(${code})の通信エラーが発生しました。接続状況をご確認ください。`);
+      alert(`銘柄(${code})の通信エラーが発生しました。接続状況またはAPI設定をご確認ください。`);
     } finally {
       setRefreshingCode(null);
     }
@@ -256,6 +284,24 @@ export default function App() {
 
   const fetchAllPrices = async (categoryId?: string) => {
     if (isFetchingAll) return;
+
+    const isGitHubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
+    const customUrl = localStorage.getItem('KNAV_CUSTOM_API_URL')?.trim();
+
+    if (isGitHubPages && !customUrl) {
+      alert(
+        `【GitHub Pages環境での株価取得について】\n` +
+        `GitHub Pagesは静的ホスティング（静的サイト）のため、Node.jsバックエンドサーバー（/api/fetch-price）が稼働していません。\n\n` +
+        `そのため、GitHub Pages単体では直接株価を取得できません。\n\n` +
+        `【解決策】\n` +
+        `①【推奨・最も確実】\n` +
+        `AI Studioのプレビュー画面で「ALL」を押して最新株価を一括取得し、サイドバーの「JSONエクスポート」で保存したファイルを、GitHub Pages側で「JSONインポート」してください（設定不要・数秒で完了）。\n\n` +
+        `②【GitHub Pagesから直接一括取得したい場合】\n` +
+        `サイドバーの「外部株価API設定 (GitHub Pages用)」から、無料のGoogle Apps Script (GAS) などのプロキシURLを設定してください。`
+      );
+      return;
+    }
+
     setIsFetchingAll(true);
     
     const allStocks = categoryId 
@@ -270,12 +316,15 @@ export default function App() {
 
     // Concurrency pool (batch of 3 parallel requests for smooth & fast fetching)
     const BATCH_SIZE = 3;
+    const isCustom = Boolean(customUrl);
+
     for (let i = 0; i < allStocks.length; i += BATCH_SIZE) {
       const batch = allStocks.slice(i, i + BATCH_SIZE);
       await Promise.all(batch.map(async (st) => {
         try {
-          const res = await fetch(`/api/fetch-price?code=${encodeURIComponent(st.code)}`, {
-            credentials: 'include',
+          const url = getPriceFetchUrl(st.code);
+          const res = await fetch(url, {
+            credentials: isCustom ? 'omit' : 'include',
             cache: 'no-store',
             headers: { 'Accept': 'application/json' }
           });
@@ -292,7 +341,7 @@ export default function App() {
 
           if (res.ok) {
             const data = await res.json();
-            const price = data.price;
+            const price = data?.price || data?.PRICE || (data?.data && (data.data.price || data.data.PRICE));
             if (price && price !== '?') {
               localStorage.setItem('KNAV_SX_CLOSE_' + st.code, JSON.stringify({
                 price: price,
@@ -317,7 +366,7 @@ export default function App() {
       }));
       
       setFetchProgress({ current: Math.min(i + batch.length, allStocks.length), total: allStocks.length });
-      // Shorter, gentle sleep between small batches
+      // Gentle sleep between small batches
       await new Promise(r => setTimeout(r, 250));
     }
     
@@ -327,7 +376,11 @@ export default function App() {
     // Provide clear, helpful outcome notification
     if (allStocks.length > 0) {
       if (authRequired || successCount === 0) {
-        alert(`【株価取得のご案内】\n株価の取得ができませんでした（成功: ${successCount}件 / 失敗: ${failCount}件）。\n\nPWA環境でのセッション確認が必要な可能性があります。PWA画面（またはブラウザ）を一度再読み込み（リロード）して再試行してください。`);
+        if (isGitHubPages) {
+          alert(`【GitHub Pages環境でのご案内】\n株価が取得できませんでした（成功: ${successCount}件 / 失敗: ${failCount}件）。\n\nAI Studioで株価取得してエクスポート＆インポートするか、外部API設定のURLをご確認ください。`);
+        } else {
+          alert(`【株価取得のご案内】\n株価の取得ができませんでした（成功: ${successCount}件 / 失敗: ${failCount}件）。\n\nセッション確認が必要な可能性があります。画面を一度再読み込み（リロード）して再試行してください。`);
+        }
       } else if (failCount > 0) {
         alert(`株価の更新が完了しました。\n成功: ${successCount}件 / 取得不可: ${failCount}件`);
       } else {

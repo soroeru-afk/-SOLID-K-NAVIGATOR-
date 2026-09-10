@@ -3,7 +3,7 @@ import {
   LayoutGrid, Folders, Plus, Folder, FolderOpen, FolderPlus, Download, 
   FileCode, Pencil, Trash2, ArrowUp, ArrowDown, Activity, ChevronDown, 
   ChevronRight, LineChart, ExternalLink, Settings, Compass, Newspaper, 
-  RefreshCw, Maximize2, Sparkles, AlertTriangle, X 
+  RefreshCw, Maximize2, Sparkles, AlertTriangle, X, Globe 
 } from 'lucide-react';
 import { Category, MarketLink, Stock } from '../types';
 import { Language, i18n } from '../i18n';
@@ -12,6 +12,7 @@ import { getChildCategories, countStocksInCategory, getFlattenedCategoryTree } f
 import { tankenCategories } from '../data/tankenData';
 import NewsDigestModal from './NewsDigestModal';
 import TankenExplorerModal from './TankenExplorerModal';
+import ProxySettingsModal from './ProxySettingsModal';
 import { openExternalWindow } from '../lib/windowUtils';
 
 interface Props {
@@ -79,6 +80,7 @@ export default function Sidebar({
   const [selectedNewsForDigest, setSelectedNewsForDigest] = useState<{ id: string; title: string; time: string; category: string; url: string } | null>(null);
   const [collapsedCatIds, setCollapsedCatIds] = useState<Set<string>>(new Set());
   const [isRestoreConfirmOpen, setIsRestoreConfirmOpen] = useState(false);
+  const [isProxyModalOpen, setIsProxyModalOpen] = useState(false);
   
   const fetchNews = async () => {
     setIsLoadingNews(true);
@@ -742,6 +744,16 @@ export default function Sidebar({
               <span>概要付JSONをダウンロード</span>
             </button>
 
+            <button 
+              type="button"
+              onClick={() => setIsProxyModalOpen(true)} 
+              className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs cursor-pointer"
+              title="GitHub Pagesや外部環境用の株価取得API / プロキシURL設定"
+            >
+              <Globe size={11} className="shrink-0 text-[#a371f7]" />
+              <span>外部株価API設定 (GitHub Pages用)</span>
+            </button>
+
             {onLoadEnrichedData && (
               <button 
                 onClick={() => setIsRestoreConfirmOpen(true)} 
@@ -855,6 +867,10 @@ export default function Sidebar({
           </div>
         </div>
       )}
+      <ProxySettingsModal 
+        isOpen={isProxyModalOpen} 
+        onClose={() => setIsProxyModalOpen(false)} 
+      />
     </>
   );
 }
