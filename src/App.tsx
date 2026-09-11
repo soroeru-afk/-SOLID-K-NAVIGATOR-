@@ -432,6 +432,18 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('knav_theme', theme);
+
+    // PWA モバイル・ブラウザバー用の theme-color 動的更新
+    const themeColors: Record<Theme, string> = {
+      black: '#0a0d12',
+      dark: '#0d131f',
+      red: '#0d0404',
+      light: '#e2e8f0',
+    };
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', themeColors[theme] || '#0a0d12');
+    }
   }, [theme]);
 
   useEffect(() => {
