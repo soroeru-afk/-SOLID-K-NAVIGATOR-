@@ -5,7 +5,7 @@ import StockList from './components/StockList';
 import Header from './components/Header';
 import CompactView from './components/CompactView';
 import MarketDataView from './components/MarketDataView';
-import { Category, Stock, MarketLink } from './types';
+import { Category, Stock, MarketLink, FolderColor } from './types';
 import { Language, i18n } from './i18n';
 import { initialGroups } from './data';
 import { initialData } from './importData';
@@ -13,13 +13,33 @@ import { enrichedPreset } from './data/enrichedPreset';
 import { getAllDescendantCategoryIds } from './lib/categoryUtils';
 import { safeFetch } from './lib/apiUtils';
 
-export type Theme = 'light' | 'dark' | 'black';
+export type Theme = 'light' | 'dark' | 'black' | 'red';
 export type FontType = 'mono' | 'gothic' | 'meiryo' | 'maru';
 
 export default function App() {
   const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem('knav_theme') as Theme) || 'black'
+    () => {
+      const saved = localStorage.getItem('knav_theme') as Theme;
+      return (saved === 'light' || saved === 'dark' || saved === 'black' || saved === 'red') ? saved : 'black';
+    }
   );
+
+  useEffect(() => {
+    localStorage.setItem('knav_theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+
+    // PWA モバイル・ブラウザバー用の theme-color 動的更新
+    const themeColors: Record<Theme, string> = {
+      black: '#0a0d12',
+      dark: '#0d131f',
+      red: '#0d0404',
+      light: '#e2e8f0',
+    };
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', themeColors[theme] || '#0a0d12');
+    }
+  }, [theme]);
 
   const [fontType, setFontType] = useState<FontType>(
     () => (localStorage.getItem('knav_font_type') as FontType) || 'gothic'
@@ -59,6 +79,18 @@ export default function App() {
       return saved === 'red' ? 'red' : 'default';
     }
   );
+
+  const [folderColor, setFolderColor] = useState<FolderColor>(
+    () => {
+      const saved = localStorage.getItem('knav_folder_color') as FolderColor;
+      const validColors: FolderColor[] = ['amber', 'blue', 'white', 'black', 'gray', 'theme'];
+      return validColors.includes(saved) ? saved : 'theme';
+    }
+  );
+
+  useEffect(() => {
+    localStorage.setItem('knav_folder_color', folderColor);
+  }, [folderColor]);
 
   useEffect(() => {
     localStorage.setItem('knav_sidebar_pos', sidebarPos);
@@ -320,9 +352,11 @@ export default function App() {
     let authRequired = false;
     let isCancelled = false;
 
-    // Concurrency pool (2 parallel requests for GAS to prevent Google rate-limits, 3 for local)
+    // Concurrency pool:
+    // If using custom GAS URL, use gentle settings (2 parallel, 400ms sleep) to prevent Google rate-limits.
+    // If using standard local server (AI Studio), restore high-speed parallel fetching (6 parallel, 50ms sleep) for ultra-fast updates.
     const isCustom = Boolean(customUrl);
-    const BATCH_SIZE = isCustom ? 2 : 3;
+    const BATCH_SIZE = isCustom ? 2 : 6;
 
     for (let i = 0; i < allStocks.length; i += BATCH_SIZE) {
       if (cancelFetchRef.current) {
@@ -335,7 +369,7 @@ export default function App() {
           const url = getPriceFetchUrl(st.code);
           const res = await safeFetch(url, {
             headers: { 'Accept': 'application/json' }
-          }, 7000);
+          }, isCustom ? 7000 : 5000);
 
           const contentType = res.headers.get('content-type') || '';
           if (!contentType.includes('application/json')) {
@@ -378,8 +412,8 @@ export default function App() {
         isCancelled = true;
         break;
       }
-      // Gentle sleep between small batches (400ms for GAS to respect quota, 250ms for local)
-      await new Promise(r => setTimeout(r, isCustom ? 400 : 250));
+      // Sleep between batches: 400ms for GAS to respect quota, 60ms for local AI Studio to maximize speed
+      await new Promise(r => setTimeout(r, isCustom ? 400 : 60));
     }
     
     setIsFetchingAll(false);
@@ -410,17 +444,6 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('knav_theme', theme);
-
-    // PWA モバイル・ブラウザバー用の theme-color 動的更新
-    const themeColors: Record<Theme, string> = {
-      black: '#0a0d12',
-      dark: '#0d131f',
-      light: '#e2e8f0',
-    };
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', themeColors[theme] || '#0a0d12');
-    }
   }, [theme]);
 
   useEffect(() => {
@@ -745,6 +768,7 @@ export default function App() {
           onMarketLinksChange={setMarketLinks}
           onLoadEnrichedData={handleLoadEnrichedPreset}
           onDownloadEnrichedData={handleDownloadEnrichedJson}
+          folderColor={folderColor}
         />
         <div 
            className={`absolute top-0 ${sidebarPos === 'right' ? 'left-0 -ml-1' : 'right-0'} w-2 h-full cursor-col-resize hover:bg-border-light/30 active:bg-border-light/50 transition-colors z-20`}
@@ -780,6 +804,7 @@ export default function App() {
           onMarketLinksChange={setMarketLinks}
           onLoadEnrichedData={handleLoadEnrichedPreset}
           onDownloadEnrichedData={handleDownloadEnrichedJson}
+          folderColor={folderColor}
         />
       </div>
 
@@ -789,6 +814,8 @@ export default function App() {
           onThemeChange={setTheme}
           fontType={fontType}
           onFontTypeChange={setFontType}
+          folderColor={folderColor}
+          onFolderColorChange={setFolderColor}
           language={language} 
           onLanguageChange={setLanguage} 
           sidebarPos={sidebarPos}
@@ -811,6 +838,7 @@ export default function App() {
             language={language}
             theme={theme}
             fontSize={listFontSize}
+            folderColor={folderColor}
           />
         ) : (
           <>
@@ -833,6 +861,7 @@ export default function App() {
               priceFontSize={priceFontSize}
               priceColor={priceColor}
               theme={theme}
+              folderColor={folderColor}
             />
           </>
         )}

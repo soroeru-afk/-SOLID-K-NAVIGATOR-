@@ -5,7 +5,7 @@ import {
   ChevronRight, LineChart, ExternalLink, Settings, Compass, 
   RefreshCw, Maximize2, Sparkles, AlertTriangle, X, Globe, Square
 } from 'lucide-react';
-import { Category, MarketLink, Stock } from '../types';
+import { Category, MarketLink, Stock, FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
 import MarketLinkEditor from './MarketLinkEditor';
 import { getChildCategories, countStocksInCategory, getFlattenedCategoryTree } from '../lib/categoryUtils';
@@ -13,6 +13,7 @@ import { tankenCategories } from '../data/tankenData';
 import TankenExplorerModal from './TankenExplorerModal';
 import ProxySettingsModal from './ProxySettingsModal';
 import { openExternalWindow } from '../lib/windowUtils';
+import { getFolderColorClass } from '../lib/folderUtils';
 
 interface Props {
   categories: Category[];
@@ -38,6 +39,7 @@ interface Props {
   onMarketLinksChange: (links: MarketLink[]) => void;
   onLoadEnrichedData?: () => void;
   onDownloadEnrichedData?: () => void;
+  folderColor?: FolderColor;
 }
 
 export default function Sidebar({
@@ -63,7 +65,8 @@ export default function Sidebar({
   marketLinks,
   onMarketLinksChange,
   onLoadEnrichedData,
-  onDownloadEnrichedData
+  onDownloadEnrichedData,
+  folderColor = 'theme'
 }: Props) {
   const [newCatName, setNewCatName] = useState('');
   const [newCatParentId, setNewCatParentId] = useState<string | null>(null);
@@ -190,7 +193,7 @@ export default function Sidebar({
               className={`w-full flex items-center justify-between py-1 px-2 cursor-pointer border transition-colors ${
                 isSelected 
                   ? 'border-border-light bg-border-main text-text-bright' 
-                  : 'border-transparent text-text-dim hover:text-text-normal hover:bg-border-main/30'
+                  : 'border-transparent text-text-normal hover:text-text-bright hover:bg-border-main/30'
               }`}
               style={{ paddingLeft: `${level * 14 + 6}px` }}
             >
@@ -199,7 +202,7 @@ export default function Sidebar({
                 {hasChildren ? (
                   <button
                     onClick={(e) => toggleCollapse(e, c.id)}
-                    className="p-0.5 hover:text-text-bright transition-colors shrink-0 -ml-1 text-text-dim"
+                    className="p-0.5 hover:text-text-bright transition-colors shrink-0 -ml-1 text-text-normal"
                   >
                     {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
                   </button>
@@ -209,9 +212,9 @@ export default function Sidebar({
 
                 {/* Folder icon */}
                 {isSelected ? (
-                  <FolderOpen size={13} className="text-[#58a6ff] shrink-0" />
+                  <FolderOpen size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, true, level === 0)}`} />
                 ) : (
-                  <Folder size={13} className={`shrink-0 ${level > 0 ? 'text-[#8b949e]' : 'text-[#d29922]'}`} />
+                  <Folder size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, false, level === 0)}`} />
                 )}
 
                 {/* Category name */}
@@ -223,7 +226,7 @@ export default function Sidebar({
               {/* Right side: Count badge & Action icons */}
               <div className="flex items-center gap-1 shrink-0 ml-2">
                 {/* Count badge (SOLID style: [ 13 ]) */}
-                <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-dim font-bold">
+                <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold">
                   {displayCount}
                 </span>
 
@@ -232,7 +235,7 @@ export default function Sidebar({
                   {/* Add sub-category */}
                   <span
                     onClick={(e) => startAddSubCategory(e, c.id)}
-                    className="text-text-dim hover:text-[#58a6ff] p-0.5 cursor-pointer"
+                    className="text-text-dim hover:text-text-bright p-0.5 cursor-pointer"
                     title={language === 'EN' ? 'Add sub-directory' : '子フォルダーを追加'}
                   >
                     <FolderPlus size={11} />
@@ -241,7 +244,7 @@ export default function Sidebar({
                   {onFetchCategory && (
                     <span 
                       onClick={(e) => { e.stopPropagation(); onFetchCategory(c.id); }} 
-                      className="text-text-dim hover:text-[#58a6ff] p-0.5 cursor-pointer"
+                      className="text-text-dim hover:text-text-bright p-0.5 cursor-pointer"
                       title={t.reacquire}
                     >
                       <Activity size={11} />
@@ -280,7 +283,7 @@ export default function Sidebar({
                         onDeleteCategory(c.id);
                       }
                     }} 
-                    className="text-[#ff7b72] hover:text-[#ff9b94] p-0.5 cursor-pointer"
+                    className="text-text-dim hover:text-text-bright p-0.5 cursor-pointer"
                     title={t.delete}
                   >
                     <Trash2 size={11} />
@@ -336,15 +339,15 @@ export default function Sidebar({
 
             {isFetchingAll ? (
               <div className="mt-1.5 flex items-center gap-1.5">
-                <div className="flex-1 h-7 flex items-center justify-center gap-1.5 border border-[#58a6ff]/40 text-[#58a6ff] bg-[#58a6ff]/10 font-bold text-[11px]">
-                  <Activity size={12} className="animate-pulse shrink-0" />
+                <div className="flex-1 h-7 flex items-center justify-center gap-1.5 border border-border-light text-text-bright bg-base-bg font-bold text-[11px]">
+                  <Activity size={12} className="animate-pulse shrink-0 text-text-dim" />
                   <span className="truncate">{t.fetching} {fetchProgress?.current}/{fetchProgress?.total}</span>
                 </div>
                 {onStopFetch && (
                   <button
                     type="button"
                     onClick={onStopFetch}
-                    className="h-7 px-2.5 flex items-center justify-center gap-1 border border-[#ff7b72] text-[#ff7b72] hover:bg-[#ff7b72]/20 font-bold text-[11px] transition-colors shrink-0"
+                    className="h-7 px-2.5 flex items-center justify-center gap-1 border border-border-light text-text-dim hover:text-text-bright hover:bg-border-main font-bold text-[11px] transition-colors shrink-0"
                     title="取得処理を停止"
                   >
                     <Square size={11} className="fill-current" />
@@ -355,9 +358,9 @@ export default function Sidebar({
             ) : (
               <button 
                 onClick={onFetchAll} 
-                className="mt-1.5 w-full h-7 flex items-center justify-center gap-2 border border-border-main text-[#58a6ff] hover:text-[#58a6ff] bg-base-bg hover:bg-border-main/50 transition-colors font-bold text-[11px]"
+                className="mt-1.5 w-full h-7 flex items-center justify-center gap-2 border border-border-main text-text-bright bg-base-bg hover:bg-border-main/50 hover:border-border-light transition-colors font-bold text-[11px]"
               >
-                <Activity size={12} /> {t.fetchAll}
+                <Activity size={12} className="text-text-dim" /> {t.fetchAll}
               </button>
             )}
           </div>
@@ -422,24 +425,24 @@ export default function Sidebar({
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 transition-colors cursor-pointer group border ${
                   isMarketDataOpen 
                     ? 'border-border-light/60 bg-border-main/50 text-text-bright' 
-                    : 'border-transparent text-text-dim hover:text-text-normal hover:bg-border-main/20'
+                    : 'border-transparent text-text-normal hover:text-text-bright hover:bg-border-main/20'
                 }`}
               >
                 <div className="flex-1 flex items-center gap-2 text-left">
-                  <LineChart size={13} className={`shrink-0 ${isMarketDataOpen ? 'text-[#58a6ff]' : ''}`} />
+                  <LineChart size={13} className={`shrink-0 ${isMarketDataOpen ? 'text-text-bright' : 'text-text-normal'}`} />
                   <span className="font-bold truncate" style={{ fontSize: sidebarFontSize }}>[ STOCK MARKET DATA ]</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button 
                     onClick={(e) => { e.stopPropagation(); setIsMarketLinkEditorOpen(true); }}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-text-dim hover:text-[#58a6ff] hover:bg-border-main/60 rounded transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-text-normal hover:text-text-bright hover:bg-border-main/60 rounded transition-all"
                     title={t.edit || 'EDIT'}
                   >
                     <Settings size={12} />
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); onSelectCategory('MARKET_DATA'); }}
-                    className="p-1 border border-border-main hover:border-border-light bg-base-bg text-[#58a6ff] hover:text-[#79c0ff] rounded-xs transition-colors shadow-2xs flex items-center justify-center"
+                    className="p-1 border border-border-main hover:border-border-light bg-base-bg text-text-normal hover:text-text-bright rounded-xs transition-colors shadow-2xs flex items-center justify-center"
                     title="メイン画面で全画面表示"
                   >
                     <Maximize2 size={12} />
@@ -451,10 +454,10 @@ export default function Sidebar({
                 <div className="flex flex-col mt-1 mb-2 border border-border-main/60 bg-base-bg/60 p-2 rounded-xs">
                   {/* Top Bar with Main Screen Open Button */}
                   <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-border-main/50 text-[10px]">
-                    <span className="text-text-dim font-bold">市場データ・リンク</span>
+                    <span className="text-text-normal font-bold">市場データ・リンク</span>
                     <button
                       onClick={() => onSelectCategory('MARKET_DATA')}
-                      className="flex items-center gap-1 text-[#58a6ff] hover:underline font-bold"
+                      className="flex items-center gap-1 text-text-normal hover:text-text-bright hover:underline font-bold"
                     >
                       <Maximize2 size={10} />
                       <span>メイン画面で開く</span>
@@ -468,7 +471,7 @@ export default function Sidebar({
                       className={`py-1 text-center font-bold transition-colors rounded-xs ${
                         marketTab === 'links'
                           ? 'bg-border-main text-text-bright border border-border-light/50 shadow-xs'
-                          : 'text-text-dim hover:text-text-normal bg-panel-bg'
+                          : 'text-text-normal hover:text-text-bright bg-panel-bg'
                       }`}
                     >
                       リンク
@@ -477,8 +480,8 @@ export default function Sidebar({
                       onClick={() => setMarketTab('tanken')}
                       className={`py-1 text-center font-bold transition-colors rounded-xs ${
                         marketTab === 'tanken'
-                          ? 'bg-border-main text-[#f59e0b] border border-border-light/50 shadow-xs'
-                          : 'text-text-dim hover:text-text-normal bg-panel-bg'
+                          ? 'bg-border-main text-text-bright border border-border-light/50 shadow-xs'
+                          : 'text-text-normal hover:text-text-bright bg-panel-bg'
                       }`}
                     >
                       銘柄探検
@@ -488,11 +491,11 @@ export default function Sidebar({
                   {/* Tab 1: 市場リンク */}
                   {marketTab === 'links' && (
                     <div className="flex flex-col gap-1 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin">
-                      <div className="flex items-center justify-between px-1 pb-1 text-[9px] text-text-dim border-b border-border-main/30">
+                      <div className="flex items-center justify-between px-1 pb-1 text-[9px] text-text-normal border-b border-border-main/30">
                         <span>クイックリンク ({marketLinks.length})</span>
                         <button
                           onClick={() => setIsMarketLinkEditorOpen(true)}
-                          className="hover:text-[#58a6ff] flex items-center gap-0.5"
+                          className="hover:text-text-bright flex items-center gap-0.5 text-text-normal"
                         >
                           <Settings size={9} />
                           <span>編集</span>
@@ -508,11 +511,11 @@ export default function Sidebar({
                             e.preventDefault();
                             openExternalWindow(link.url);
                           }}
-                          className="flex items-center justify-between text-text-dim hover:text-text-normal hover:bg-border-main/50 px-2 py-1 rounded transition-colors group"
+                          className="flex items-center justify-between text-text-normal hover:text-text-bright hover:bg-border-main/50 px-2 py-1 rounded transition-colors group"
                           title={`${link.title}（別ウィンドウで開く）`}
                         >
                           <span className="truncate pr-1 font-medium" style={{ fontSize: Math.max(11, sidebarFontSize - 1) }}>{link.title}</span>
-                          <ExternalLink size={10} className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:text-[#58a6ff]" />
+                          <ExternalLink size={10} className="shrink-0 opacity-60 group-hover:opacity-100 group-hover:text-text-bright" />
                         </a>
                       ))}
                     </div>
@@ -528,8 +531,8 @@ export default function Sidebar({
                             onClick={() => setTankenSubTab('fundamentals')}
                             className={`flex-1 py-0.5 text-center font-bold rounded-xs transition-colors text-[10px] ${
                               tankenSubTab === 'fundamentals'
-                                ? 'bg-[#d97706]/25 text-[#f59e0b] border border-[#d97706]/50'
-                                : 'text-text-dim hover:text-text-normal bg-panel-bg'
+                                ? 'bg-border-main text-text-bright border border-border-light/50'
+                                : 'text-text-normal hover:text-text-bright bg-panel-bg'
                             }`}
                           >
                             ファンダ
@@ -538,8 +541,8 @@ export default function Sidebar({
                             onClick={() => setTankenSubTab('technicals')}
                             className={`flex-1 py-0.5 text-center font-bold rounded-xs transition-colors text-[10px] ${
                               tankenSubTab === 'technicals'
-                                ? 'bg-[#16a34a]/25 text-[#4ade80] border border-[#16a34a]/50'
-                                : 'text-text-dim hover:text-text-normal bg-panel-bg'
+                                ? 'bg-border-main text-text-bright border border-border-light/50'
+                                : 'text-text-normal hover:text-text-bright bg-panel-bg'
                             }`}
                           >
                             テクニカル
@@ -547,7 +550,7 @@ export default function Sidebar({
                         </div>
                         <button
                           onClick={() => setIsTankenModalOpen(true)}
-                          className="px-1.5 py-0.5 bg-panel-bg hover:bg-border-main border border-border-main text-text-dim hover:text-text-bright flex items-center gap-1 rounded-xs transition-colors text-[10px]"
+                          className="px-1.5 py-0.5 bg-panel-bg hover:bg-border-main border border-border-main text-text-normal hover:text-text-bright flex items-center gap-1 rounded-xs transition-colors text-[10px]"
                           title="全画面で2列表示"
                         >
                           <Maximize2 size={10} />
@@ -575,7 +578,7 @@ export default function Sidebar({
                                   e.preventDefault();
                                   openExternalWindow(item.url);
                                 }}
-                                className="group flex items-center justify-between px-2 py-0.5 text-text-dim hover:text-text-bright hover:bg-border-main/50 rounded transition-colors"
+                                className="group flex items-center justify-between px-2 py-0.5 text-text-normal hover:text-text-bright hover:bg-border-main/50 rounded transition-colors"
                                 title={`${item.title}（別ウィンドウで開く）`}
                               >
                                 <span className="truncate group-hover:underline font-medium" style={{ fontSize: Math.max(11, sidebarFontSize - 1) }}>{item.title}</span>
@@ -597,14 +600,14 @@ export default function Sidebar({
               className={`w-full flex items-center justify-between px-2.5 py-1.5 border transition-colors mt-1 shrink-0 ${
                 activeCategory === null 
                   ? 'border-border-light bg-border-main text-text-bright' 
-                  : 'border-transparent text-text-dim hover:text-text-normal'
+                  : 'border-transparent text-text-normal hover:text-text-bright'
               }`}
             >
               <div className="flex items-center gap-2">
-                <Folders size={13} className="shrink-0 text-[#d29922]" />
+                <Folders size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, activeCategory === null, true)}`} />
                 <span className="font-bold" style={{ fontSize: sidebarFontSize }}>[ {t.allData} ]</span>
               </div>
-              <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-dim font-bold">
+              <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold">
                 {stocksLength}
               </span>
             </button>
@@ -619,21 +622,21 @@ export default function Sidebar({
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 border transition-colors group/unassigned mt-1 ${
                   activeCategory === 'UNASSIGNED' 
                     ? 'border-border-light bg-border-main text-text-bright' 
-                    : 'border-transparent text-text-dim hover:text-text-normal'
+                    : 'border-transparent text-text-normal hover:text-text-bright'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <FolderOpen size={13} className={`shrink-0 ${activeCategory === 'UNASSIGNED' ? 'text-text-bright' : 'text-text-dim'}`} />
+                  <FolderOpen size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, activeCategory === 'UNASSIGNED', false)}`} />
                   <span className="truncate flex-1 text-left font-bold" style={{ fontSize: sidebarFontSize }}>{t.unassigned}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-dim font-bold">
+                  <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold">
                     {unassignedCount}
                   </span>
                   {onFetchCategory && (
                     <span 
                       onClick={(e) => { e.stopPropagation(); onFetchCategory('UNASSIGNED'); }} 
-                      className="opacity-0 group-hover/unassigned:opacity-100 text-text-dim hover:text-[#58a6ff] p-0.5 ml-1"
+                      className="opacity-0 group-hover/unassigned:opacity-100 text-text-dim hover:text-text-bright p-0.5 ml-1"
                       title={t.reacquire}
                     >
                       <Activity size={11} />
@@ -648,49 +651,49 @@ export default function Sidebar({
           <div className="shrink-0 pt-2.5 mt-2 border-t border-border-main flex flex-col gap-1.5 bg-panel-bg z-10">
             <div className="text-[10px] text-text-dim mb-0.5 font-bold flex items-center justify-between">
               <span>{t.dataManagement}</span>
-              <span className="text-[9px] text-[#58a6ff] font-mono">228 STOCKS</span>
+              <span className="text-[9px] text-text-dim font-mono">228 STOCKS</span>
             </div>
             
-            <button onClick={onExportJson} className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs">
-              <Download size={11} className="shrink-0 text-[#58a6ff]" /> {t.exportJson}
+            <button onClick={onExportJson} className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs group">
+              <Download size={11} className="shrink-0 text-text-dim group-hover:text-text-bright transition-colors" /> {t.exportJson}
             </button>
-            <button onClick={() => jsonInputRef.current?.click()} className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs">
-              <FileCode size={11} className="shrink-0 text-[#3fb950]" /> {t.importJson}
+            <button onClick={() => jsonInputRef.current?.click()} className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs group">
+              <FileCode size={11} className="shrink-0 text-text-dim group-hover:text-text-bright transition-colors" /> {t.importJson}
             </button>
 
             <button 
               type="button"
               onClick={onDownloadEnrichedData} 
-              className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs mt-1 cursor-pointer"
+              className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs mt-1 cursor-pointer group"
               title="228銘柄の概要付きJSONファイルを保存"
             >
-              <Download size={11} className="shrink-0 text-[#f59e0b]" />
+              <Download size={11} className="shrink-0 text-text-dim group-hover:text-text-bright transition-colors" />
               <span>概要付JSONをダウンロード</span>
             </button>
 
             <button 
               type="button"
               onClick={() => setIsProxyModalOpen(true)} 
-              className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs cursor-pointer"
+              className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs cursor-pointer group"
               title="GitHub Pagesや外部環境用の株価取得API / プロキシURL設定"
             >
-              <Globe size={11} className="shrink-0 text-[#a371f7]" />
+              <Globe size={11} className="shrink-0 text-text-dim group-hover:text-text-bright transition-colors" />
               <span>外部株価API設定 (GitHub Pages用)</span>
             </button>
 
             {onLoadEnrichedData && (
               <button 
                 onClick={() => setIsRestoreConfirmOpen(true)} 
-                className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-[#58a6ff]/40 text-[#58a6ff] bg-[#58a6ff]/10 hover:bg-[#58a6ff]/20 hover:border-[#58a6ff] transition-colors text-xs font-bold"
+                className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs font-bold group"
                 title="全228銘柄と各社の企業概要（事業内容・強み）を初期プリセットから復元します（確認画面が開きます）"
               >
-                <Sparkles size={11} className="shrink-0" />
+                <Sparkles size={11} className="shrink-0 text-text-dim group-hover:text-text-bright transition-colors" />
                 <span>228銘柄（概要付）を復元</span>
               </button>
             )}
 
-            <button onClick={onResetData} className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-[#ff7b72] bg-base-bg hover:text-[#ff9b94] hover:border-[#ff7b72]/50 transition-colors text-xs mt-1">
-              <Trash2 size={11} className="shrink-0" /> {t.resetData}
+            <button onClick={onResetData} className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs mt-1 group">
+              <Trash2 size={11} className="shrink-0 text-text-dim group-hover:text-text-bright transition-colors" /> {t.resetData}
             </button>
             <input type="file" accept=".json" className="hidden" ref={jsonInputRef} onChange={e => handleFileChange(e)} />
           </div>

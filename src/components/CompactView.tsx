@@ -165,7 +165,7 @@ export default function CompactView({
           <div className="flex flex-col">
             <h1 className="font-bold text-[12px] text-text-bright tracking-widest leading-tight">{t.appTitle}</h1>
             <h2 className="font-bold text-[10px] text-text-dim tracking-widest leading-tight">
-              {t.appSubTitle} <span className="text-[#58a6ff] ml-1">MINI</span>
+              {t.appSubTitle} <span className="text-text-dim ml-1">MINI</span>
             </h2>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function CompactView({
             className="flex items-center justify-between px-2.5 py-1.5 cursor-pointer bg-base-bg/60 border-b border-border-main hover:bg-border-main/30 transition-colors select-none shrink-0"
           >
             <div className="flex items-center gap-2 text-text-bright font-bold text-[11px]">
-              <LineChart size={13} className="text-[#58a6ff]" />
+              <LineChart size={13} className="text-text-bright" />
               <span>[ STOCK MARKET DATA ]</span>
             </div>
             <div className="flex items-center gap-1 text-text-dim text-[10px]">
@@ -232,7 +232,7 @@ export default function CompactView({
                   onClick={() => setMarketTab('tanken')}
                   className={`py-1 text-center font-bold transition-colors rounded-xs ${
                     marketTab === 'tanken'
-                      ? 'bg-border-main text-[#f59e0b] border border-border-light/50 shadow-xs'
+                      ? 'bg-border-main text-text-bright border border-border-light/50 shadow-xs'
                       : 'text-text-dim hover:text-text-normal bg-base-bg'
                   }`}
                 >
@@ -304,7 +304,7 @@ export default function CompactView({
                           onClick={() => setTankenSubTab('fundamentals')}
                           className={`flex-1 py-1 text-center font-bold rounded-xs transition-colors text-[10px] ${
                             tankenSubTab === 'fundamentals'
-                              ? 'bg-[#d97706]/25 text-[#f59e0b] border border-[#d97706]/50 shadow-2xs'
+                              ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
                               : 'text-text-dim hover:text-text-normal bg-base-bg'
                           }`}
                         >
@@ -315,7 +315,7 @@ export default function CompactView({
                           onClick={() => setTankenSubTab('technicals')}
                           className={`flex-1 py-1 text-center font-bold rounded-xs transition-colors text-[10px] ${
                             tankenSubTab === 'technicals'
-                              ? 'bg-[#16a34a]/25 text-[#4ade80] border border-[#16a34a]/50 shadow-2xs'
+                              ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
                               : 'text-text-dim hover:text-text-normal bg-base-bg'
                           }`}
                         >
@@ -333,7 +333,7 @@ export default function CompactView({
                             onClick={() => handleTankenSizeChange(sz)}
                             className={`px-1.5 py-0.5 font-bold rounded-2xs transition-colors text-[9px] ${
                               tankenSize === sz
-                                ? 'bg-border-main text-[#58a6ff] border border-border-light/60 shadow-2xs'
+                                ? 'bg-border-main text-text-bright border border-border-light/60 shadow-2xs'
                                 : 'text-text-dim hover:text-text-bright'
                             }`}
                             title={`文字・行間サイズ: ${sz === 'sm' ? '小' : sz === 'md' ? '中 (推奨)' : '大'}`}
@@ -388,11 +388,11 @@ export default function CompactView({
           <div 
             onMouseDown={handleMouseDown}
             className={`h-2.5 my-1 flex items-center justify-center cursor-row-resize select-none group transition-colors rounded-2xs ${
-              isDragging ? 'bg-[#58a6ff]/40' : 'hover:bg-border-light/60 active:bg-[#58a6ff]/30'
+              isDragging ? 'bg-border-light' : 'hover:bg-border-light/60 active:bg-border-light'
             }`}
             title="ドラッグして上下の表示高さを変更（設定は自動保存されます）"
           >
-            <div className="w-12 h-1 bg-border-light group-hover:bg-[#58a6ff] rounded-full transition-colors flex items-center justify-center">
+            <div className="w-12 h-1 bg-border-light group-hover:bg-text-bright rounded-full transition-colors flex items-center justify-center">
               <GripHorizontal size={10} className="text-text-dim group-hover:text-text-bright opacity-60" />
             </div>
           </div>

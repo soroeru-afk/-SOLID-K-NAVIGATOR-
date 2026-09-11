@@ -1,12 +1,16 @@
 import { Theme, FontType } from '../App';
+import { FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
 import { PanelLeft, PanelRight, Minimize2, Type, Palette } from 'lucide-react';
+import { getFolderColorBadgeClass } from '../lib/folderUtils';
 
 interface Props {
   theme: Theme;
   onThemeChange: (theme: Theme) => void;
   fontType: FontType;
   onFontTypeChange: (fontType: FontType) => void;
+  folderColor: FolderColor;
+  onFolderColorChange: (color: FolderColor) => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
   sidebarPos: 'left' | 'right';
@@ -27,6 +31,8 @@ export default function Header({
   onThemeChange, 
   fontType, 
   onFontTypeChange, 
+  folderColor,
+  onFolderColorChange,
   language, 
   onLanguageChange, 
   sidebarPos, 
@@ -106,6 +112,25 @@ export default function Header({
                 <span className="text-text-dim w-7 text-right font-mono">{priceFontSize}PX</span>
             </div>
 
+            {/* FOLDER COLOR Selector */}
+            <div className="flex items-center gap-1.5">
+                <span className="text-text-dim hidden md:inline font-mono">FOLDER:</span>
+                <button
+                    type="button"
+                    onClick={() => {
+                      const colorOrder: FolderColor[] = ['theme', 'amber', 'blue', 'white', 'black', 'gray'];
+                      const currentIndex = colorOrder.indexOf(folderColor);
+                      const next = colorOrder[(currentIndex + 1) % colorOrder.length];
+                      onFolderColorChange(next);
+                    }}
+                    className="w-[74px] h-[22px] px-1.5 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors text-center text-[9px] font-mono flex items-center justify-center gap-1.5 shrink-0"
+                    title="フォルダーアイコン色：THEME(同系色) / AMBER(琥珀) / BLUE(青) / WHITE(白) / BLACK(黒) / GRAY(灰)"
+                >
+                    <span className={`w-2.5 h-2.5 rounded-xs shrink-0 ${getFolderColorBadgeClass(folderColor)}`} />
+                    <span className="w-[38px] text-left truncate">{folderColor === 'theme' ? 'THEME' : folderColor.toUpperCase()}</span>
+                </button>
+            </div>
+
             <div className="flex items-center gap-2">
                 <span className="text-text-dim mr-2 hidden md:inline">FONT:</span>
                 <select
@@ -123,13 +148,20 @@ export default function Header({
             <div className="flex items-center gap-2">
                 <button
                     onClick={() => {
-                      const next = theme === 'black' ? 'dark' : theme === 'dark' ? 'light' : 'black';
+                      const next = theme === 'black' ? 'dark' : theme === 'dark' ? 'red' : theme === 'red' ? 'light' : 'black';
                       onThemeChange(next);
                     }}
                     className="w-[180px] px-3 py-1 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors flex items-center justify-center gap-2 uppercase"
                 >
                     <Palette size={14} className="text-text-dim shrink-0" />
-                    <span className="truncate">THEME: {theme === 'black' ? ((t as any).blackTheme || 'ONYX BLACK') : theme === 'dark' ? t.navyDark : t.paperLight}</span>
+                    <span className="truncate">
+                      THEME: {
+                        theme === 'black' ? (t.blackTheme || 'ONYX BLACK') :
+                        theme === 'dark' ? t.navyDark :
+                        theme === 'red' ? (t.redTheme || 'CRIMSON RED') :
+                        t.paperLight
+                      }
+                    </span>
                 </button>
             </div>
             
@@ -158,7 +190,7 @@ export default function Header({
                 <button
                     onClick={onToggleCompactMode}
                     title="Compact Mode"
-                    className="p-1.5 border border-border-main rounded text-text-dim hover:text-[#58a6ff] hover:bg-border-main/50 transition-colors ml-2"
+                    className="p-1.5 border border-border-main rounded text-text-dim hover:text-text-bright hover:bg-border-main/50 transition-colors ml-2"
                 >
                     <Minimize2 size={16} />
                 </button>

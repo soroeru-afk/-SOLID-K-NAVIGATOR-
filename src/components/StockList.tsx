@@ -5,13 +5,14 @@ import {
   Folder, FolderOpen, FolderInput, FolderPlus, ChevronRight, ChevronDown, RefreshCw, 
   ChevronUp, RotateCcw
 } from 'lucide-react';
-import { Stock, Category, StockMemo } from '../types';
+import { Stock, Category, StockMemo, FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
 import { Theme } from '../App';
 import StockDetailModal from './StockDetailModal';
 import MoveCategoryModal from './MoveCategoryModal';
 import { getCategoryPath, getChildCategories, countStocksInCategory } from '../lib/categoryUtils';
 import { openExternalWindow } from '../lib/windowUtils';
+import { getFolderColorClass } from '../lib/folderUtils';
 
 interface Props {
   stocks: Stock[];
@@ -31,6 +32,7 @@ interface Props {
   priceFontSize: number;
   priceColor: string;
   theme: Theme;
+  folderColor?: FolderColor;
 }
 
 type SortOption = 'default' | 'date_desc' | 'date_asc' | 'code_asc' | 'price_desc' | 'name_asc';
@@ -83,7 +85,8 @@ export default function StockList({
   stockFontSize,
   priceFontSize,
   priceColor,
-  theme
+  theme,
+  folderColor = 'theme'
 }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
@@ -383,9 +386,9 @@ export default function StockList({
         <div className="flex items-center gap-1.5 overflow-x-auto text-xs py-0.5 scrollbar-thin">
           <button
             onClick={() => onSelectCategory(null)}
-            className={`font-bold flex items-center gap-1.5 transition-colors shrink-0 ${!activeCategory ? 'text-[#58a6ff]' : 'text-text-dim hover:text-text-bright'}`}
+            className={`font-bold flex items-center gap-1.5 transition-colors shrink-0 ${!activeCategory ? 'text-text-bright' : 'text-text-dim hover:text-text-bright'}`}
           >
-            <Folder size={13} className="text-[#d29922]" />
+            <Folder size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, !activeCategory, true)}`} />
             <span>[ {language === 'EN' ? 'ALL DATA' : '全てのデータ'} ]</span>
           </button>
 
@@ -393,7 +396,7 @@ export default function StockList({
             <>
               <ChevronRight size={12} className="text-text-dim shrink-0" />
               <span className="font-bold text-text-bright flex items-center gap-1.5 shrink-0">
-                <FolderOpen size={13} className="text-text-dim shrink-0" />
+                <FolderOpen size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, true, false)}`} />
                 {t.unassigned}
               </span>
             </>
@@ -406,7 +409,7 @@ export default function StockList({
                 <ChevronRight size={12} className="text-text-dim shrink-0" />
                 {isLast ? (
                   <span className="font-bold text-text-bright flex items-center gap-1.5 shrink-0">
-                    <FolderOpen size={13} className="text-[#58a6ff] shrink-0" />
+                    <FolderOpen size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, true, idx === 0)}`} />
                     {crumb.name}
                   </span>
                 ) : (
@@ -414,7 +417,7 @@ export default function StockList({
                     onClick={() => onSelectCategory(crumb.id)}
                     className="font-bold text-text-dim hover:text-text-bright flex items-center gap-1.5 transition-colors shrink-0"
                   >
-                    <Folder size={13} className="text-[#d29922] shrink-0" />
+                    <Folder size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, false, idx === 0)}`} />
                     {crumb.name}
                   </button>
                 )}
@@ -453,7 +456,7 @@ export default function StockList({
           {/* Header with Title, Count, Add Button, and COLLAPSE / EXPAND Toggle */}
           <div className="flex items-center justify-between text-[10px] font-bold text-text-dim uppercase tracking-wider">
             <div className="flex items-center gap-2">
-              <Folder size={12} className={activeCategory ? "text-[#58a6ff]" : "text-[#d29922]"} />
+              <Folder size={12} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, Boolean(activeCategory), !activeCategory)}`} />
               <span>
                 {!activeCategory ? t.categories : t.subCategories} ({gridCategories.length})
               </span>
@@ -461,9 +464,9 @@ export default function StockList({
               {onAddCategory && !isQuickAddingSubCat && (
                 <button
                   onClick={() => setIsQuickAddingSubCat(true)}
-                  className="px-1.5 py-0.2 bg-base-bg border border-border-main hover:border-border-light text-text-dim hover:text-[#58a6ff] transition-colors text-[9px] font-bold flex items-center gap-1 normal-case tracking-normal"
+                  className="px-1.5 py-0.2 bg-base-bg border border-border-main hover:border-border-light text-text-dim hover:text-text-bright transition-colors text-[9px] font-bold flex items-center gap-1 normal-case tracking-normal"
                 >
-                  <FolderPlus size={10} />
+                  <FolderPlus size={10} className={`shrink-0 ${getFolderColorClass(folderColor, false, false)}`} />
                   <span>{activeCategory ? (language === 'EN' ? '+ Sub-category' : '+ 子カテゴリー') : (language === 'EN' ? '+ Category' : '+ カテゴリー')}</span>
                 </button>
               )}
@@ -527,7 +530,7 @@ export default function StockList({
                   className="group flex items-center justify-between px-3 py-1.5 bg-base-bg border border-border-main hover:border-border-light hover:bg-border-main/30 text-left transition-colors h-9 shadow-xs"
                 >
                   <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
-                    <Folder size={13} className={`${activeCategory ? 'text-[#58a6ff]' : 'text-[#d29922]'} shrink-0 group-hover:scale-105 transition-transform`} />
+                    <Folder size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, false, !activeCategory)} group-hover:scale-105 transition-transform`} />
                     <span 
                       className="font-bold text-text-bright truncate"
                       style={{ fontSize: listFontSize }}
@@ -645,7 +648,7 @@ export default function StockList({
                       const targets = stocks.filter(s => selectedIds.has(s.id));
                       setMovingStocks(targets);
                     }}
-                    className="h-6 px-2 bg-base-bg border border-border-main hover:border-border-light text-[#58a6ff] hover:text-[#58a6ff] text-[10px] font-bold inline-flex items-center gap-1 transition-colors box-border"
+                    className="h-6 px-2 bg-base-bg border border-border-main hover:border-border-light text-text-bright hover:text-white text-[10px] font-bold inline-flex items-center gap-1 transition-colors box-border"
                   >
                     <FolderInput size={12} />
                     <span>{language === 'EN' ? 'Move to...' : 'カテゴリ移動'}</span>
@@ -669,7 +672,7 @@ export default function StockList({
             <button
               type="button"
               onClick={handleResetAllWidths}
-              className="h-6 px-2 bg-base-bg border border-border-main hover:border-border-light text-text-dim hover:text-[#58a6ff] text-[10px] font-bold inline-flex items-center gap-1 transition-colors box-border"
+              className="h-6 px-2 bg-base-bg border border-border-main hover:border-border-light text-text-dim hover:text-text-bright text-[10px] font-bold inline-flex items-center gap-1 transition-colors box-border"
               title={language === 'EN' ? 'Reset column widths to default' : '列幅を初期状態にリセット'}
             >
               <RotateCcw size={11} />
@@ -775,7 +778,7 @@ export default function StockList({
                         {/* Move to Category button */}
                         <button
                           onClick={() => setMovingStocks([st])}
-                          className="w-6 h-6 flex items-center justify-center bg-base-bg text-text-dim hover:text-[#58a6ff] hover:border-border-light border border-border-main transition-colors"
+                          className="w-6 h-6 flex items-center justify-center bg-base-bg text-text-dim hover:text-text-bright hover:border-border-light border border-border-main transition-colors"
                           title={language === 'EN' ? 'Move to category' : 'カテゴリーを移動'}
                         >
                           <FolderInput size={12} />
@@ -804,7 +807,7 @@ export default function StockList({
                             title={t.updatePrice}
                             className="w-6 h-6 flex items-center justify-center bg-base-bg text-text-dim hover:text-text-bright border border-border-main transition-colors disabled:opacity-40"
                           >
-                            <RefreshCw size={11} className={isRefreshingThis ? 'animate-spin text-[#58a6ff]' : ''} />
+                            <RefreshCw size={11} className={isRefreshingThis ? 'animate-spin text-text-bright' : ''} />
                           </button>
                         )}
                       </div>
@@ -835,7 +838,7 @@ export default function StockList({
                               e.preventDefault();
                               openExternalWindow(`https://kabutan.jp/stock/?code=${st.code}`);
                             }}
-                            className="text-text-bright hover:text-[#58a6ff] font-black leading-snug tracking-wide hover:underline truncate"
+                            className="text-text-bright hover:text-white font-black leading-snug tracking-wide hover:underline truncate"
                             style={{ fontSize: stockFontSize }}
                             title={`${st.name}（別ウィンドウで株探を開く）`}
                           >
@@ -882,10 +885,10 @@ export default function StockList({
                     >
                       {st.description ? (
                         <div>
-                          <div className="text-[9px] text-[#58a6ff] font-bold tracking-wider mb-1 flex items-center gap-1">
+                          <div className="text-[9px] text-text-bright font-bold tracking-wider mb-1 flex items-center gap-1">
                             <span>[ 企業概要・詳細情報 ]</span>
                           </div>
-                          <p className="text-xs text-text-normal line-clamp-3 leading-relaxed whitespace-pre-wrap font-sans">
+                          <p className="text-xs text-text-bright line-clamp-3 leading-relaxed whitespace-pre-wrap font-sans">
                             {st.description}
                           </p>
                         </div>
@@ -894,7 +897,7 @@ export default function StockList({
                           <div className="text-[9px] text-text-dim font-bold tracking-wider mb-1 flex items-center gap-1">
                             <span>[ メモ・考察 ]</span>
                           </div>
-                          <p className="text-xs text-text-normal line-clamp-3 leading-relaxed whitespace-pre-wrap font-sans">
+                          <p className="text-xs text-text-bright line-clamp-3 leading-relaxed whitespace-pre-wrap font-sans">
                             {memo.text}
                           </p>
                         </div>
@@ -917,7 +920,7 @@ export default function StockList({
                       <span>•</span>
                       <span 
                         onClick={() => setMovingStocks([st])}
-                        className="truncate max-w-[110px] hover:text-[#58a6ff] cursor-pointer hover:underline"
+                        className="truncate max-w-[110px] hover:text-text-bright cursor-pointer hover:underline"
                         title={language === 'EN' ? 'Click to move category' : 'クリックしてカテゴリー移動'}
                       >
                         {getCategoryName(st.categoryId)}
@@ -964,10 +967,10 @@ export default function StockList({
                 <div
                   onMouseDown={(e) => handleResizeStart('code', e)}
                   onDoubleClick={() => handleResetColWidth('code')}
-                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-[#58a6ff]/20 z-20"
+                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-border-light/40 z-20"
                   title="ドラッグで幅調整 (ダブルクリックで初期化)"
                 >
-                  <div className={`w-[2px] h-3.5 ${resizingCol === 'code' ? 'bg-[#58a6ff]' : 'bg-border-light/60 group-hover/col:bg-[#58a6ff]'}`} />
+                  <div className={`w-[2px] h-3.5 ${resizingCol === 'code' ? 'bg-text-bright' : 'bg-border-light/60 group-hover/col:bg-text-bright'}`} />
                 </div>
               </div>
 
@@ -981,10 +984,10 @@ export default function StockList({
                 <div
                   onMouseDown={(e) => handleResizeStart('name', e)}
                   onDoubleClick={() => handleResetColWidth('name')}
-                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-[#58a6ff]/20 z-20"
+                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-border-light/40 z-20"
                   title="ドラッグで幅調整 (ダブルクリックで初期化)"
                 >
-                  <div className={`w-[2px] h-3.5 ${resizingCol === 'name' ? 'bg-[#58a6ff]' : 'bg-border-light/60 group-hover/col:bg-[#58a6ff]'}`} />
+                  <div className={`w-[2px] h-3.5 ${resizingCol === 'name' ? 'bg-text-bright' : 'bg-border-light/60 group-hover/col:bg-text-bright'}`} />
                 </div>
               </div>
 
@@ -998,10 +1001,10 @@ export default function StockList({
                 <div
                   onMouseDown={(e) => handleResizeStart('price', e)}
                   onDoubleClick={() => handleResetColWidth('price')}
-                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-[#58a6ff]/20 z-20"
+                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-border-light/40 z-20"
                   title="ドラッグで幅調整 (ダブルクリックで初期化)"
                 >
-                  <div className={`w-[2px] h-3.5 ${resizingCol === 'price' ? 'bg-[#58a6ff]' : 'bg-border-light/60 group-hover/col:bg-[#58a6ff]'}`} />
+                  <div className={`w-[2px] h-3.5 ${resizingCol === 'price' ? 'bg-text-bright' : 'bg-border-light/60 group-hover/col:bg-text-bright'}`} />
                 </div>
               </div>
 
@@ -1010,15 +1013,15 @@ export default function StockList({
                 style={{ minWidth: Math.max(MIN_COLUMN_WIDTHS.description, columnWidths.description) }}
                 className="relative flex-1 flex items-center px-2 py-1.5 group/col min-w-0"
               >
-                <span className="truncate font-bold tracking-wider text-[#58a6ff]">企業概要・詳細 / メモ</span>
+                <span className="truncate font-bold tracking-wider text-text-bright">企業概要・詳細 / メモ</span>
                 {/* Resizer Handle */}
                 <div
                   onMouseDown={(e) => handleResizeStart('description', e)}
                   onDoubleClick={() => handleResetColWidth('description')}
-                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-[#58a6ff]/20 z-20"
+                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-border-light/40 z-20"
                   title="ドラッグで幅調整 (ダブルクリックで初期化)"
                 >
-                  <div className={`w-[2px] h-3.5 ${resizingCol === 'description' ? 'bg-[#58a6ff]' : 'bg-border-light/60 group-hover/col:bg-[#58a6ff]'}`} />
+                  <div className={`w-[2px] h-3.5 ${resizingCol === 'description' ? 'bg-text-bright' : 'bg-border-light/60 group-hover/col:bg-text-bright'}`} />
                 </div>
               </div>
 
@@ -1032,10 +1035,10 @@ export default function StockList({
                 <div
                   onMouseDown={(e) => handleResizeStart('category', e)}
                   onDoubleClick={() => handleResetColWidth('category')}
-                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-[#58a6ff]/20 z-20"
+                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-border-light/40 z-20"
                   title="ドラッグで幅調整 (ダブルクリックで初期化)"
                 >
-                  <div className={`w-[2px] h-3.5 ${resizingCol === 'category' ? 'bg-[#58a6ff]' : 'bg-border-light/60 group-hover/col:bg-[#58a6ff]'}`} />
+                  <div className={`w-[2px] h-3.5 ${resizingCol === 'category' ? 'bg-text-bright' : 'bg-border-light/60 group-hover/col:bg-text-bright'}`} />
                 </div>
               </div>
 
@@ -1049,10 +1052,10 @@ export default function StockList({
                 <div
                   onMouseDown={(e) => handleResizeStart('date', e)}
                   onDoubleClick={() => handleResetColWidth('date')}
-                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-[#58a6ff]/20 z-20"
+                  className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize flex items-center justify-center group-hover/col:bg-border-light/40 z-20"
                   title="ドラッグで幅調整 (ダブルクリックで初期化)"
                 >
-                  <div className={`w-[2px] h-3.5 ${resizingCol === 'date' ? 'bg-[#58a6ff]' : 'bg-border-light/60 group-hover/col:bg-[#58a6ff]'}`} />
+                  <div className={`w-[2px] h-3.5 ${resizingCol === 'date' ? 'bg-text-bright' : 'bg-border-light/60 group-hover/col:bg-text-bright'}`} />
                 </div>
               </div>
 
@@ -1143,7 +1146,7 @@ export default function StockList({
                             e.preventDefault();
                             openExternalWindow(`https://kabutan.jp/stock/?code=${st.code}`);
                           }}
-                          className="text-text-bright hover:text-[#ef4444] hover:underline truncate font-bold leading-tight"
+                          className="text-text-bright hover:text-white hover:underline truncate font-bold leading-tight"
                           style={{ fontSize: stockFontSize }}
                           title={`${st.name}（別ウィンドウで株探を開く）`}
                         >
@@ -1177,7 +1180,7 @@ export default function StockList({
                           title={t.updatePrice}
                           className="text-text-dim hover:text-text-bright p-0.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40 shrink-0"
                         >
-                          <RefreshCw size={11} className={isRefreshingThis ? 'animate-spin text-[#58a6ff]' : ''} />
+                          <RefreshCw size={11} className={isRefreshingThis ? 'animate-spin text-text-bright' : ''} />
                         </button>
                       )}
                     </div>
@@ -1190,8 +1193,8 @@ export default function StockList({
                       title={st.description || memo?.text || ''}
                     >
                       {st.description ? (
-                        <span className="text-text-normal truncate">
-                          <span className="text-[#58a6ff] font-bold text-[10px] mr-1 shrink-0">[詳細]</span>
+                        <span className="text-text-bright truncate">
+                          <span className="text-text-bright font-bold text-[10px] mr-1 shrink-0">[詳細]</span>
                           {st.description}
                         </span>
                       ) : memo?.text ? (
@@ -1211,7 +1214,7 @@ export default function StockList({
                     >
                       <button
                         onClick={() => setMovingStocks([st])}
-                        className="p-1 hover:text-[#58a6ff] transition-colors shrink-0"
+                        className="p-1 hover:text-text-bright transition-colors shrink-0"
                         title={language === 'EN' ? 'Move to category' : 'カテゴリー移動'}
                       >
                         <FolderInput size={11} />

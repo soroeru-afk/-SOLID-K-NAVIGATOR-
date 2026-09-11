@@ -33,3 +33,5 @@ export interface Stock {
   description?: string;
 }
 
+export type FolderColor = 'theme' | 'amber' | 'blue' | 'white' | 'black' | 'gray';
+

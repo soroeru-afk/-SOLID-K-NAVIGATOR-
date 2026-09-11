@@ -4,11 +4,12 @@ import {
   LineChart, Folder, ChevronRight, Globe, Link2, Sparkles, Compass, 
   Search, Tag, LayoutGrid, List
 } from 'lucide-react';
-import { MarketLink } from '../types';
+import { MarketLink, FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
 import { Theme } from '../App';
 import { tankenCategories } from '../data/tankenData';
 import { openExternalWindow } from '../lib/windowUtils';
+import { getFolderColorClass } from '../lib/folderUtils';
 
 interface Props {
   links: MarketLink[];
@@ -17,6 +18,7 @@ interface Props {
   language: Language;
   theme: Theme;
   fontSize: number;
+  folderColor?: FolderColor;
 }
 
 export default function MarketDataView({
@@ -25,7 +27,8 @@ export default function MarketDataView({
   onBackToStocks,
   language,
   theme,
-  fontSize
+  fontSize,
+  folderColor = 'theme'
 }: Props) {
   const [activeTab, setActiveTab] = useState<'links' | 'tanken'>('links');
   
@@ -125,14 +128,14 @@ export default function MarketDataView({
             onClick={onBackToStocks}
             className="font-bold flex items-center gap-1.5 text-text-dim hover:text-text-bright transition-colors"
           >
-            <Folder size={13} className="text-[#d29922]" />
+            <Folder size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, false, true)}`} />
             <span>[ {language === 'EN' ? 'ALL DATA' : 'ALL DATA'} ]</span>
           </button>
 
           <ChevronRight size={12} className="text-text-dim shrink-0" />
 
-          <span className="font-bold text-[#58a6ff] flex items-center gap-1.5 truncate">
-            <LineChart size={13} className="shrink-0" />
+          <span className="font-bold text-text-bright flex items-center gap-1.5 truncate">
+            <LineChart size={13} className="shrink-0 text-text-bright" />
             [ STOCK MARKET DATA ]
           </span>
         </div>
@@ -222,7 +225,7 @@ export default function MarketDataView({
                   onClick={() => toggleLinkViewMode('card')}
                   className={`p-1 rounded-xs transition-colors ${
                     linkViewMode === 'card'
-                      ? 'bg-border-main text-[#58a6ff]'
+                      ? 'bg-border-main text-text-bright border border-border-light shadow-xs'
                       : 'text-text-dim hover:text-text-bright'
                   }`}
                   title="カード型表示"
@@ -234,7 +237,7 @@ export default function MarketDataView({
                   onClick={() => toggleLinkViewMode('list')}
                   className={`p-1 rounded-xs transition-colors ${
                     linkViewMode === 'list'
-                      ? 'bg-border-main text-[#58a6ff]'
+                      ? 'bg-border-main text-text-bright border border-border-light shadow-xs'
                       : 'text-text-dim hover:text-text-bright'
                   }`}
                   title="リスト型表示"
@@ -391,7 +394,7 @@ export default function MarketDataView({
                                 e.preventDefault();
                                 openExternalWindow(link.url);
                               }}
-                              className="block font-bold text-text-bright hover:text-[#58a6ff] hover:underline transition-colors tracking-wide mb-2 line-clamp-2 leading-snug"
+                              className="block font-bold text-text-bright hover:text-white hover:underline transition-colors tracking-wide mb-2 line-clamp-2 leading-snug"
                               style={{ fontSize: `${customFontSize}px` }}
                               title={`${link.title}（別ウィンドウで開く）`}
                             >
@@ -415,7 +418,7 @@ export default function MarketDataView({
                                 e.preventDefault();
                                 openExternalWindow(link.url);
                               }}
-                              className="flex items-center gap-1 text-[10px] font-bold text-text-dim group-hover:text-[#58a6ff] hover:underline transition-colors"
+                              className="flex items-center gap-1 text-[10px] font-bold text-text-dim group-hover:text-text-bright hover:underline transition-colors"
                               title="別ウィンドウで開く"
                             >
                               <span>開く</span>
@@ -503,7 +506,7 @@ export default function MarketDataView({
                             e.preventDefault();
                             openExternalWindow(link.url);
                           }}
-                          className="font-bold text-text-bright hover:text-[#58a6ff] hover:underline transition-colors truncate"
+                          className="font-bold text-text-bright hover:text-white hover:underline transition-colors truncate"
                           style={{ fontSize: `${customFontSize}px` }}
                           title={`${link.title}（別ウィンドウで開く）`}
                         >
@@ -559,7 +562,7 @@ export default function MarketDataView({
                             e.preventDefault();
                             openExternalWindow(link.url);
                           }}
-                          className="flex items-center gap-1 px-2 py-1 border border-border-main bg-base-bg text-[11px] font-bold text-text-dim group-hover:text-[#58a6ff] hover:border-border-light transition-colors ml-1"
+                          className="flex items-center gap-1 px-2 py-1 border border-border-main bg-base-bg text-[11px] font-bold text-text-dim group-hover:text-text-bright hover:border-border-light transition-colors ml-1"
                           title="別ウィンドウで開く"
                         >
                           <span>開く</span>
@@ -669,7 +672,7 @@ export default function MarketDataView({
                                   title={`${item.title}（別ウィンドウで開く）`}
                                 >
                                   <div className="flex items-center gap-2 truncate">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-text-dim/60 group-hover:bg-[#58a6ff] shrink-0 transition-colors" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-text-dim/60 group-hover:bg-text-bright shrink-0 transition-colors" />
                                     <span 
                                       className="truncate group-hover:underline"
                                       style={{ fontSize: `${Math.max(12, customFontSize - 1)}px` }}

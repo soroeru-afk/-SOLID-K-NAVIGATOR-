@@ -601,7 +601,7 @@ export default function StockDetailModal({
                       setBwpDateInput(bwp.setAt || '');
                       setIsEditingBwp(true);
                     }}
-                    className="text-base font-bold font-mono text-text-bright cursor-pointer hover:text-[#58a6ff] transition-colors"
+                    className="text-base font-bold font-mono text-text-bright cursor-pointer hover:text-text-bright transition-colors"
                     title="クリックして買値を編集"
                   >
                     ¥{bwp.price}
@@ -658,7 +658,7 @@ export default function StockDetailModal({
                 className="flex items-center justify-center gap-1.5 px-3 py-2 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-[11px]"
                 title="株探の基本情報を完全に独立した新規ウィンドウで開く"
               >
-                <ExternalLink size={12} className="text-[#58a6ff]" />
+                <ExternalLink size={12} className="text-text-bright" />
                 {t.openKabutan}
               </a>
               <a
@@ -725,7 +725,7 @@ export default function StockDetailModal({
             {/* Header: Title and TTS Audio Controls (グレー枠の上・外側に配置) */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-[10px] text-text-dim font-bold tracking-wider flex items-center gap-1.5">
-                <Tag size={12} className="text-[#58a6ff]" />
+                <Tag size={12} className="text-text-bright" />
                 <span>企業概要・詳細情報 (銘柄詳細)</span>
               </div>
 
@@ -838,7 +838,7 @@ export default function StockDetailModal({
                   className={`h-7 px-2.5 bg-base-bg border border-border-main hover:border-border-light text-[10px] font-bold inline-flex items-center gap-1 rounded-xs transition-colors box-border shrink-0 ${
                     isEditingDesc 
                       ? 'text-[#3fb950] border-[#2ea043]/50' 
-                      : 'text-[#58a6ff] hover:text-[#79c0ff]'
+                      : 'text-text-bright hover:text-white'
                   }`}
                   title={isEditingDesc ? "編集を完了" : "企業概要・詳細情報を編集"}
                 >
@@ -869,7 +869,7 @@ export default function StockDetailModal({
                 />
               ) : descText ? (
                 <div 
-                  className="text-text-normal leading-relaxed whitespace-pre-wrap font-sans select-text"
+                  className="text-text-bright leading-relaxed whitespace-pre-wrap font-sans select-text"
                   style={{ fontSize: `${memoFontSize}px` }}
                 >
                   {descText}
@@ -956,7 +956,7 @@ export default function StockDetailModal({
                   <button
                     type="button"
                     onClick={() => setMemoViewMode('edit')}
-                    className="text-[#58a6ff] hover:underline font-bold"
+                    className="text-text-bright hover:underline font-bold"
                   >
                     テキストを編集
                   </button>
@@ -999,7 +999,7 @@ export default function StockDetailModal({
                                 <Play size={10} className="fill-current ml-0.5" />
                               )}
                             </button>
-                            <p className="flex-1 whitespace-pre-wrap leading-relaxed select-text">
+                            <p className="flex-1 whitespace-pre-wrap leading-relaxed select-text text-text-bright">
                               {para}
                             </p>
                           </div>
