@@ -1,8 +1,8 @@
-const CACHE_NAME = 'solid-k-navigator-v5.1';
+const CACHE_NAME = 'solid-k-navigator-v5.2';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
+  './',
+  './index.html',
+  './manifest.json',
 ];
 
 // Install event - cache static assets
@@ -51,7 +51,7 @@ self.addEventListener('fetch', (event) => {
       .catch(() => {
         // Fall back to cache if network fails
         return caches.match(event.request).then((cachedResponse) => {
-          return cachedResponse || caches.match('/index.html');
+          return cachedResponse || caches.match('./index.html');
         });
       })
   );
