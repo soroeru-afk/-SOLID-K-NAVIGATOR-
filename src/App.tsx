@@ -438,6 +438,7 @@ export default function App() {
       black: '#0a0d12',
       dark: '#0d131f',
       light: '#e2e8f0',
+      red: '#0d0404',
     };
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
