@@ -51,13 +51,9 @@ export default function Header({
 
   return (
     <header className="flex justify-between items-center w-full shrink-0 border border-border-main bg-panel-bg px-3 py-1.5 md:py-2 relative overflow-x-auto scrollbar-none gap-2">
-        <div className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold tracking-widest hidden md:block select-none pointer-events-none">
-            {t.systemControl}
-        </div>
-        
         {/* Left Label */}
         <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[10px] text-text-dim font-mono tracking-wider font-bold hidden lg:inline">{t.canvasEnv}</span>
+            <span className="text-[10px] text-text-dim font-mono tracking-wider font-bold hidden md:inline">{t.canvasEnv}</span>
         </div>
 
         {/* Right Controls Container - Single Row (No Wrap) */}
