@@ -3,7 +3,7 @@ import {
   Database, FileText, Trash2, CheckSquare, Square, Pencil, ExternalLink, 
   ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, X, LayoutGrid, List as ListIcon, 
   Folder, FolderOpen, FolderInput, FolderPlus, ChevronRight, ChevronDown, RefreshCw, 
-  ChevronUp, RotateCcw
+  ChevronUp, RotateCcw, GripVertical
 } from 'lucide-react';
 import { Stock, Category, StockMemo, FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
@@ -22,6 +22,7 @@ interface Props {
   onDelete: (ids: string[]) => void;
   onUpdate: (id: string, updates: Partial<Stock>) => void;
   onMoveStock?: (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => void;
+  onReorderStocks?: (sourceIds: string[], targetId: string, position: 'before' | 'after') => void;
   onMoveStocksToCategory?: (ids: string[], categoryId: string) => void;
   onAddCategory?: (name: string, parentId?: string | null) => void;
   onRefreshPrice?: (code: string) => Promise<void>;
@@ -76,6 +77,7 @@ export default function StockList({
   onDelete,
   onUpdate,
   onMoveStock,
+  onReorderStocks,
   onMoveStocksToCategory,
   onAddCategory,
   onRefreshPrice,
@@ -100,6 +102,12 @@ export default function StockList({
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [selectedStockForDetail, setSelectedStockForDetail] = useState<Stock | null>(null);
   const [movingStocks, setMovingStocks] = useState<Stock[] | null>(null);
+
+  // Drag & drop state for stocks
+  const [draggingStockIds, setDraggingStockIds] = useState<string[]>([]);
+  const [dragOverStockId, setDragOverStockId] = useState<string | null>(null);
+  const [dragInsertPosition, setDragInsertPosition] = useState<'before' | 'after'>('before');
+  const [dragOverCategoryId, setDragOverCategoryId] = useState<string | null>(null);
   
   // Resizable column widths for list view (persisted in localStorage)
   const [columnWidths, setColumnWidths] = useState<ListColumnWidths>(() => {
@@ -358,6 +366,93 @@ export default function StockList({
     setEditingId(null);
   };
 
+  // Drag & drop handlers for stocks
+  const handleDragStart = (e: React.DragEvent, st: Stock) => {
+    const idsToDrag = selectedIds.has(st.id) ? Array.from(selectedIds) : [st.id];
+    setDraggingStockIds(idsToDrag);
+    e.dataTransfer.setData('text/plain', st.code);
+    e.dataTransfer.setData('text/stock-id', st.id);
+    e.dataTransfer.setData('application/json', JSON.stringify({ stockIds: idsToDrag, sourceCategoryId: st.categoryId }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setDraggingStockIds([]);
+    setDragOverStockId(null);
+    setDragOverCategoryId(null);
+  };
+
+  const handleDragOverStock = (e: React.DragEvent, targetStock: Stock, isCard: boolean) => {
+    if (draggingStockIds.length === 0 || draggingStockIds.includes(targetStock.id)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    let pos: 'before' | 'after' = 'before';
+    if (isCard) {
+      const midX = rect.left + rect.width / 2;
+      pos = e.clientX > midX ? 'after' : 'before';
+    } else {
+      const midY = rect.top + rect.height / 2;
+      pos = e.clientY > midY ? 'after' : 'before';
+    }
+    
+    if (dragOverStockId !== targetStock.id || dragInsertPosition !== pos) {
+      setDragOverStockId(targetStock.id);
+      setDragInsertPosition(pos);
+    }
+  };
+
+  const handleDragLeaveStock = (e: React.DragEvent, targetStock: Stock) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    if (dragOverStockId === targetStock.id) {
+      setDragOverStockId(null);
+    }
+  };
+
+  const handleDropStock = (e: React.DragEvent, targetStock: Stock) => {
+    e.preventDefault();
+    if (draggingStockIds.length > 0 && !draggingStockIds.includes(targetStock.id)) {
+      onReorderStocks?.(draggingStockIds, targetStock.id, dragInsertPosition);
+    }
+    setDraggingStockIds([]);
+    setDragOverStockId(null);
+  };
+
+  const handleCategoryDragOver = (e: React.DragEvent, catId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverCategoryId !== catId) {
+      setDragOverCategoryId(catId);
+    }
+  };
+
+  const handleCategoryDragLeave = (e: React.DragEvent, catId: string) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    if (dragOverCategoryId === catId) {
+      setDragOverCategoryId(null);
+    }
+  };
+
+  const handleCategoryDrop = (e: React.DragEvent, catId: string) => {
+    e.preventDefault();
+    let stockIdsToMove = draggingStockIds;
+    if (stockIdsToMove.length === 0) {
+      try {
+        const raw = e.dataTransfer.getData('application/json');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data.stockIds) stockIdsToMove = data.stockIds;
+        }
+      } catch {}
+    }
+    if (stockIdsToMove.length > 0) {
+      onMoveStocksToCategory?.(stockIdsToMove, catId);
+    }
+    setDraggingStockIds([]);
+    setDragOverCategoryId(null);
+  };
+
   // Sub-categories or Root-categories to show in grid card section
   const gridCategories = useMemo(() => {
     if (activeCategory === 'MARKET_DATA' || activeCategory === 'UNASSIGNED') {
@@ -523,26 +618,36 @@ export default function StockList({
           {/* Grid Layout (Hidden when collapsed) */}
           {!isCategoriesCollapsed && gridCategories.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-40 overflow-y-auto pr-1 scrollbar-thin mt-2">
-              {gridCategories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => onSelectCategory(cat.id)}
-                  className="group flex items-center justify-between px-3 py-1.5 bg-base-bg border border-border-main hover:border-border-light hover:bg-border-main/30 text-left transition-colors h-9 shadow-xs"
-                >
-                  <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
-                    <Folder size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, false, !activeCategory)} group-hover:scale-105 transition-transform`} />
-                    <span 
-                      className="font-bold text-text-bright truncate"
-                      style={{ fontSize: listFontSize }}
-                    >
-                      {cat.name}
+              {gridCategories.map(cat => {
+                const isDragTarget = dragOverCategoryId === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => onSelectCategory(cat.id)}
+                    onDragOver={(e) => handleCategoryDragOver(e, cat.id)}
+                    onDragLeave={(e) => handleCategoryDragLeave(e, cat.id)}
+                    onDrop={(e) => handleCategoryDrop(e, cat.id)}
+                    className={`group flex items-center justify-between px-3 py-1.5 bg-base-bg border text-left transition-colors h-9 shadow-xs ${
+                      isDragTarget 
+                        ? 'border-border-light bg-border-main/40 ring-1 ring-border-light' 
+                        : 'border-border-main hover:border-border-light hover:bg-border-main/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
+                      <Folder size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, false, !activeCategory)} group-hover:scale-105 transition-transform`} />
+                      <span 
+                        className="font-bold text-text-bright truncate"
+                        style={{ fontSize: listFontSize }}
+                      >
+                        {cat.name}
+                      </span>
+                    </div>
+                    <span className="px-1.5 py-0.2 bg-panel-bg border border-border-main text-text-dim text-[10px] font-mono font-bold shrink-0 ml-2">
+                      {cat.count}
                     </span>
-                  </div>
-                  <span className="px-1.5 py-0.2 bg-panel-bg border border-border-main text-text-dim text-[10px] font-mono font-bold shrink-0 ml-2">
-                    {cat.count}
-                  </span>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -728,12 +833,24 @@ export default function StockList({
               const memo = getMemoData(st.code);
               const isSelected = selectedIds.has(st.id);
               const isRefreshingThis = refreshingCode === st.code;
+              const isDragging = draggingStockIds.includes(st.id);
+              const isDropTarget = dragOverStockId === st.id;
 
               return (
                 <div
                   key={st.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, st)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOverStock(e, st, true)}
+                  onDragLeave={(e) => handleDragLeaveStock(e, st)}
+                  onDrop={(e) => handleDropStock(e, st)}
                   className={`group relative flex flex-col justify-between border bg-base-bg/40 hover:bg-base-bg/90 transition-all shadow-sm ${
-                    isSelected ? 'border-border-light ring-1 ring-border-light' : 'border-border-main hover:border-border-light'
+                    isDragging ? 'opacity-40 border-dashed scale-[0.99]' : ''
+                  } ${
+                    isDropTarget 
+                      ? (dragInsertPosition === 'before' ? 'border-l-4 border-l-border-light ring-2 ring-border-light bg-border-main/20' : 'border-r-4 border-r-border-light ring-2 ring-border-light bg-border-main/20')
+                      : (isSelected ? 'border-border-light ring-1 ring-border-light' : 'border-border-main hover:border-border-light')
                   }`}
                   style={{
                     backgroundColor: theme === 'light' ? '#FFFFFF' : undefined,
@@ -743,7 +860,15 @@ export default function StockList({
                   {/* Card Header Top (Checkbox, Code Badge, Quick Actions) */}
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        {/* Drag Handle */}
+                        <div
+                          className="cursor-grab active:cursor-grabbing text-text-dim/40 group-hover:text-text-dim hover:!text-text-bright transition-colors p-0.5"
+                          title={language === 'EN' ? 'Drag to reorder' : 'ドラッグして並び替え'}
+                        >
+                          <GripVertical size={13} />
+                        </div>
+
                         <button
                           onClick={(e) => toggleSelect(st.id, e)}
                           className="text-text-dim hover:text-text-bright transition-colors"
@@ -1076,19 +1201,39 @@ export default function StockList({
                 const memo = getMemoData(st.code);
                 const isSelected = selectedIds.has(st.id);
                 const isRefreshingThis = refreshingCode === st.code;
+                const isDragging = draggingStockIds.includes(st.id);
+                const isDropTarget = dragOverStockId === st.id;
 
                 return (
                   <div
                     key={st.id}
-                    className={`group flex items-stretch border transition-colors pl-2 pr-0 min-w-full ${
-                      isSelected ? 'border-border-light bg-border-main/20' : 'border-border-main hover:border-border-light bg-base-bg/30 hover:bg-base-bg/80'
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, st)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOverStock(e, st, false)}
+                    onDragLeave={(e) => handleDragLeaveStock(e, st)}
+                    onDrop={(e) => handleDropStock(e, st)}
+                    className={`group flex items-stretch border transition-colors pl-1.5 pr-0 min-w-full relative ${
+                      isDragging ? 'opacity-40 border-dashed' : ''
+                    } ${
+                      isDropTarget
+                        ? (dragInsertPosition === 'before' ? 'border-t-2 border-t-border-light bg-border-main/30' : 'border-b-2 border-b-border-light bg-border-main/30')
+                        : (isSelected ? 'border-border-light bg-border-main/20' : 'border-border-main hover:border-border-light bg-base-bg/30 hover:bg-base-bg/80')
                     }`}
                   >
                     {/* Col 1: Code & Checkbox */}
                     <div 
                       style={{ width: columnWidths.code, minWidth: MIN_COLUMN_WIDTHS.code, flexShrink: 0 }}
-                      className="flex items-center gap-2 pr-2 py-1.5 overflow-hidden"
+                      className="flex items-center gap-1.5 pr-2 py-1.5 overflow-hidden"
                     >
+                      {/* Drag Handle */}
+                      <div
+                        className="cursor-grab active:cursor-grabbing text-text-dim/40 group-hover:text-text-dim hover:!text-text-bright transition-colors p-0.5 shrink-0"
+                        title={language === 'EN' ? 'Drag to reorder' : 'ドラッグして並び替え'}
+                      >
+                        <GripVertical size={13} />
+                      </div>
+
                       <button
                         onClick={(e) => toggleSelect(st.id, e)}
                         className="text-text-dim hover:text-text-bright transition-colors shrink-0"

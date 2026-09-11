@@ -568,6 +568,43 @@ export default function App() {
     });
   };
 
+  const reorderStocks = (sourceIds: string[], targetId: string, position: 'before' | 'after' = 'before') => {
+    if (!sourceIds.length || sourceIds.includes(targetId)) return;
+    setStocks(prev => {
+      const itemsToMove = prev.filter(s => sourceIds.includes(s.id));
+      if (itemsToMove.length === 0) return prev;
+      const remaining = prev.filter(s => !sourceIds.includes(s.id));
+      
+      let targetIdx = remaining.findIndex(s => s.id === targetId);
+      if (targetIdx < 0) {
+        return [...remaining, ...itemsToMove];
+      }
+      if (position === 'after') {
+        targetIdx += 1;
+      }
+      remaining.splice(targetIdx, 0, ...itemsToMove);
+      return remaining;
+    });
+  };
+
+  const reorderCategory = (sourceId: string, targetId: string, position: 'before' | 'after' = 'before') => {
+    if (sourceId === targetId) return;
+    setCategories(prev => {
+      const newCats = [...prev];
+      const sourceIdx = newCats.findIndex(c => c.id === sourceId);
+      if (sourceIdx < 0) return prev;
+      const [moved] = newCats.splice(sourceIdx, 1);
+      
+      let targetIdx = newCats.findIndex(c => c.id === targetId);
+      if (targetIdx < 0) return prev;
+      if (position === 'after') {
+        targetIdx += 1;
+      }
+      newCats.splice(targetIdx, 0, moved);
+      return newCats;
+    });
+  };
+
   const handleExportJson = () => {
     const bbHistory: Record<string, any> = {};
     const closeCache: Record<string, any> = {};
@@ -769,6 +806,8 @@ export default function App() {
           onLoadEnrichedData={handleLoadEnrichedPreset}
           onDownloadEnrichedData={handleDownloadEnrichedJson}
           folderColor={folderColor}
+          onReorderCategory={reorderCategory}
+          onMoveStocksToCategory={moveStocksToCategory}
         />
         <div 
            className={`absolute top-0 ${sidebarPos === 'right' ? 'left-0 -ml-1' : 'right-0'} w-2 h-full cursor-col-resize hover:bg-border-light/30 active:bg-border-light/50 transition-colors z-20`}
@@ -805,6 +844,8 @@ export default function App() {
           onLoadEnrichedData={handleLoadEnrichedPreset}
           onDownloadEnrichedData={handleDownloadEnrichedJson}
           folderColor={folderColor}
+          onReorderCategory={reorderCategory}
+          onMoveStocksToCategory={moveStocksToCategory}
         />
       </div>
 
@@ -851,6 +892,7 @@ export default function App() {
               onDelete={deleteStocks} 
               onUpdate={updateStock}
               onMoveStock={moveStock}
+              onReorderStocks={reorderStocks}
               onMoveStocksToCategory={moveStocksToCategory}
               onAddCategory={addCategory}
               onRefreshPrice={fetchSinglePrice}

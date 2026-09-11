@@ -3,7 +3,7 @@ import {
   LayoutGrid, Folders, Plus, Folder, FolderOpen, FolderPlus, Download, 
   FileCode, Pencil, Trash2, ArrowUp, ArrowDown, Activity, ChevronDown, 
   ChevronRight, LineChart, ExternalLink, Settings, Compass, 
-  RefreshCw, Maximize2, Sparkles, AlertTriangle, X, Globe, Square
+  RefreshCw, Maximize2, Sparkles, AlertTriangle, X, Globe, Square, GripVertical
 } from 'lucide-react';
 import { Category, MarketLink, Stock, FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
@@ -23,6 +23,8 @@ interface Props {
   onUpdateCategory: (id: string, name: string) => void;
   onDeleteCategory: (id: string) => void;
   onMoveCategory?: (id: string, direction: 'up' | 'down') => void;
+  onReorderCategory?: (sourceId: string, targetId: string, position: 'before' | 'after') => void;
+  onMoveStocksToCategory?: (ids: string[], categoryId: string) => void;
   activeCategory: string | null;
   onSelectCategory: (id: string | null) => void;
   language: Language;
@@ -50,6 +52,8 @@ export default function Sidebar({
   onUpdateCategory,
   onDeleteCategory,
   onMoveCategory,
+  onReorderCategory,
+  onMoveStocksToCategory,
   activeCategory,
   onSelectCategory,
   language,
@@ -81,6 +85,13 @@ export default function Sidebar({
   const [collapsedCatIds, setCollapsedCatIds] = useState<Set<string>>(new Set());
   const [isRestoreConfirmOpen, setIsRestoreConfirmOpen] = useState(false);
   const [isProxyModalOpen, setIsProxyModalOpen] = useState(false);
+
+  // Drag & drop state for Sidebar
+  const [draggingCatId, setDraggingCatId] = useState<string | null>(null);
+  const [dragOverCatId, setDragOverCatId] = useState<string | null>(null);
+  const [dragOverIsStock, setDragOverIsStock] = useState<boolean>(false);
+  const [dragCatInsertPos, setDragCatInsertPos] = useState<'before' | 'after'>('before');
+  const [dragOverUnassigned, setDragOverUnassigned] = useState<boolean>(false);
   
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const t = i18n[language];
@@ -91,6 +102,116 @@ export default function Sidebar({
   const handleSaveMarketLinks = (links: MarketLink[]) => {
     onMarketLinksChange(links);
     setIsMarketLinkEditorOpen(false);
+  };
+
+  // Category Drag Handlers
+  const handleCatDragStart = (e: React.DragEvent, c: Category) => {
+    setDraggingCatId(c.id);
+    e.dataTransfer.setData('text/category-id', c.id);
+    e.dataTransfer.setData('text/plain', c.name);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleCatDragEnd = () => {
+    setDraggingCatId(null);
+    setDragOverCatId(null);
+    setDragOverIsStock(false);
+    setDragOverUnassigned(false);
+  };
+
+  const handleCatDragOver = (e: React.DragEvent, c: Category) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Check if dragging a stock or a category
+    const isStockDrag = !draggingCatId;
+    setDragOverIsStock(isStockDrag);
+
+    if (isStockDrag) {
+      e.dataTransfer.dropEffect = 'move';
+      if (dragOverCatId !== c.id) {
+        setDragOverCatId(c.id);
+      }
+    } else {
+      if (draggingCatId === c.id) return;
+      e.dataTransfer.dropEffect = 'move';
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const pos = e.clientY > midY ? 'after' : 'before';
+      setDragOverCatId(c.id);
+      setDragCatInsertPos(pos);
+    }
+  };
+
+  const handleCatDragLeave = (e: React.DragEvent, c: Category) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    if (dragOverCatId === c.id) {
+      setDragOverCatId(null);
+      setDragOverIsStock(false);
+    }
+  };
+
+  const handleCatDrop = (e: React.DragEvent, c: Category) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (dragOverIsStock) {
+      // Dropping stocks into this category
+      let stockIdsToMove: string[] = [];
+      try {
+        const raw = e.dataTransfer.getData('application/json');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data.stockIds) stockIdsToMove = data.stockIds;
+        }
+      } catch {}
+      if (stockIdsToMove.length === 0) {
+        const singleId = e.dataTransfer.getData('text/stock-id');
+        if (singleId) stockIdsToMove = [singleId];
+      }
+
+      if (stockIdsToMove.length > 0) {
+        onMoveStocksToCategory?.(stockIdsToMove, c.id);
+      }
+    } else if (draggingCatId && draggingCatId !== c.id) {
+      // Reordering categories
+      onReorderCategory?.(draggingCatId, c.id, dragCatInsertPos);
+    }
+
+    setDraggingCatId(null);
+    setDragOverCatId(null);
+    setDragOverIsStock(false);
+  };
+
+  const handleUnassignedDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverUnassigned(true);
+  };
+
+  const handleUnassignedDragLeave = (e: React.DragEvent) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setDragOverUnassigned(false);
+  };
+
+  const handleUnassignedDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    let stockIdsToMove: string[] = [];
+    try {
+      const raw = e.dataTransfer.getData('application/json');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.stockIds) stockIdsToMove = data.stockIds;
+      }
+    } catch {}
+    if (stockIdsToMove.length === 0) {
+      const singleId = e.dataTransfer.getData('text/stock-id');
+      if (singleId) stockIdsToMove = [singleId];
+    }
+    if (stockIdsToMove.length > 0) {
+      onMoveStocksToCategory?.(stockIdsToMove, '');
+    }
+    setDragOverUnassigned(false);
   };
 
   const handleAdd = (e: React.FormEvent) => {
@@ -168,6 +289,9 @@ export default function Sidebar({
     const { directCount, totalCount } = countStocksInCategory(c.id, categories, stocks);
     const displayCount = hasChildren && totalCount !== directCount ? `${directCount} / ${totalCount}` : directCount;
 
+    const isDraggingThisCat = draggingCatId === c.id;
+    const isDragOverThisCat = dragOverCatId === c.id;
+
     return (
       <div key={c.id} className="flex flex-col">
         <div className="relative group/cat">
@@ -190,14 +314,34 @@ export default function Sidebar({
           ) : (
             <div
               onClick={() => onSelectCategory(c.id)}
-              className={`w-full flex items-center justify-between py-1 px-2 cursor-pointer border transition-colors ${
-                isSelected 
-                  ? 'border-border-light bg-border-main text-text-bright' 
-                  : 'border-transparent text-text-normal hover:text-text-bright hover:bg-border-main/30'
+              draggable
+              onDragStart={(e) => handleCatDragStart(e, c)}
+              onDragEnd={handleCatDragEnd}
+              onDragOver={(e) => handleCatDragOver(e, c)}
+              onDragLeave={(e) => handleCatDragLeave(e, c)}
+              onDrop={(e) => handleCatDrop(e, c)}
+              className={`w-full flex items-center justify-between py-1 px-2 cursor-pointer border transition-colors relative ${
+                isDraggingThisCat ? 'opacity-40 border-dashed' : ''
+              } ${
+                isDragOverThisCat
+                  ? (dragOverIsStock 
+                      ? 'border-border-light bg-border-main/60 text-text-bright ring-1 ring-border-light' 
+                      : (dragCatInsertPos === 'before' ? 'border-t-2 border-t-border-light bg-border-main/30' : 'border-b-2 border-b-border-light bg-border-main/30'))
+                  : (isSelected 
+                      ? 'border-border-light bg-border-main text-text-bright' 
+                      : 'border-transparent text-text-normal hover:text-text-bright hover:bg-border-main/30')
               }`}
-              style={{ paddingLeft: `${level * 14 + 6}px` }}
+              style={{ paddingLeft: `${level * 14 + 4}px` }}
             >
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              <div className="flex items-center gap-1 min-w-0 flex-1">
+                {/* Drag Grip Handle */}
+                <div 
+                  className="cursor-grab active:cursor-grabbing text-text-dim/30 group-hover/cat:text-text-dim hover:!text-text-bright transition-colors p-0.5 shrink-0"
+                  title={language === 'EN' ? 'Drag to reorder folder' : 'ドラッグしてフォルダーを並び替え'}
+                >
+                  <GripVertical size={11} />
+                </div>
+
                 {/* Expand / Collapse toggle arrow */}
                 {hasChildren ? (
                   <button
@@ -207,7 +351,7 @@ export default function Sidebar({
                     {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
                   </button>
                 ) : (
-                  <span className="w-3 shrink-0" />
+                  <span className="w-2 shrink-0" />
                 )}
 
                 {/* Folder icon */}
@@ -619,10 +763,15 @@ export default function Sidebar({
               {/* UNASSIGNED item */}
               <button 
                 onClick={() => onSelectCategory('UNASSIGNED')}
+                onDragOver={handleUnassignedDragOver}
+                onDragLeave={handleUnassignedDragLeave}
+                onDrop={handleUnassignedDrop}
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 border transition-colors group/unassigned mt-1 ${
-                  activeCategory === 'UNASSIGNED' 
-                    ? 'border-border-light bg-border-main text-text-bright' 
-                    : 'border-transparent text-text-normal hover:text-text-bright'
+                  dragOverUnassigned
+                    ? 'border-border-light bg-border-main/60 text-text-bright ring-1 ring-border-light'
+                    : (activeCategory === 'UNASSIGNED' 
+                        ? 'border-border-light bg-border-main text-text-bright' 
+                        : 'border-transparent text-text-normal hover:text-text-bright')
                 }`}
               >
                 <div className="flex items-center gap-2">
