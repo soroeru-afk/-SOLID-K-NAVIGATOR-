@@ -50,17 +50,21 @@ export default function Header({
   const t = i18n[language];
 
   return (
-    <header className="flex justify-between items-center w-full shrink-0 border border-border-main bg-panel-bg px-3 py-2.5 md:p-3 relative flex-wrap gap-2 md:gap-4">
-        <div className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold tracking-widest hidden md:block">
+    <header className="flex justify-between items-center w-full shrink-0 border border-border-main bg-panel-bg px-3 py-1.5 md:py-2 relative overflow-x-auto scrollbar-none gap-2">
+        <div className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold tracking-widest hidden md:block select-none pointer-events-none">
             {t.systemControl}
         </div>
-        <div className="flex items-center gap-3">
-            <span className="text-[10px] text-text-dim hidden md:inline">{t.canvasEnv}</span>
+        
+        {/* Left Label */}
+        <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] text-text-dim font-mono tracking-wider font-bold hidden lg:inline">{t.canvasEnv}</span>
         </div>
-        <div className="flex items-center gap-4 md:gap-6 text-[10px] ml-auto flex-wrap">
+
+        {/* Right Controls Container - Single Row (No Wrap) */}
+        <div className="flex items-center gap-2 sm:gap-3 lg:gap-3.5 text-[10px] ml-auto shrink-0 whitespace-nowrap">
             {/* TEXT & LIST SIZE Slider */}
-            <div className="flex items-center gap-1.5">
-                <span className="text-text-dim hidden md:inline font-mono">TEXT SIZE:</span>
+            <div className="flex items-center gap-1 shrink-0">
+                <span className="text-text-dim hidden xl:inline font-mono">TEXT:</span>
                 <input 
                   type="range" 
                   min="11" 
@@ -68,15 +72,15 @@ export default function Header({
                   step="1"
                   value={listFontSize} 
                   onChange={(e) => onListFontSizeChange(Number(e.target.value))}
-                  className="w-14 md:w-16 accent-border-light cursor-pointer"
+                  className="w-12 sm:w-14 accent-border-light cursor-pointer h-3"
                   title={`Text / Folder / Info Size: ${listFontSize}px`}
                 />
-                <span className="text-text-dim w-7 text-right font-mono">{listFontSize}PX</span>
+                <span className="text-text-dim w-6 text-right font-mono text-[9px]">{listFontSize}PX</span>
             </div>
 
             {/* STOCK SIZE Slider */}
-            <div className="flex items-center gap-1.5">
-                <span className="text-text-bright font-bold hidden md:inline font-mono">STOCK SIZE:</span>
+            <div className="flex items-center gap-1 shrink-0">
+                <span className="text-text-bright font-bold hidden xl:inline font-mono">STOCK:</span>
                 <input 
                   type="range" 
                   min="12" 
@@ -84,20 +88,22 @@ export default function Header({
                   step="1"
                   value={stockFontSize} 
                   onChange={(e) => onStockFontSizeChange(Number(e.target.value))}
-                  className="w-14 md:w-16 accent-border-light cursor-pointer"
+                  className="w-12 sm:w-14 accent-border-light cursor-pointer h-3"
                   title={`Stock Name Size: ${stockFontSize}px`}
                 />
-                <span className="text-text-bright font-bold w-7 text-right font-mono">{stockFontSize}PX</span>
+                <span className="text-text-bright font-bold w-6 text-right font-mono text-[9px]">{stockFontSize}PX</span>
             </div>
 
             {/* PRICE Color and Size */}
-            <div className="flex items-center gap-1.5">
-                <span className="text-text-dim hidden md:inline font-mono">PRICE:</span>
+            <div className="flex items-center gap-1 shrink-0">
+                <span className="text-text-dim hidden xl:inline font-mono">PRICE:</span>
                 <button
+                    type="button"
                     onClick={() => onPriceColorChange(priceColor === 'red' ? 'default' : 'red')}
-                    className="px-2 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors text-center text-[9px] font-mono"
+                    className="h-[22px] px-1.5 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors text-center text-[9px] font-mono shrink-0 rounded-xs"
+                    title="株価表示色切替 (THEME / RED)"
                 >
-                    COLOR: {priceColor === 'red' ? 'RED' : 'THEME'}
+                    {priceColor === 'red' ? 'RED' : 'THEME'}
                 </button>
                 <input 
                   type="range" 
@@ -106,15 +112,15 @@ export default function Header({
                   step="1"
                   value={priceFontSize} 
                   onChange={(e) => onPriceFontSizeChange(Number(e.target.value))}
-                  className="w-14 md:w-16 accent-border-light cursor-pointer"
+                  className="w-12 sm:w-14 accent-border-light cursor-pointer h-3"
                   title={`Price Font Size: ${priceFontSize}px`}
                 />
-                <span className="text-text-dim w-7 text-right font-mono">{priceFontSize}PX</span>
+                <span className="text-text-dim w-6 text-right font-mono text-[9px]">{priceFontSize}PX</span>
             </div>
 
             {/* FOLDER COLOR Selector */}
-            <div className="flex items-center gap-1.5">
-                <span className="text-text-dim hidden md:inline font-mono">FOLDER:</span>
+            <div className="flex items-center gap-1 shrink-0">
+                <span className="text-text-dim hidden xl:inline font-mono">FOLDER:</span>
                 <button
                     type="button"
                     onClick={() => {
@@ -123,37 +129,40 @@ export default function Header({
                       const next = colorOrder[(currentIndex + 1) % colorOrder.length];
                       onFolderColorChange(next);
                     }}
-                    className="w-[74px] h-[22px] px-1.5 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors text-center text-[9px] font-mono flex items-center justify-center gap-1.5 shrink-0"
+                    className="w-[68px] h-[22px] px-1.5 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors text-center text-[9px] font-mono flex items-center justify-center gap-1 shrink-0 rounded-xs"
                     title="フォルダーアイコン色：THEME(同系色) / AMBER(琥珀) / BLUE(青) / WHITE(白) / BLACK(黒) / GRAY(灰)"
                 >
-                    <span className={`w-2.5 h-2.5 rounded-xs shrink-0 ${getFolderColorBadgeClass(folderColor)}`} />
-                    <span className="w-[38px] text-left truncate">{folderColor === 'theme' ? 'THEME' : folderColor.toUpperCase()}</span>
+                    <span className={`w-2 h-2 rounded-xs shrink-0 ${getFolderColorBadgeClass(folderColor)}`} />
+                    <span className="w-[34px] text-left truncate">{folderColor === 'theme' ? 'THEME' : folderColor.toUpperCase()}</span>
                 </button>
             </div>
 
-            <div className="flex items-center gap-2">
-                <span className="text-text-dim mr-2 hidden md:inline">FONT:</span>
+            {/* FONT SELECTOR */}
+            <div className="flex items-center gap-1 shrink-0">
+                <span className="text-text-dim hidden xl:inline font-mono">FONT:</span>
                 <select
                   value={fontType}
                   onChange={(e) => onFontTypeChange(e.target.value as FontType)}
-                  className="bg-base-bg border border-border-main text-text-bright px-2 py-1 outline-none focus:border-border-light cursor-pointer"
+                  className="h-[22px] bg-base-bg border border-border-main text-text-bright px-1.5 py-0.5 outline-none focus:border-border-light cursor-pointer text-[10px] rounded-xs font-mono"
                 >
                   <option value="gothic">GOTHIC</option>
-                  <option value="maru">MARU GOTHIC</option>
+                  <option value="maru">MARU</option>
                   <option value="meiryo">MEIRYO</option>
                   <option value="mono">MONO</option>
                 </select>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* THEME BUTTON */}
+            <div className="flex items-center shrink-0">
                 <button
+                    type="button"
                     onClick={() => {
                       const next = theme === 'black' ? 'dark' : theme === 'dark' ? 'red' : theme === 'red' ? 'light' : 'black';
                       onThemeChange(next);
                     }}
-                    className="w-[180px] px-3 py-1 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors flex items-center justify-center gap-2 uppercase"
+                    className="w-[140px] sm:w-[150px] h-[22px] px-2 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors flex items-center justify-center gap-1.5 uppercase text-[9px] font-mono shrink-0 rounded-xs"
                 >
-                    <Palette size={14} className="text-text-dim shrink-0" />
+                    <Palette size={12} className="text-text-dim shrink-0" />
                     <span className="truncate">
                       THEME: {
                         theme === 'black' ? (t.blackTheme || 'ONYX BLACK') :
@@ -165,34 +174,40 @@ export default function Header({
                 </button>
             </div>
             
-            <div className="flex items-center gap-4 border-l border-border-main pl-6">
-                <div className="flex border border-border-main rounded text-[10px] overflow-hidden leading-none shrink-0 bg-base-bg">
+            {/* Action Toggles: EN/JP, Sidebar, Compact */}
+            <div className="flex items-center gap-1.5 border-l border-border-main pl-2 sm:pl-2.5 shrink-0">
+                <div className="flex border border-border-main rounded-xs text-[9px] font-mono overflow-hidden leading-none shrink-0 bg-base-bg h-[22px]">
                   <button
+                    type="button"
                     onClick={() => onLanguageChange('EN')}
-                    className={`px-3 py-1.5 transition-colors font-bold ${language === 'EN' ? 'bg-border-light text-text-bright' : 'text-text-dim hover:text-text-normal'}`}
+                    className={`px-1.5 sm:px-2 py-1 transition-colors font-bold ${language === 'EN' ? 'bg-border-light text-text-bright' : 'text-text-dim hover:text-text-normal'}`}
                   >
                     EN
                   </button>
                   <button
+                    type="button"
                     onClick={() => onLanguageChange('JP')}
-                    className={`px-3 py-1.5 transition-colors font-bold ${language === 'JP' ? 'bg-border-light text-text-bright' : 'text-text-dim hover:text-text-normal'}`}
+                    className={`px-1.5 sm:px-2 py-1 transition-colors font-bold ${language === 'JP' ? 'bg-border-light text-text-bright' : 'text-text-dim hover:text-text-normal'}`}
                   >
                     JP
                   </button>
                 </div>
 
                 <button
+                    type="button"
                     onClick={() => onSidebarPosChange(sidebarPos === 'left' ? 'right' : 'left')}
-                    className="p-1.5 border border-border-main rounded text-text-dim hover:text-text-normal hover:bg-border-main/50 transition-colors"
+                    className="w-[22px] h-[22px] flex items-center justify-center border border-border-main rounded-xs text-text-dim hover:text-text-normal hover:bg-border-main/50 transition-colors shrink-0"
+                    title="サイドバー位置切替"
                 >
-                    {sidebarPos === 'left' ? <PanelLeft size={16} /> : <PanelRight size={16} />}
+                    {sidebarPos === 'left' ? <PanelLeft size={13} /> : <PanelRight size={13} />}
                 </button>
                 <button
+                    type="button"
                     onClick={onToggleCompactMode}
                     title="Compact Mode"
-                    className="p-1.5 border border-border-main rounded text-text-dim hover:text-text-bright hover:bg-border-main/50 transition-colors ml-2"
+                    className="w-[22px] h-[22px] flex items-center justify-center border border-border-main rounded-xs text-text-dim hover:text-text-bright hover:bg-border-main/50 transition-colors shrink-0"
                 >
-                    <Minimize2 size={16} />
+                    <Minimize2 size={13} />
                 </button>
             </div>
         </div>
