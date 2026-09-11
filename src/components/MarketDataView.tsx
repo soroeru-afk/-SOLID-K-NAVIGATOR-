@@ -394,7 +394,7 @@ export default function MarketDataView({
                                 e.preventDefault();
                                 openExternalWindow(link.url);
                               }}
-                              className="block font-bold text-text-bright hover:text-white hover:underline transition-colors tracking-wide mb-2 line-clamp-2 leading-snug"
+                              className="block font-bold text-text-bright hover:underline transition-colors tracking-wide mb-2 line-clamp-2 leading-snug"
                               style={{ fontSize: `${customFontSize}px` }}
                               title={`${link.title}（別ウィンドウで開く）`}
                             >
@@ -506,7 +506,7 @@ export default function MarketDataView({
                             e.preventDefault();
                             openExternalWindow(link.url);
                           }}
-                          className="font-bold text-text-bright hover:text-white hover:underline transition-colors truncate"
+                          className="font-bold text-text-bright hover:underline transition-colors truncate"
                           style={{ fontSize: `${customFontSize}px` }}
                           title={`${link.title}（別ウィンドウで開く）`}
                         >

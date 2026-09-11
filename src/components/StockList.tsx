@@ -648,7 +648,7 @@ export default function StockList({
                       const targets = stocks.filter(s => selectedIds.has(s.id));
                       setMovingStocks(targets);
                     }}
-                    className="h-6 px-2 bg-base-bg border border-border-main hover:border-border-light text-text-bright hover:text-white text-[10px] font-bold inline-flex items-center gap-1 transition-colors box-border"
+                    className="h-6 px-2 bg-base-bg border border-border-main hover:border-border-light text-text-bright text-[10px] font-bold inline-flex items-center gap-1 transition-colors box-border"
                   >
                     <FolderInput size={12} />
                     <span>{language === 'EN' ? 'Move to...' : 'カテゴリ移動'}</span>
@@ -838,7 +838,7 @@ export default function StockList({
                               e.preventDefault();
                               openExternalWindow(`https://kabutan.jp/stock/?code=${st.code}`);
                             }}
-                            className="text-text-bright hover:text-white font-black leading-snug tracking-wide hover:underline truncate"
+                            className="text-text-bright font-black leading-snug tracking-wide hover:underline truncate"
                             style={{ fontSize: stockFontSize }}
                             title={`${st.name}（別ウィンドウで株探を開く）`}
                           >
@@ -1146,7 +1146,7 @@ export default function StockList({
                             e.preventDefault();
                             openExternalWindow(`https://kabutan.jp/stock/?code=${st.code}`);
                           }}
-                          className="text-text-bright hover:text-white hover:underline truncate font-bold leading-tight"
+                          className="text-text-bright hover:underline truncate font-bold leading-tight"
                           style={{ fontSize: stockFontSize }}
                           title={`${st.name}（別ウィンドウで株探を開く）`}
                         >

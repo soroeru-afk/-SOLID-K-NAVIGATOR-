@@ -838,7 +838,7 @@ export default function StockDetailModal({
                   className={`h-7 px-2.5 bg-base-bg border border-border-main hover:border-border-light text-[10px] font-bold inline-flex items-center gap-1 rounded-xs transition-colors box-border shrink-0 ${
                     isEditingDesc 
                       ? 'text-[#3fb950] border-[#2ea043]/50' 
-                      : 'text-text-bright hover:text-white'
+                      : 'text-text-bright hover:text-text-bright'
                   }`}
                   title={isEditingDesc ? "編集を完了" : "企業概要・詳細情報を編集"}
                 >
