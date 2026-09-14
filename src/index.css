@@ -13,17 +13,17 @@
   --color-accent-text: var(--theme-accent-text);
 }
 
-.font-type-mono {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+.font-type-mono, .font-type-mono input, .font-type-mono textarea, .font-type-mono select, .font-type-mono button, .font-type-mono div, .font-type-mono p, .font-type-mono span {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace !important;
 }
-.font-type-gothic {
-  font-family: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+.font-type-gothic, .font-type-gothic input, .font-type-gothic textarea, .font-type-gothic select, .font-type-gothic button, .font-type-gothic div, .font-type-gothic p, .font-type-gothic span {
+  font-family: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif !important;
 }
-.font-type-meiryo {
-  font-family: "Meiryo", "Hiragino Sans", "Noto Sans JP", sans-serif;
+.font-type-meiryo, .font-type-meiryo input, .font-type-meiryo textarea, .font-type-meiryo select, .font-type-meiryo button, .font-type-meiryo div, .font-type-meiryo p, .font-type-meiryo span {
+  font-family: "Meiryo", "Hiragino Sans", "Noto Sans JP", sans-serif !important;
 }
-.font-type-maru {
-  font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
+.font-type-maru, .font-type-maru input, .font-type-maru textarea, .font-type-maru select, .font-type-maru button, .font-type-maru div, .font-type-maru p, .font-type-maru span {
+  font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif !important;
 }
 
 :root {

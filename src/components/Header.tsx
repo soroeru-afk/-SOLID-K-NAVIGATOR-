@@ -21,6 +21,8 @@ interface Props {
   onStockFontSizeChange: (size: number) => void;
   priceFontSize: number;
   onPriceFontSizeChange: (size: number) => void;
+  memoFontSize: number;
+  onMemoFontSizeChange: (size: number) => void;
   priceColor: string;
   onPriceColorChange: (color: string) => void;
   onToggleCompactMode: () => void;
@@ -42,7 +44,9 @@ export default function Header({
   stockFontSize,
   onStockFontSizeChange,
   priceFontSize, 
-  onPriceFontSizeChange, 
+  onPriceFontSizeChange,
+  memoFontSize,
+  onMemoFontSizeChange,
   priceColor, 
   onPriceColorChange, 
   onToggleCompactMode 
@@ -68,10 +72,10 @@ export default function Header({
                   step="1"
                   value={listFontSize} 
                   onChange={(e) => onListFontSizeChange(Number(e.target.value))}
-                  className="w-12 sm:w-14 accent-border-light cursor-pointer h-3"
+                  className="w-10 sm:w-12 md:w-14 accent-border-light cursor-pointer h-3"
                   title={`Text / Folder / Info Size: ${listFontSize}px`}
                 />
-                <span className="text-text-dim w-6 text-right font-mono text-[9px]">{listFontSize}PX</span>
+                <span className="text-text-dim w-5 text-right font-mono text-[9px]">{listFontSize}PX</span>
             </div>
 
             {/* STOCK SIZE Slider */}
@@ -84,10 +88,10 @@ export default function Header({
                   step="1"
                   value={stockFontSize} 
                   onChange={(e) => onStockFontSizeChange(Number(e.target.value))}
-                  className="w-12 sm:w-14 accent-border-light cursor-pointer h-3"
+                  className="w-10 sm:w-12 md:w-14 accent-border-light cursor-pointer h-3"
                   title={`Stock Name Size: ${stockFontSize}px`}
                 />
-                <span className="text-text-bright font-bold w-6 text-right font-mono text-[9px]">{stockFontSize}PX</span>
+                <span className="text-text-bright font-bold w-5 text-right font-mono text-[9px]">{stockFontSize}PX</span>
             </div>
 
             {/* PRICE Color and Size */}
@@ -96,7 +100,7 @@ export default function Header({
                 <button
                     type="button"
                     onClick={() => onPriceColorChange(priceColor === 'red' ? 'default' : 'red')}
-                    className="h-[22px] px-1.5 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors text-center text-[9px] font-mono shrink-0 rounded-xs"
+                    className="w-[52px] h-[22px] px-1 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors text-center text-[9px] font-mono shrink-0 rounded-xs flex items-center justify-center"
                     title="株価表示色切替 (THEME / RED)"
                 >
                     {priceColor === 'red' ? 'RED' : 'THEME'}
@@ -108,10 +112,26 @@ export default function Header({
                   step="1"
                   value={priceFontSize} 
                   onChange={(e) => onPriceFontSizeChange(Number(e.target.value))}
-                  className="w-12 sm:w-14 accent-border-light cursor-pointer h-3"
+                  className="w-10 sm:w-12 md:w-14 accent-border-light cursor-pointer h-3"
                   title={`Price Font Size: ${priceFontSize}px`}
                 />
-                <span className="text-text-dim w-6 text-right font-mono text-[9px]">{priceFontSize}PX</span>
+                <span className="text-text-dim w-5 text-right font-mono text-[9px]">{priceFontSize}PX</span>
+            </div>
+
+            {/* DETAIL / MEMO SIZE Slider */}
+            <div className="flex items-center gap-1 shrink-0">
+                <span className="text-text-dim hidden xl:inline font-mono">DETAIL:</span>
+                <input 
+                  type="range" 
+                  min="11" 
+                  max="24" 
+                  step="1"
+                  value={memoFontSize} 
+                  onChange={(e) => onMemoFontSizeChange(Number(e.target.value))}
+                  className="w-10 sm:w-12 md:w-14 accent-border-light cursor-pointer h-3"
+                  title={`Detail / Memo Font Size: ${memoFontSize}px`}
+                />
+                <span className="text-text-dim w-5 text-right font-mono text-[9px]">{memoFontSize}PX</span>
             </div>
 
             {/* FOLDER COLOR Selector */}

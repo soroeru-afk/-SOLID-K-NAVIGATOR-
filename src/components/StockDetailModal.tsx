@@ -15,6 +15,8 @@ interface Props {
   language: Language;
   theme: Theme;
   priceColor: string;
+  memoFontSize?: number;
+  onMemoFontSizeChange?: (size: number) => void;
 }
 
 export default function StockDetailModal({
@@ -26,7 +28,9 @@ export default function StockDetailModal({
   isRefreshingPrice,
   language,
   theme,
-  priceColor
+  priceColor,
+  memoFontSize: memoFontSizeProp,
+  onMemoFontSizeChange
 }: Props) {
   const t = i18n[language];
   const [memoText, setMemoText] = useState('');
@@ -45,10 +49,22 @@ export default function StockDetailModal({
   // Memo view mode: 'preview' (段落再生) or 'edit' (テキスト編集)
   const [memoViewMode, setMemoViewMode] = useState<'preview' | 'edit'>('preview');
 
-  const [memoFontSize, setMemoFontSize] = useState<number>(() => {
+  const [localMemoFontSize, setLocalMemoFontSize] = useState<number>(() => {
     const saved = localStorage.getItem('KNAV_DETAIL_FONT_SIZE');
     return saved ? parseInt(saved, 10) : 14;
   });
+
+  const memoFontSize = memoFontSizeProp !== undefined ? memoFontSizeProp : localMemoFontSize;
+  const setMemoFontSize = (valOrFn: number | ((prev: number) => number)) => {
+    const nextVal = typeof valOrFn === 'function' ? valOrFn(memoFontSize) : valOrFn;
+    const clamped = Math.min(24, Math.max(11, nextVal));
+    if (onMemoFontSizeChange) {
+      onMemoFontSizeChange(clamped);
+    } else {
+      setLocalMemoFontSize(clamped);
+      localStorage.setItem('KNAV_DETAIL_FONT_SIZE', clamped.toString());
+    }
+  };
 
   // Speech Synthesis (TTS) state - Ichiro & Haruka settings stored independently
   const [voiceType, setVoiceType] = useState<'ichiro' | 'haruka'>(() => {
@@ -724,7 +740,7 @@ export default function StockDetailModal({
           <div className="flex flex-col gap-2">
             {/* Header: Title and TTS Audio Controls (グレー枠の上・外側に配置) */}
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-[10px] text-text-dim font-bold tracking-wider flex items-center gap-1.5">
+              <div className="text-text-dim font-bold tracking-wider flex items-center gap-1.5" style={{ fontSize: `${Math.max(11, memoFontSize - 1)}px` }}>
                 <Tag size={12} className="text-text-bright" />
                 <span>企業概要・詳細情報 (銘柄詳細)</span>
               </div>
@@ -864,18 +880,18 @@ export default function StockDetailModal({
                   value={descText}
                   onChange={(e) => setDescText(e.target.value)}
                   placeholder="事業内容、主力製品、特色、テーマ、注目ポイントなどを記入..."
-                  className="w-full h-24 bg-panel-bg border border-border-light p-2.5 text-text-bright leading-relaxed focus:outline-none font-sans resize-y"
+                  className="w-full h-24 bg-panel-bg border border-border-light p-2.5 text-text-bright leading-relaxed focus:outline-none resize-y"
                   style={{ fontSize: `${memoFontSize}px` }}
                 />
               ) : descText ? (
                 <div 
-                  className="text-text-bright leading-relaxed whitespace-pre-wrap font-sans select-text"
+                  className="text-text-bright leading-relaxed whitespace-pre-wrap select-text"
                   style={{ fontSize: `${memoFontSize}px` }}
                 >
                   {descText}
                 </div>
               ) : (
-                <div className="text-[11px] text-text-dim italic">
+                <div className="text-text-dim italic" style={{ fontSize: `${memoFontSize}px` }}>
                   詳細情報は未登録です。「+ 詳細を追加」から事業内容や特色を登録できます。
                 </div>
               )}
@@ -885,7 +901,7 @@ export default function StockDetailModal({
           {/* Memo & Analysis Area (MEMO 考察・メモ・投資ノート) */}
           <div className="flex flex-col gap-2 flex-1">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-[10px] text-text-dim font-bold tracking-wider flex items-center gap-1.5">
+              <div className="text-text-dim font-bold tracking-wider flex items-center gap-1.5" style={{ fontSize: `${Math.max(11, memoFontSize - 1)}px` }}>
                 <FileText size={12} />
                 <span>{t.memo} (考察・メモ・投資ノート)</span>
                 <span className="text-text-dim font-normal ml-1">
@@ -999,7 +1015,7 @@ export default function StockDetailModal({
                                 <Play size={10} className="fill-current ml-0.5" />
                               )}
                             </button>
-                            <p className="flex-1 whitespace-pre-wrap leading-relaxed select-text text-text-bright">
+                            <p className="flex-1 whitespace-pre-wrap leading-relaxed select-text text-text-bright" style={{ fontSize: `${memoFontSize}px` }}>
                               {para}
                             </p>
                           </div>
@@ -1014,7 +1030,7 @@ export default function StockDetailModal({
                 value={memoText}
                 onChange={(e) => setMemoText(e.target.value)}
                 placeholder={language === 'EN' ? 'Enter notes, investment thesis, key levels, catalysts...' : 'この銘柄の投資理由、決算メモ、目標・サポートライン、注目ニュースなどを記入...'}
-                className="w-full h-44 bg-base-bg border border-border-main p-3 text-text-bright leading-relaxed focus:outline-none focus:border-border-light resize-y font-mono"
+                className="w-full h-44 bg-base-bg border border-border-main p-3 text-text-bright leading-relaxed focus:outline-none focus:border-border-light resize-y"
                 style={{ fontSize: `${memoFontSize}px`, lineHeight: 1.6 }}
               />
             )}

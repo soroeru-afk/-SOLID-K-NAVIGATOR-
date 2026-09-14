@@ -61,6 +61,10 @@ export default function App() {
     () => parseInt(localStorage.getItem('knav_price_font_size') || '16')
   );
 
+  const [memoFontSize, setMemoFontSize] = useState<number>(
+    () => parseInt(localStorage.getItem('KNAV_DETAIL_FONT_SIZE') || '14')
+  );
+
   const [priceColor, setPriceColor] = useState<string>(
     () => {
       const saved = localStorage.getItem('knav_price_color');
@@ -95,6 +99,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('knav_price_font_size', priceFontSize.toString());
   }, [priceFontSize]);
+
+  useEffect(() => {
+    localStorage.setItem('KNAV_DETAIL_FONT_SIZE', memoFontSize.toString());
+  }, [memoFontSize]);
 
   useEffect(() => {
     localStorage.setItem('knav_price_color', priceColor);
@@ -437,8 +445,8 @@ export default function App() {
     const themeColors: Record<Theme, string> = {
       black: '#0a0d12',
       dark: '#0d131f',
-      light: '#e2e8f0',
       red: '#0d0404',
+      light: '#e2e8f0',
     };
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
@@ -867,6 +875,8 @@ export default function App() {
           onStockFontSizeChange={setStockFontSize}
           priceFontSize={priceFontSize}
           onPriceFontSizeChange={setPriceFontSize}
+          memoFontSize={memoFontSize}
+          onMemoFontSizeChange={setMemoFontSize}
           priceColor={priceColor}
           onPriceColorChange={setPriceColor}
           onToggleCompactMode={() => setIsCompactMode(true)}
@@ -901,6 +911,8 @@ export default function App() {
               listFontSize={listFontSize}
               stockFontSize={stockFontSize}
               priceFontSize={priceFontSize}
+              memoFontSize={memoFontSize}
+              onMemoFontSizeChange={setMemoFontSize}
               priceColor={priceColor}
               theme={theme}
               folderColor={folderColor}

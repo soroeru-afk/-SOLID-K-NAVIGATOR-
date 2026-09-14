@@ -31,6 +31,8 @@ interface Props {
   listFontSize: number;
   stockFontSize: number;
   priceFontSize: number;
+  memoFontSize: number;
+  onMemoFontSizeChange: (size: number) => void;
   priceColor: string;
   theme: Theme;
   folderColor?: FolderColor;
@@ -86,6 +88,8 @@ export default function StockList({
   listFontSize,
   stockFontSize,
   priceFontSize,
+  memoFontSize,
+  onMemoFontSizeChange,
   priceColor,
   theme,
   folderColor = 'theme'
@@ -1010,24 +1014,33 @@ export default function StockList({
                     >
                       {st.description ? (
                         <div>
-                          <div className="text-[9px] text-text-bright font-bold tracking-wider mb-1 flex items-center gap-1">
+                          <div className="text-text-bright font-bold tracking-wider mb-1 flex items-center gap-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
                             <span>[ 企業概要・詳細情報 ]</span>
                           </div>
-                          <p className="text-xs text-text-bright line-clamp-3 leading-relaxed whitespace-pre-wrap font-sans">
+                          <p 
+                            className="text-text-bright line-clamp-3 leading-relaxed whitespace-pre-wrap"
+                            style={{ fontSize: `${memoFontSize}px` }}
+                          >
                             {st.description}
                           </p>
                         </div>
                       ) : memo && memo.text ? (
                         <div>
-                          <div className="text-[9px] text-text-dim font-bold tracking-wider mb-1 flex items-center gap-1">
+                          <div className="text-text-dim font-bold tracking-wider mb-1 flex items-center gap-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
                             <span>[ メモ・考察 ]</span>
                           </div>
-                          <p className="text-xs text-text-bright line-clamp-3 leading-relaxed whitespace-pre-wrap font-sans">
+                          <p 
+                            className="text-text-bright line-clamp-3 leading-relaxed whitespace-pre-wrap"
+                            style={{ fontSize: `${memoFontSize}px` }}
+                          >
                             {memo.text}
                           </p>
                         </div>
                       ) : (
-                        <div className="h-full flex items-center justify-center text-text-dim/60 text-[11px] italic">
+                        <div 
+                          className="h-full flex items-center justify-center text-text-dim/60 italic"
+                          style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}
+                        >
                           詳細情報・メモ未登録
                         </div>
                       )}
@@ -1338,17 +1351,17 @@ export default function StockList({
                       title={st.description || memo?.text || ''}
                     >
                       {st.description ? (
-                        <span className="text-text-bright truncate">
-                          <span className="text-text-bright font-bold text-[10px] mr-1 shrink-0">[詳細]</span>
+                        <span className="text-text-bright truncate" style={{ fontSize: `${memoFontSize}px` }}>
+                          <span className="text-text-bright font-bold mr-1 shrink-0" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>[詳細]</span>
                           {st.description}
                         </span>
                       ) : memo?.text ? (
-                        <span className="truncate">
-                          <span className="text-text-dim text-[10px] mr-1 shrink-0">[メモ]</span>
+                        <span className="truncate" style={{ fontSize: `${memoFontSize}px` }}>
+                          <span className="text-text-dim font-bold mr-1 shrink-0" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>[メモ]</span>
                           {memo.text}
                         </span>
                       ) : (
-                        <span className="text-text-dim/40 italic">未登録</span>
+                        <span className="text-text-dim/40 italic" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>未登録</span>
                       )}
                     </div>
 
@@ -1445,6 +1458,8 @@ export default function StockList({
           language={language}
           theme={theme}
           priceColor={priceColor}
+          memoFontSize={memoFontSize}
+          onMemoFontSizeChange={onMemoFontSizeChange}
         />
       )}
 
