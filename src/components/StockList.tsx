@@ -372,9 +372,16 @@ export default function StockList({
 
   // Drag & drop handlers for stocks
   const handleDragStart = (e: React.DragEvent, st: Stock) => {
+    const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+    if (targetTag === 'input' || targetTag === 'textarea') {
+      e.preventDefault();
+      return;
+    }
+
     const idsToDrag = selectedIds.has(st.id) ? Array.from(selectedIds) : [st.id];
     setDraggingStockIds(idsToDrag);
-    e.dataTransfer.setData('text/plain', st.code);
+    (window as any).__knav_dragging_stock_ids = idsToDrag;
+    e.dataTransfer.setData('text/plain', JSON.stringify({ stockIds: idsToDrag, sourceCategoryId: st.categoryId }));
     e.dataTransfer.setData('text/stock-id', st.id);
     e.dataTransfer.setData('application/json', JSON.stringify({ stockIds: idsToDrag, sourceCategoryId: st.categoryId }));
     e.dataTransfer.effectAllowed = 'move';
@@ -382,6 +389,7 @@ export default function StockList({
 
   const handleDragEnd = () => {
     setDraggingStockIds([]);
+    (window as any).__knav_dragging_stock_ids = null;
     setDragOverStockId(null);
     setDragOverCategoryId(null);
   };
@@ -868,7 +876,7 @@ export default function StockList({
                         {/* Drag Handle */}
                         <div
                           className="cursor-grab active:cursor-grabbing text-text-dim/40 group-hover:text-text-dim hover:!text-text-bright transition-colors p-0.5"
-                          title={language === 'EN' ? 'Drag to reorder' : 'ドラッグして並び替え'}
+                          title={language === 'EN' ? 'Drag to reorder or drop into sidebar folder' : 'ドラッグして並び替え、またはサイドバーのフォルダーへ移動'}
                         >
                           <GripVertical size={13} />
                         </div>
@@ -1242,7 +1250,7 @@ export default function StockList({
                       {/* Drag Handle */}
                       <div
                         className="cursor-grab active:cursor-grabbing text-text-dim/40 group-hover:text-text-dim hover:!text-text-bright transition-colors p-0.5 shrink-0"
-                        title={language === 'EN' ? 'Drag to reorder' : 'ドラッグして並び替え'}
+                        title={language === 'EN' ? 'Drag to reorder or drop into sidebar folder' : 'ドラッグして並び替え、またはサイドバーのフォルダーへ移動'}
                       >
                         <GripVertical size={13} />
                       </div>

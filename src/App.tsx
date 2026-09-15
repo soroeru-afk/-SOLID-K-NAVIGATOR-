@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import AddStockForm from './components/AddStockForm';
 import StockList from './components/StockList';
@@ -107,6 +108,17 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('knav_price_color', priceColor);
   }, [priceColor]);
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   useEffect(() => {
     // Initialize caches from initialData if they don't exist
@@ -440,18 +452,6 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('knav_theme', theme);
-
-    // PWA モバイル・ブラウザバー用の theme-color 動的更新
-    const themeColors: Record<Theme, string> = {
-      black: '#0a0d12',
-      dark: '#0d131f',
-      red: '#0d0404',
-      light: '#e2e8f0',
-    };
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', themeColors[theme] || '#0a0d12');
-    }
   }, [theme]);
 
   useEffect(() => {
@@ -525,7 +525,21 @@ export default function App() {
   };
 
   const moveStocksToCategory = (ids: string[], newCategoryId: string) => {
-    setStocks(prev => prev.map(s => ids.includes(s.id) ? { ...s, categoryId: newCategoryId } : s));
+    setStocks(prev => {
+      const movedStocks = prev.filter(s => ids.includes(s.id));
+      const targetCat = categories.find(c => c.id === newCategoryId);
+      const targetName = targetCat ? targetCat.name : (newCategoryId === '' ? (language === 'EN' ? 'Unassigned' : '未分類') : '');
+      
+      const stockDesc = movedStocks.length === 1 
+        ? `${movedStocks[0].code} ${movedStocks[0].name}` 
+        : `${movedStocks.length} ${language === 'EN' ? 'stocks' : '件の銘柄'}`;
+      
+      setToastMessage(language === 'EN' 
+        ? `Moved ${stockDesc} to "${targetName}"` 
+        : `${stockDesc} を「${targetName}」に移動しました`);
+
+      return prev.map(s => ids.includes(s.id) ? { ...s, categoryId: newCategoryId } : s);
+    });
   };
 
   const updateStock = (id: string, updates: Partial<Stock>) => {
@@ -920,6 +934,14 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* Drag & Drop Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-panel-bg border border-[#58a6ff] text-text-bright px-4 py-2.5 shadow-2xl flex items-center gap-2.5 font-mono text-xs animate-in fade-in slide-in-from-bottom-2 duration-150 rounded-xs">
+          <CheckCircle2 size={16} className="text-[#2ea043] shrink-0" />
+          <span className="font-bold">{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

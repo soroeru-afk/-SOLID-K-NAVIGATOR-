@@ -124,7 +124,8 @@ export default function Sidebar({
     e.stopPropagation();
 
     // Check if dragging a stock or a category
-    const isStockDrag = !draggingCatId;
+    const isCategoryDrag = !!draggingCatId;
+    const isStockDrag = !isCategoryDrag;
     setDragOverIsStock(isStockDrag);
 
     if (isStockDrag) {
@@ -144,10 +145,15 @@ export default function Sidebar({
   };
 
   const handleCatDragLeave = (e: React.DragEvent, c: Category) => {
-    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-    if (dragOverCatId === c.id) {
-      setDragOverCatId(null);
-      setDragOverIsStock(false);
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+      if (dragOverCatId === c.id) {
+        setDragOverCatId(null);
+        setDragOverIsStock(false);
+      }
     }
   };
 
@@ -155,29 +161,49 @@ export default function Sidebar({
     e.preventDefault();
     e.stopPropagation();
 
-    if (dragOverIsStock) {
-      // Dropping stocks into this category
-      let stockIdsToMove: string[] = [];
+    let stockIdsToMove: string[] = [];
+
+    // 1. Check window global storage (most robust across browsers)
+    if ((window as any).__knav_dragging_stock_ids && Array.isArray((window as any).__knav_dragging_stock_ids)) {
+      stockIdsToMove = [...(window as any).__knav_dragging_stock_ids];
+    }
+
+    // 2. Check application/json
+    if (stockIdsToMove.length === 0) {
       try {
         const raw = e.dataTransfer.getData('application/json');
         if (raw) {
           const data = JSON.parse(raw);
-          if (data.stockIds) stockIdsToMove = data.stockIds;
+          if (data.stockIds && Array.isArray(data.stockIds)) stockIdsToMove = data.stockIds;
         }
       } catch {}
-      if (stockIdsToMove.length === 0) {
-        const singleId = e.dataTransfer.getData('text/stock-id');
-        if (singleId) stockIdsToMove = [singleId];
-      }
+    }
 
-      if (stockIdsToMove.length > 0) {
-        onMoveStocksToCategory?.(stockIdsToMove, c.id);
-      }
+    // 3. Check text/plain (JSON format fallback)
+    if (stockIdsToMove.length === 0) {
+      try {
+        const rawText = e.dataTransfer.getData('text/plain');
+        if (rawText && rawText.startsWith('{')) {
+          const data = JSON.parse(rawText);
+          if (data.stockIds && Array.isArray(data.stockIds)) stockIdsToMove = data.stockIds;
+        }
+      } catch {}
+    }
+
+    // 4. Check text/stock-id
+    if (stockIdsToMove.length === 0) {
+      const singleId = e.dataTransfer.getData('text/stock-id');
+      if (singleId) stockIdsToMove = [singleId];
+    }
+
+    if (stockIdsToMove.length > 0) {
+      onMoveStocksToCategory?.(stockIdsToMove, c.id);
     } else if (draggingCatId && draggingCatId !== c.id) {
       // Reordering categories
       onReorderCategory?.(draggingCatId, c.id, dragCatInsertPos);
     }
 
+    (window as any).__knav_dragging_stock_ids = null;
     setDraggingCatId(null);
     setDragOverCatId(null);
     setDragOverIsStock(false);
@@ -185,32 +211,64 @@ export default function Sidebar({
 
   const handleUnassignedDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
     setDragOverUnassigned(true);
   };
 
   const handleUnassignedDragLeave = (e: React.DragEvent) => {
-    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-    setDragOverUnassigned(false);
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+      setDragOverUnassigned(false);
+    }
   };
 
   const handleUnassignedDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     let stockIdsToMove: string[] = [];
-    try {
-      const raw = e.dataTransfer.getData('application/json');
-      if (raw) {
-        const data = JSON.parse(raw);
-        if (data.stockIds) stockIdsToMove = data.stockIds;
-      }
-    } catch {}
+
+    // 1. Check window global storage
+    if ((window as any).__knav_dragging_stock_ids && Array.isArray((window as any).__knav_dragging_stock_ids)) {
+      stockIdsToMove = [...(window as any).__knav_dragging_stock_ids];
+    }
+
+    // 2. Check application/json
+    if (stockIdsToMove.length === 0) {
+      try {
+        const raw = e.dataTransfer.getData('application/json');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data.stockIds && Array.isArray(data.stockIds)) stockIdsToMove = data.stockIds;
+        }
+      } catch {}
+    }
+
+    // 3. Check text/plain (JSON format fallback)
+    if (stockIdsToMove.length === 0) {
+      try {
+        const rawText = e.dataTransfer.getData('text/plain');
+        if (rawText && rawText.startsWith('{')) {
+          const data = JSON.parse(rawText);
+          if (data.stockIds && Array.isArray(data.stockIds)) stockIdsToMove = data.stockIds;
+        }
+      } catch {}
+    }
+
+    // 4. Check text/stock-id
     if (stockIdsToMove.length === 0) {
       const singleId = e.dataTransfer.getData('text/stock-id');
       if (singleId) stockIdsToMove = [singleId];
     }
+
     if (stockIdsToMove.length > 0) {
       onMoveStocksToCategory?.(stockIdsToMove, '');
     }
+
+    (window as any).__knav_dragging_stock_ids = null;
     setDragOverUnassigned(false);
   };
 
@@ -325,7 +383,7 @@ export default function Sidebar({
               } ${
                 isDragOverThisCat
                   ? (dragOverIsStock 
-                      ? 'border-border-light bg-border-main/60 text-text-bright ring-1 ring-border-light' 
+                      ? 'border-[#58a6ff] bg-[#58a6ff]/20 text-text-bright ring-2 ring-[#58a6ff]/60 font-bold shadow-sm' 
                       : (dragCatInsertPos === 'before' ? 'border-t-2 border-t-border-light bg-border-main/30' : 'border-b-2 border-b-border-light bg-border-main/30'))
                   : (isSelected 
                       ? 'border-border-light bg-border-main text-text-bright' 
@@ -355,8 +413,8 @@ export default function Sidebar({
                 )}
 
                 {/* Folder icon */}
-                {isSelected ? (
-                  <FolderOpen size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, true, level === 0)}`} />
+                {isSelected || (isDragOverThisCat && dragOverIsStock) ? (
+                  <FolderOpen size={13} className={`shrink-0 transition-colors ${isDragOverThisCat && dragOverIsStock ? 'text-[#58a6ff]' : getFolderColorClass(folderColor, true, level === 0)}`} />
                 ) : (
                   <Folder size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, false, level === 0)}`} />
                 )}
@@ -369,10 +427,16 @@ export default function Sidebar({
 
               {/* Right side: Count badge & Action icons */}
               <div className="flex items-center gap-1 shrink-0 ml-2">
-                {/* Count badge (SOLID style: [ 13 ]) */}
-                <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold">
-                  {displayCount}
-                </span>
+                {isDragOverThisCat && dragOverIsStock ? (
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-[#58a6ff] text-black rounded-xs animate-pulse">
+                    {language === 'EN' ? '+ MOVE' : '+ 移動'}
+                  </span>
+                ) : (
+                  <>
+                    {/* Count badge (SOLID style: [ 13 ]) */}
+                    <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold">
+                      {displayCount}
+                    </span>
 
                 {/* Hover actions */}
                 <div className="hidden group-hover/cat:flex items-center gap-1">
@@ -433,9 +497,11 @@ export default function Sidebar({
                     <Trash2 size={11} />
                   </span>
                 </div>
-              </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
         </div>
 
         {/* Render child categories if not collapsed */}
@@ -768,28 +834,36 @@ export default function Sidebar({
                 onDrop={handleUnassignedDrop}
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 border transition-colors group/unassigned mt-1 ${
                   dragOverUnassigned
-                    ? 'border-border-light bg-border-main/60 text-text-bright ring-1 ring-border-light'
+                    ? 'border-[#58a6ff] bg-[#58a6ff]/20 text-text-bright ring-2 ring-[#58a6ff]/60 font-bold shadow-sm'
                     : (activeCategory === 'UNASSIGNED' 
                         ? 'border-border-light bg-border-main text-text-bright' 
                         : 'border-transparent text-text-normal hover:text-text-bright')
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <FolderOpen size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, activeCategory === 'UNASSIGNED', false)}`} />
+                  <FolderOpen size={13} className={`shrink-0 transition-colors ${dragOverUnassigned ? 'text-[#58a6ff]' : getFolderColorClass(folderColor, activeCategory === 'UNASSIGNED', false)}`} />
                   <span className="truncate flex-1 text-left font-bold" style={{ fontSize: sidebarFontSize }}>{t.unassigned}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold">
-                    {unassignedCount}
-                  </span>
-                  {onFetchCategory && (
-                    <span 
-                      onClick={(e) => { e.stopPropagation(); onFetchCategory('UNASSIGNED'); }} 
-                      className="opacity-0 group-hover/unassigned:opacity-100 text-text-dim hover:text-text-bright p-0.5 ml-1"
-                      title={t.reacquire}
-                    >
-                      <Activity size={11} />
+                  {dragOverUnassigned ? (
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-[#58a6ff] text-black rounded-xs animate-pulse">
+                      {language === 'EN' ? '+ MOVE' : '+ 移動'}
                     </span>
+                  ) : (
+                    <>
+                      <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold">
+                        {unassignedCount}
+                      </span>
+                      {onFetchCategory && (
+                        <span 
+                          onClick={(e) => { e.stopPropagation(); onFetchCategory('UNASSIGNED'); }} 
+                          className="opacity-0 group-hover/unassigned:opacity-100 text-text-dim hover:text-text-bright p-0.5 ml-1"
+                          title={t.reacquire}
+                        >
+                          <Activity size={11} />
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
               </button>
