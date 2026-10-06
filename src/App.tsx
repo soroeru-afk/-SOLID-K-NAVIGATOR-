@@ -150,6 +150,13 @@ export default function App() {
   });
 
   const [stocks, setStocks] = useState<Stock[]>(() => {
+    const descMap = new Map<string, string>();
+    enrichedPreset.stocks.forEach(s => {
+      if (s.description && s.description.trim()) {
+        descMap.set(s.code, s.description);
+      }
+    });
+
     const saved = localStorage.getItem('knav_stocks_v2');
     if (saved) {
         try { 
@@ -158,6 +165,12 @@ export default function App() {
                 const c = localStorage.getItem('KNAV_SX_CLOSE_' + s.code);
                 if (c) {
                     try { const cv = JSON.parse(c); if(cv.price) s.price = cv.price; } catch(e){}
+                }
+                if (!s.description || !s.description.trim()) {
+                  const defaultDesc = descMap.get(s.code);
+                  if (defaultDesc) {
+                    s.description = defaultDesc;
+                  }
                 }
                 return s;
             });
@@ -171,12 +184,44 @@ export default function App() {
           code: s.code,
           name: s.name,
           categoryId: g.id,
+          description: s.description || descMap.get(s.code) || '',
           createdAt: Date.now() + index
         });
       });
     });
     return initialStocks;
   });
+
+  // Auto-fill missing descriptions for all registered stocks from enrichedPreset
+  useEffect(() => {
+    const descMap = new Map<string, string>();
+    enrichedPreset.stocks.forEach(s => {
+      if (s.description && s.description.trim()) {
+        descMap.set(s.code, s.description);
+      }
+    });
+
+    let hasChange = false;
+    const filledStocks = stocks.map(st => {
+      if (!st.description || !st.description.trim()) {
+        const d = descMap.get(st.code);
+        if (d) {
+          hasChange = true;
+          return { ...st, description: d };
+        }
+      }
+      return st;
+    });
+
+    if (hasChange) {
+      setStocks(filledStocks);
+      try {
+        localStorage.setItem('knav_stocks_v2', JSON.stringify(filledStocks));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
   
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 
@@ -512,9 +557,17 @@ export default function App() {
   };
 
   const addStocks = (items: {code: string, name: string, categoryId: string}[]) => {
+    const descMap = new Map<string, string>();
+    enrichedPreset.stocks.forEach(s => {
+      if (s.description && s.description.trim()) {
+        descMap.set(s.code, s.description);
+      }
+    });
+
     const newStocks = items.map((item, index) => ({
       id: Date.now().toString() + index,
       ...item,
+      description: descMap.get(item.code) || '',
       createdAt: Date.now()
     }));
     setStocks([...newStocks, ...stocks]);
@@ -670,11 +723,23 @@ export default function App() {
   };
 
   const handleDownloadEnrichedJson = () => {
-    const blob = new Blob([JSON.stringify(enrichedPreset, null, 2)], { type: 'application/json' });
+    const dataToExport = {
+      groups: enrichedPreset.groups,
+      bbHistory: enrichedPreset.bbHistory || {},
+      closeCache: enrichedPreset.closeCache || {},
+      memoCache: enrichedPreset.memoCache || {},
+      bwpCache: enrichedPreset.bwpCache || {},
+      categories: enrichedPreset.categories,
+      stocks: enrichedPreset.stocks,
+      marketLinks: enrichedPreset.marketLinks || marketLinks,
+      exportedAt: new Date().toLocaleString('ja-JP'),
+      version: 'Simple-X-Web'
+    };
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'k-navigator-enriched.json';
+    a.download = `knav_enriched_latest_${enrichedPreset.stocks.length}stocks.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -696,7 +761,12 @@ export default function App() {
       let loadedCategories: Category[] = [];
       let loadedStocks: Stock[] = [];
 
-      if (Array.isArray(data.categories) && Array.isArray(data.stocks) && data.categories.length > 0) {
+      const groupStocksCount = Array.isArray(data.groups) 
+        ? data.groups.reduce((acc: number, g: any) => acc + (Array.isArray(g.stocks) ? g.stocks.length : 0), 0)
+        : 0;
+      const directStocksCount = Array.isArray(data.stocks) ? data.stocks.length : 0;
+
+      if (directStocksCount >= groupStocksCount && directStocksCount > 0 && Array.isArray(data.categories) && data.categories.length > 0) {
         loadedCategories = data.categories;
         loadedStocks = data.stocks.map((s: any) => ({
           ...s,
@@ -704,8 +774,11 @@ export default function App() {
           price: s.price || (data.closeCache && data.closeCache[s.code] ? data.closeCache[s.code]?.price : undefined)
         }));
       } else if (data.groups && Array.isArray(data.groups)) {
+        loadedCategories = Array.isArray(data.categories) && data.categories.length > 0
+          ? data.categories
+          : data.groups.map((g: any) => ({ id: g.id, name: g.name, parentId: g.parentId || undefined }));
+        
         data.groups.forEach((g: any) => {
-          loadedCategories.push({ id: g.id, name: g.name, parentId: g.parentId || undefined });
           if (Array.isArray(g.stocks)) {
             g.stocks.forEach((s: any, index: number) => {
               let priceStr = undefined;
@@ -724,6 +797,9 @@ export default function App() {
             });
           }
         });
+      } else if (Array.isArray(data.stocks) && data.stocks.length > 0) {
+        loadedCategories = Array.isArray(data.categories) ? data.categories : [];
+        loadedStocks = data.stocks;
       }
 
       if (loadedCategories.length > 0 || loadedStocks.length > 0) {
@@ -744,16 +820,76 @@ export default function App() {
     try {
       setCategories(enrichedPreset.categories);
       setStocks(enrichedPreset.stocks);
+      if (enrichedPreset.closeCache) {
+        Object.keys(enrichedPreset.closeCache).forEach(c => {
+          localStorage.setItem('KNAV_SX_CLOSE_' + c, JSON.stringify(enrichedPreset.closeCache![c]));
+        });
+      }
+      if (enrichedPreset.bbHistory) {
+        Object.keys(enrichedPreset.bbHistory).forEach(c => {
+          localStorage.setItem('KNAV_SX_HIST_' + c, JSON.stringify(enrichedPreset.bbHistory![c]));
+        });
+      }
+      if (enrichedPreset.memoCache) {
+        Object.keys(enrichedPreset.memoCache).forEach(c => {
+          localStorage.setItem('KNAV_SX_MEMO_' + c, JSON.stringify(enrichedPreset.memoCache![c]));
+        });
+      }
+      if (enrichedPreset.bwpCache) {
+        Object.keys(enrichedPreset.bwpCache).forEach(c => {
+          localStorage.setItem('KNAV_SX_BWP_' + c, JSON.stringify(enrichedPreset.bwpCache![c]));
+        });
+      }
+      if (enrichedPreset.marketLinks) {
+        setMarketLinks(enrichedPreset.marketLinks);
+      }
       setActiveCategoryId(null);
-      alert(`初期プリセット（228銘柄・概要付き、${enrichedPreset.categories.length}フォルダー）を正常に復元しました。`);
+      alert(`最新データ（全${enrichedPreset.stocks.length}銘柄・サイバーセキュリティ等概要付き、${enrichedPreset.categories.length}フォルダー）を正常に復元・反映しました。`);
     } catch (e) {
       console.error("Failed to restore preset", e);
-      alert('228銘柄概要付きデータの復元に失敗しました');
+      alert('最新データの復元に失敗しました');
+    }
+  };
+
+  const handleFillMissingDescriptions = () => {
+    const descMap = new Map<string, string>();
+    enrichedPreset.stocks.forEach(s => {
+      if (s.description && s.description.trim()) {
+        descMap.set(s.code, s.description);
+      }
+    });
+
+    let count = 0;
+    const nextStocks = stocks.map(st => {
+      if (!st.description || !st.description.trim()) {
+        const d = descMap.get(st.code);
+        if (d) {
+          count++;
+          return { ...st, description: d };
+        }
+      }
+      return st;
+    });
+
+    if (count > 0) {
+      setStocks(nextStocks);
+      try {
+        localStorage.setItem('knav_stocks_v2', JSON.stringify(nextStocks));
+      } catch (e) {}
+      setToastMessage(`${count}銘柄の詳細情報（企業概要）を自動補完・登録しました。`);
+    } else {
+      setToastMessage('すべての登録銘柄に詳細情報が登録されています。');
     }
   };
 
   const handleResetData = () => {
     if (window.confirm(i18n[language].confirmReset)) {
+      const descMap = new Map<string, string>();
+      enrichedPreset.stocks.forEach(s => {
+        if (s.description && s.description.trim()) {
+          descMap.set(s.code, s.description);
+        }
+      });
       setCategories(initialGroups.map(g => ({ id: g.id, name: g.name })));
       const initialStocks: Stock[] = [];
       initialGroups.forEach(g => {
@@ -763,6 +899,7 @@ export default function App() {
             code: s.code,
             name: s.name,
             categoryId: g.id,
+            description: s.description || descMap.get(s.code) || '',
             createdAt: Date.now() + index
           });
         });
@@ -827,6 +964,7 @@ export default function App() {
           onMarketLinksChange={setMarketLinks}
           onLoadEnrichedData={handleLoadEnrichedPreset}
           onDownloadEnrichedData={handleDownloadEnrichedJson}
+          onFillMissingDescriptions={handleFillMissingDescriptions}
           folderColor={folderColor}
           onReorderCategory={reorderCategory}
           onMoveStocksToCategory={moveStocksToCategory}
@@ -865,6 +1003,7 @@ export default function App() {
           onMarketLinksChange={setMarketLinks}
           onLoadEnrichedData={handleLoadEnrichedPreset}
           onDownloadEnrichedData={handleDownloadEnrichedJson}
+          onFillMissingDescriptions={handleFillMissingDescriptions}
           folderColor={folderColor}
           onReorderCategory={reorderCategory}
           onMoveStocksToCategory={moveStocksToCategory}

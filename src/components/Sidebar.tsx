@@ -3,7 +3,7 @@ import {
   LayoutGrid, Folders, Plus, Folder, FolderOpen, FolderPlus, Download, 
   FileCode, Pencil, Trash2, ArrowUp, ArrowDown, Activity, ChevronDown, 
   ChevronRight, LineChart, ExternalLink, Settings, Compass, 
-  RefreshCw, Maximize2, Sparkles, AlertTriangle, X, Globe, Square, GripVertical
+  RefreshCw, Maximize2, Sparkles, AlertTriangle, X, Globe, Square, GripVertical, FileText
 } from 'lucide-react';
 import { Category, MarketLink, Stock, FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
@@ -14,6 +14,7 @@ import TankenExplorerModal from './TankenExplorerModal';
 import ProxySettingsModal from './ProxySettingsModal';
 import { openExternalWindow } from '../lib/windowUtils';
 import { getFolderColorClass } from '../lib/folderUtils';
+import { enrichedPreset } from '../data/enrichedPreset';
 
 interface Props {
   categories: Category[];
@@ -41,6 +42,7 @@ interface Props {
   onMarketLinksChange: (links: MarketLink[]) => void;
   onLoadEnrichedData?: () => void;
   onDownloadEnrichedData?: () => void;
+  onFillMissingDescriptions?: () => void;
   folderColor?: FolderColor;
 }
 
@@ -70,6 +72,7 @@ export default function Sidebar({
   onMarketLinksChange,
   onLoadEnrichedData,
   onDownloadEnrichedData,
+  onFillMissingDescriptions,
   folderColor = 'theme'
 }: Props) {
   const [newCatName, setNewCatName] = useState('');
@@ -116,6 +119,7 @@ export default function Sidebar({
   const sidebarFontSize = Math.min(20, Math.max(12, listFontSize));
 
   const unassignedCount = stocks.filter(s => !s.categoryId).length;
+  const presetStocksCount = enrichedPreset?.stocks?.length || 0;
 
   const handleSaveMarketLinks = (links: MarketLink[]) => {
     onMarketLinksChange(links);
@@ -923,10 +927,10 @@ export default function Sidebar({
                   type="button"
                   onClick={onDownloadEnrichedData} 
                   className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs mt-1 cursor-pointer group"
-                  title="228銘柄の概要付きJSONファイルを保存"
+                  title={`最新プリセット（全${presetStocksCount}銘柄・概要付き）のJSONファイルを保存`}
                 >
                   <Download size={11} className="shrink-0 text-text-dim group-hover:text-text-bright transition-colors" />
-                  <span>概要付JSONをダウンロード</span>
+                  <span>最新概要付JSONをダウンロード</span>
                 </button>
 
                 <button 
@@ -939,14 +943,26 @@ export default function Sidebar({
                   <span>外部株価API設定 (GitHub Pages用)</span>
                 </button>
 
+                {onFillMissingDescriptions && (
+                  <button 
+                    type="button"
+                    onClick={onFillMissingDescriptions} 
+                    className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs font-bold group cursor-pointer"
+                    title="現在登録されている銘柄の中で詳細情報（企業概要）が未登録のものに、プリセットから自動補完・登録します"
+                  >
+                    <FileText size={11} className="shrink-0 text-text-dim group-hover:text-text-bright transition-colors" />
+                    <span>詳細情報を一括補完 (未登録分)</span>
+                  </button>
+                )}
+
                 {onLoadEnrichedData && (
                   <button 
                     onClick={() => setIsRestoreConfirmOpen(true)} 
                     className="w-full h-7 flex items-center justify-start px-2.5 gap-2 border border-border-main text-text-dim bg-base-bg hover:text-text-bright hover:border-border-light transition-colors text-xs font-bold group"
-                    title="全228銘柄と各社の企業概要（事業内容・強み）を初期プリセットから復元します（確認画面が開きます）"
+                    title={`最新プリセット（全${presetStocksCount}銘柄・概要付き）へ復元します（確認画面が開きます）`}
                   >
                     <Sparkles size={11} className="shrink-0 text-text-dim group-hover:text-text-bright transition-colors" />
-                    <span>228銘柄（概要付）を復元</span>
+                    <span>最新データ（{presetStocksCount}銘柄・概要付）を復元</span>
                   </button>
                 )}
 
@@ -978,7 +994,7 @@ export default function Sidebar({
         />
       )}
 
-      {/* 228銘柄復元 確認ダイアログ */}
+      {/* プリセット復元 確認ダイアログ */}
       {isRestoreConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in duration-150">
           <div className="w-full max-w-md bg-panel-bg border border-border-light shadow-2xl rounded-xs overflow-hidden flex flex-col">
@@ -986,7 +1002,7 @@ export default function Sidebar({
             <div className="flex items-center justify-between px-4 py-3 border-b border-border-main bg-base-bg">
               <div className="flex items-center gap-2 text-[#f59e0b] font-bold text-xs md:text-sm">
                 <AlertTriangle size={16} className="shrink-0 text-[#f59e0b]" />
-                <span>228銘柄プリセット復元の確認</span>
+                <span>最新データ（{presetStocksCount}銘柄）復元の確認</span>
               </div>
               <button 
                 onClick={() => setIsRestoreConfirmOpen(false)}
@@ -1002,20 +1018,20 @@ export default function Sidebar({
               <div className="p-3 bg-[#f85149]/10 border border-[#f85149]/30 rounded-xs text-[#ff7b72] font-bold flex items-start gap-2">
                 <AlertTriangle size={16} className="shrink-0 mt-0.5 text-[#ff7b72]" />
                 <div>
-                  【注意】現在のデータはすべて上書きされます
+                  【注意】現在のデータ（{stocksLength}銘柄）は最新プリセットで上書きされます
                 </div>
               </div>
 
               <div className="text-text-bright font-medium">
-                この操作を実行すると、現在登録されている銘柄データ・新しく作成したカテゴリー・編集したメモなどは<span className="text-[#ff7b72] font-bold">差分ではなくすべて初期状態に上書きリセット</span>されます。
+                この操作を実行すると、サイバーセキュリティやドローン等を含む<span className="text-[#3fb950] font-bold">全{presetStocksCount}銘柄（最新概要・詳細情報付き）</span>の最新プリセットデータに復元されます。
               </div>
 
               <div className="p-2.5 bg-base-bg border border-border-main text-[11px] text-text-dim rounded-xs leading-normal">
-                💡 現在のデータを残しておきたい場合は、一旦「キャンセル」し、事前に「<span className="text-text-bright font-bold">JSONエクスポート</span>」で現在のバックアップファイルを保存してください。
+                💡 現在のデータを残しておきたい場合は、一旦「キャンセル」し、事前に「<span className="text-text-bright font-bold">JSONエクスポート</span>」でバックアップを保存してください。
               </div>
 
               <div className="text-text-bright text-xs pt-1 font-bold">
-                本当に初期プリセット（228銘柄・概要付き）へ復元しますか？
+                最新プリセット（全{presetStocksCount}銘柄・概要付き）へ復元しますか？
               </div>
             </div>
 

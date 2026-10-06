@@ -850,7 +850,14 @@ export default function StockDetailModal({
 
                 <button
                   type="button"
-                  onClick={() => setIsEditingDesc(!isEditingDesc)}
+                  onClick={() => {
+                    if (isEditingDesc) {
+                      if (descText.trim() !== (stock.description || '')) {
+                        onUpdateStock(stock.id, { description: descText.trim() });
+                      }
+                    }
+                    setIsEditingDesc(!isEditingDesc);
+                  }}
                   className={`h-7 px-2.5 bg-base-bg border border-border-main hover:border-border-light text-[10px] font-bold inline-flex items-center gap-1 rounded-xs transition-colors box-border shrink-0 ${
                     isEditingDesc 
                       ? 'text-[#3fb950] border-[#2ea043]/50' 
