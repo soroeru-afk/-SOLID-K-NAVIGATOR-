@@ -3,7 +3,7 @@ import {
   Database, FileText, Trash2, CheckSquare, Square, Pencil, ExternalLink, 
   ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, X, LayoutGrid, List as ListIcon, 
   Folder, FolderOpen, FolderInput, FolderPlus, ChevronRight, ChevronDown, RefreshCw, 
-  ChevronUp, RotateCcw, GripVertical
+  ChevronUp, RotateCcw, GripVertical, CornerUpRight
 } from 'lucide-react';
 import { Stock, Category, StockMemo, FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
@@ -24,6 +24,7 @@ interface Props {
   onMoveStock?: (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => void;
   onReorderStocks?: (sourceIds: string[], targetId: string, position: 'before' | 'after') => void;
   onMoveStocksToCategory?: (ids: string[], categoryId: string) => void;
+  onCreateStockShortcuts?: (ids: string[], categoryId: string) => void;
   onAddCategory?: (name: string, parentId?: string | null) => void;
   onRefreshPrice?: (code: string) => Promise<void>;
   refreshingCode?: string | null;
@@ -81,6 +82,7 @@ export default function StockList({
   onMoveStock,
   onReorderStocks,
   onMoveStocksToCategory,
+  onCreateStockShortcuts,
   onAddCategory,
   onRefreshPrice,
   refreshingCode,
@@ -106,6 +108,7 @@ export default function StockList({
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [selectedStockForDetail, setSelectedStockForDetail] = useState<Stock | null>(null);
   const [movingStocks, setMovingStocks] = useState<Stock[] | null>(null);
+  const [movingMode, setMovingMode] = useState<'move' | 'shortcut'>('move');
 
   // Drag & drop state for stocks
   const [draggingStockIds, setDraggingStockIds] = useState<string[]>([]);
@@ -763,13 +766,31 @@ export default function StockList({
                   <button
                     onClick={() => {
                       const targets = stocks.filter(s => selectedIds.has(s.id));
+                      setMovingMode('move');
                       setMovingStocks(targets);
                     }}
                     className="h-6 px-2 bg-base-bg border border-border-main hover:border-border-light text-text-bright text-[10px] font-bold inline-flex items-center gap-1 transition-colors box-border"
+                    title={language === 'EN' ? 'Move selected stocks to another category' : '選択した銘柄を別のカテゴリーに移動'}
                   >
                     <FolderInput size={12} />
-                    <span>{language === 'EN' ? 'Move to...' : 'カテゴリ移動'}</span>
+                    <span>{language === 'EN' ? 'Move' : '移動'}</span>
                   </button>
+
+                  {/* Shortcut Selected to Category Modal Trigger */}
+                  {onCreateStockShortcuts && (
+                    <button
+                      onClick={() => {
+                        const targets = stocks.filter(s => selectedIds.has(s.id));
+                        setMovingMode('shortcut');
+                        setMovingStocks(targets);
+                      }}
+                      className="h-6 px-2 bg-base-bg border border-border-main hover:border-border-light text-text-bright text-[10px] font-bold inline-flex items-center gap-1 transition-colors box-border"
+                      title={language === 'EN' ? 'Create shortcut in another category (synchronized)' : '別カテゴリーにショートカットを作成（実体と完全同期）'}
+                    >
+                      <CornerUpRight size={12} />
+                      <span>{language === 'EN' ? 'Shortcut' : 'ショートカット'}</span>
+                    </button>
+                  )}
 
                   <button 
                     onClick={handleDelete}
@@ -908,15 +929,27 @@ export default function StockList({
                         >
                           {st.code}
                         </a>
+                        {st.isShortcut && (
+                          <span 
+                            className="font-mono text-[9px] px-1 py-0.5 border border-border-main bg-base-bg text-text-dim flex items-center gap-0.5 shrink-0 select-none"
+                            title={language === 'EN' ? 'Shortcut (Synced with original)' : 'ショートカット銘柄（実体と連動）'}
+                          >
+                            <CornerUpRight size={9} />
+                            <span>SC</span>
+                          </span>
+                        )}
                       </div>
 
                       {/* Right Mini Action Bar */}
                       <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                         {/* Move to Category button */}
                         <button
-                          onClick={() => setMovingStocks([st])}
+                          onClick={() => {
+                            setMovingMode('move');
+                            setMovingStocks([st]);
+                          }}
                           className="w-6 h-6 flex items-center justify-center bg-base-bg text-text-dim hover:text-text-bright hover:border-border-light border border-border-main transition-colors"
-                          title={language === 'EN' ? 'Move to category' : 'カテゴリーを移動'}
+                          title={language === 'EN' ? 'Move / Shortcut' : 'カテゴリー移動・ショートカット'}
                         >
                           <FolderInput size={12} />
                         </button>
@@ -1065,9 +1098,12 @@ export default function StockList({
                       </span>
                       <span>•</span>
                       <span 
-                        onClick={() => setMovingStocks([st])}
+                        onClick={() => {
+                          setMovingMode('move');
+                          setMovingStocks([st]);
+                        }}
                         className="truncate max-w-[110px] hover:text-text-bright cursor-pointer hover:underline"
-                        title={language === 'EN' ? 'Click to move category' : 'クリックしてカテゴリー移動'}
+                        title={language === 'EN' ? 'Click to move category / shortcut' : 'クリックしてカテゴリー移動・ショートカット'}
                       >
                         {getCategoryName(st.categoryId)}
                       </span>
@@ -1266,6 +1302,15 @@ export default function StockList({
                         )}
                       </button>
 
+                      {st.isShortcut && (
+                        <span 
+                          className="font-mono text-[9px] px-1 py-0 border border-border-main bg-base-bg text-text-dim flex items-center gap-0.5 shrink-0 select-none mr-1"
+                          title={language === 'EN' ? 'Shortcut (Synced with original)' : 'ショートカット銘柄（実体と連動）'}
+                        >
+                          <CornerUpRight size={8} />
+                          <span>SC</span>
+                        </span>
+                      )}
                       <a
                         href={`https://kabutan.jp/stock/?code=${st.code}`}
                         target="_blank"
@@ -1379,14 +1424,20 @@ export default function StockList({
                       className="flex items-center gap-1 px-2 py-1.5 text-text-dim overflow-hidden"
                     >
                       <button
-                        onClick={() => setMovingStocks([st])}
+                        onClick={() => {
+                          setMovingMode('move');
+                          setMovingStocks([st]);
+                        }}
                         className="p-1 hover:text-text-bright transition-colors shrink-0"
-                        title={language === 'EN' ? 'Move to category' : 'カテゴリー移動'}
+                        title={language === 'EN' ? 'Move / Shortcut' : 'カテゴリー移動・ショートカット'}
                       >
                         <FolderInput size={11} />
                       </button>
                       <span 
-                        onClick={() => setMovingStocks([st])}
+                        onClick={() => {
+                          setMovingMode('move');
+                          setMovingStocks([st]);
+                        }}
                         className="truncate cursor-pointer hover:underline hover:text-text-bright" 
                         style={{ fontSize: listFontSize }}
                         title={getCategoryName(st.categoryId)}
@@ -1471,16 +1522,29 @@ export default function StockList({
         />
       )}
 
-      {/* Move Category Modal */}
+      {/* Move / Shortcut Category Modal */}
       {movingStocks && (
         <MoveCategoryModal
           isOpen={true}
           onClose={() => setMovingStocks(null)}
           targetStocks={movingStocks}
           categories={categories}
+          allStocks={stocks}
+          initialMode={movingMode}
           onMove={(ids, newCatId) => {
             if (onMoveStocksToCategory) {
               onMoveStocksToCategory(ids, newCatId);
+            }
+            // 選択解除
+            setSelectedIds(prev => {
+              const next = new Set(prev);
+              ids.forEach(id => next.delete(id));
+              return next;
+            });
+          }}
+          onCreateShortcut={(ids, newCatId) => {
+            if (onCreateStockShortcuts) {
+              onCreateStockShortcuts(ids, newCatId);
             }
             // 選択解除
             setSelectedIds(prev => {

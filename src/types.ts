@@ -31,6 +31,7 @@ export interface Stock {
   price?: string;
   priceUpdatedAt?: number;
   description?: string;
+  isShortcut?: boolean;
 }
 
 export type FolderColor = 'theme' | 'amber' | 'blue' | 'white' | 'black' | 'gray';

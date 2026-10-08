@@ -447,6 +447,11 @@ export default function StockDetailModal({
             <div>
               <h2 className="text-base font-black text-text-bright tracking-wide flex items-center gap-2">
                 <span>{stock.name}</span>
+                {stock.isShortcut && (
+                  <span className="text-[10px] font-mono border border-border-main bg-base-bg text-text-dim px-1.5 py-0 select-none font-normal">
+                    SHORTCUT
+                  </span>
+                )}
               </h2>
               <div className="flex items-center gap-2 text-[10px] text-text-dim mt-0.5">
                 <span>{category?.name || '未分類'}</span>

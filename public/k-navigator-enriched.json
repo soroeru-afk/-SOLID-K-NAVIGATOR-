@@ -3224,5 +3224,20 @@
   ],
   "exportedAt": "2026/9/10 3:44:47",
   "version": "Simple-X-Web",
-  "descriptionCount": 204
+  "descriptionCount": 204,
+  "marketLinks": [
+    { "id": "m0", "title": "市場ニュース（総合）", "url": "https://kabutan.jp/news/marketnews/" },
+    { "id": "m1", "title": "決算速報", "url": "https://kabutan.jp/news/" },
+    { "id": "m5", "title": "今日の上昇率", "url": "https://kabutan.jp/warning/?mode=2_1" },
+    { "id": "m6", "title": "今日の下落率", "url": "https://kabutan.jp/warning/?mode=2_2" },
+    { "id": "m2", "title": "本日の活況銘柄", "url": "https://kabutan.jp/warning/?mode=2_9" },
+    { "id": "m3", "title": "本日の売買代金ランキング", "url": "https://kabutan.jp/warning/trading_value_ranking" },
+    { "id": "m4", "title": "本日の出来高ランキング", "url": "https://kabutan.jp/warning/volume_ranking" },
+    { "id": "m9", "title": "日経平均の寄与度ランキング", "url": "https://kabutan.jp/warning/?mode=8_1" },
+    { "id": "m7", "title": "本日のストップ高銘柄", "url": "https://kabutan.jp/warning/?mode=3_1" },
+    { "id": "m8", "title": "本日のストップ安銘柄", "url": "https://kabutan.jp/warning/?mode=3_2" },
+    { "id": "m11", "title": "移動平均線上昇トレンド銘柄", "url": "https://kabutan.jp/tansaku/?mode=2_0262" },
+    { "id": "m12", "title": "25日線マイナスカイリ -10%以上", "url": "https://kabutan.jp/tansaku/?mode=2_0278" },
+    { "id": "m13", "title": "出来高急増銘柄", "url": "https://kabutan.jp/tansaku/?mode=2_0311" }
+  ]
 }

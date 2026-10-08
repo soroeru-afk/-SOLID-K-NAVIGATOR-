@@ -458,7 +458,7 @@ export default function App() {
                 price: price,
                 date: new Date().toLocaleDateString('ja-JP')
               }));
-              setStocks(prev => prev.map(s => s.id === st.id ? { 
+              setStocks(prev => prev.map(s => s.code === st.code ? { 
                 ...s, 
                 price: price, 
                 priceUpdatedAt: Date.now() 
@@ -611,8 +611,85 @@ export default function App() {
     });
   };
 
+  const createStockShortcuts = (sourceStockIds: string[], targetCategoryId: string) => {
+    setStocks(prev => {
+      const sourceStocks = prev.filter(s => sourceStockIds.includes(s.id));
+      if (sourceStocks.length === 0) return prev;
+
+      const targetCat = categories.find(c => c.id === targetCategoryId);
+      const targetName = targetCat ? targetCat.name : (targetCategoryId === '' ? (language === 'EN' ? 'Unassigned' : '未分類') : '');
+
+      const existingCodesInTarget = new Set(
+        prev.filter(s => s.categoryId === targetCategoryId).map(s => s.code)
+      );
+
+      const newlyCreated: Stock[] = [];
+      let skippedCount = 0;
+
+      sourceStocks.forEach((src, idx) => {
+        if (existingCodesInTarget.has(src.code)) {
+          skippedCount++;
+          return;
+        }
+        newlyCreated.push({
+          id: `sc_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
+          code: src.code,
+          name: src.name,
+          categoryId: targetCategoryId,
+          description: src.description || '',
+          price: src.price,
+          priceUpdatedAt: src.priceUpdatedAt,
+          createdAt: Date.now() + idx,
+          isShortcut: true,
+        });
+        existingCodesInTarget.add(src.code);
+      });
+
+      if (newlyCreated.length === 0) {
+        setToastMessage(language === 'EN'
+          ? `Selected stock(s) already exist in "${targetName}"`
+          : `対象の銘柄はすでに「${targetName}」に登録されています`);
+        return prev;
+      }
+
+      const stockDesc = newlyCreated.length === 1 
+        ? `${newlyCreated[0].code} ${newlyCreated[0].name}` 
+        : `${newlyCreated.length} ${language === 'EN' ? 'stocks' : '件の銘柄'}`;
+
+      const skipSuffix = skippedCount > 0 
+        ? (language === 'EN' ? ` (${skippedCount} already existed)` : ` (${skippedCount}件は重複のためスキップ)`)
+        : '';
+
+      setToastMessage(language === 'EN'
+        ? `Created shortcut for ${stockDesc} in "${targetName}"${skipSuffix}`
+        : `${stockDesc} のショートカットを「${targetName}」に作成しました${skipSuffix}`);
+
+      return [...newlyCreated, ...prev];
+    });
+  };
+
   const updateStock = (id: string, updates: Partial<Stock>) => {
-    setStocks(stocks.map(st => st.id === id ? { ...st, ...updates } : st));
+    setStocks(prev => {
+      const target = prev.find(st => st.id === id);
+      if (!target) return prev;
+
+      // 同一銘柄コードを持つすべての実体・ショートカットに同期する項目
+      const syncFields: Partial<Stock> = {};
+      if (updates.name !== undefined) syncFields.name = updates.name;
+      if (updates.description !== undefined) syncFields.description = updates.description;
+      if (updates.price !== undefined) syncFields.price = updates.price;
+      if (updates.priceUpdatedAt !== undefined) syncFields.priceUpdatedAt = updates.priceUpdatedAt;
+
+      return prev.map(st => {
+        if (st.id === id) {
+          return { ...st, ...updates };
+        }
+        if (st.code === target.code && Object.keys(syncFields).length > 0) {
+          return { ...st, ...syncFields };
+        }
+        return st;
+      });
+    });
   };
 
   const moveStock = (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => {
@@ -1079,6 +1156,7 @@ export default function App() {
               onMoveStock={moveStock}
               onReorderStocks={reorderStocks}
               onMoveStocksToCategory={moveStocksToCategory}
+              onCreateStockShortcuts={createStockShortcuts}
               onAddCategory={addCategory}
               onRefreshPrice={fetchSinglePrice}
               refreshingCode={refreshingCode}
