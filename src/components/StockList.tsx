@@ -13,6 +13,7 @@ import MoveCategoryModal from './MoveCategoryModal';
 import { getCategoryPath, getChildCategories, countStocksInCategory } from '../lib/categoryUtils';
 import { openExternalWindow } from '../lib/windowUtils';
 import { getFolderColorClass } from '../lib/folderUtils';
+import { getPriceLimit } from '../lib/priceLimitUtils';
 
 interface Props {
   stocks: Stock[];
@@ -54,7 +55,7 @@ export interface ListColumnWidths {
 const DEFAULT_COLUMN_WIDTHS: ListColumnWidths = {
   code: 105,
   name: 160,
-  price: 90,
+  price: 110,
   description: 320,
   category: 120,
   date: 85,
@@ -65,7 +66,7 @@ const DEFAULT_COLUMN_WIDTHS: ListColumnWidths = {
 const MIN_COLUMN_WIDTHS: Record<keyof ListColumnWidths, number> = {
   code: 85,
   name: 110,      // 銘柄名が欠けない最小幅
-  price: 80,      // 現在値が欠けない最小幅
+  price: 90,      // 現在値・値幅制限が欠けない最小幅
   description: 140, // メモ最小幅
   category: 95,   // セクター名が欠けない最小幅
   date: 80,       // 登録日が欠けない最小幅
@@ -1025,8 +1026,8 @@ export default function StockList({
                       )}
                     </div>
 
-                    {/* Price & Target Row */}
-                    <div className="flex items-center justify-between gap-2 bg-base-bg/70 px-2.5 py-1.5 border border-border-main mb-3 font-mono">
+                    {/* Price, Limit Range & Target Row */}
+                    <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1 bg-base-bg/70 px-2.5 py-1.5 border border-border-main mb-3 font-mono">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] text-text-dim">現在値:</span>
                         <span
@@ -1040,8 +1041,24 @@ export default function StockList({
                         </span>
                       </div>
 
+                      {/* 制限値幅 (東証公定ルールによるストップ高・ストップ安) */}
+                      {(() => {
+                        const limit = getPriceLimit(st.price);
+                        if (!limit) return null;
+                        return (
+                          <div 
+                            className="flex items-center gap-1 text-[10px] text-text-dim border-l border-border-main pl-2 select-all"
+                            title={`制限値幅: ${limit.fullText} (ストップ安: ${limit.low.toLocaleString()}円 / ストップ高: ${limit.high.toLocaleString()}円)`}
+                          >
+                            <span>値幅:</span>
+                            <span className="text-text-bright font-bold">{limit.displayText}</span>
+                            <span className="text-[9px] text-text-dim/80">({limit.range >= 0 ? `±${limit.range.toLocaleString()}` : ''})</span>
+                          </div>
+                        );
+                      })()}
+
                       {memo?.targetPrice && (
-                        <div className="flex items-center gap-1 text-[10px]">
+                        <div className="flex items-center gap-1 text-[10px] ml-auto">
                           <span className="text-text-dim">目標:</span>
                           <span className="text-text-bright font-bold">¥{memo.targetPrice}</span>
                         </div>
@@ -1178,7 +1195,10 @@ export default function StockList({
                 style={{ width: columnWidths.price, minWidth: MIN_COLUMN_WIDTHS.price, flexShrink: 0 }}
                 className="relative flex items-center justify-end px-2 py-1.5 group/col"
               >
-                <span className="truncate font-bold tracking-wider">現在値</span>
+                <div className="flex flex-col items-end leading-none overflow-hidden select-none">
+                  <span className="truncate font-bold tracking-wider">現在値</span>
+                  <span className="text-[9px] text-text-dim/80 font-mono scale-90 origin-right mt-0.5">制限値幅</span>
+                </div>
                 {/* Resizer Handle */}
                 <div
                   onMouseDown={(e) => handleResizeStart('price', e)}
@@ -1367,21 +1387,36 @@ export default function StockList({
                       )}
                     </div>
 
-                    {/* Col 3: Price */}
+                    {/* Col 3: Price & Limit Range */}
                     <div 
                       style={{ width: columnWidths.price, minWidth: MIN_COLUMN_WIDTHS.price, flexShrink: 0 }}
                       className="flex items-center justify-end gap-1.5 px-2 py-1.5 font-mono text-right overflow-hidden"
                     >
                       {st.price && st.price !== '?' ? (
-                        <span 
-                          className="font-bold tracking-tight truncate"
-                          style={{ 
-                            fontSize: priceFontSize, 
-                            color: priceColor === 'red' ? '#C41414' : undefined 
-                          }}
-                        >
-                          ¥{st.price}
-                        </span>
+                        (() => {
+                          const limit = getPriceLimit(st.price);
+                          return (
+                            <div className="flex flex-col items-end leading-tight overflow-hidden min-w-0">
+                              <span 
+                                className="font-bold tracking-tight truncate"
+                                style={{ 
+                                  fontSize: priceFontSize, 
+                                  color: priceColor === 'red' ? '#C41414' : undefined 
+                                }}
+                              >
+                                ¥{st.price}
+                              </span>
+                              {limit && (
+                                <span 
+                                  className="text-[10px] text-text-dim font-mono tracking-tight truncate select-all hover:text-text-normal transition-colors"
+                                  title={`制限値幅: ${limit.fullText} (ストップ安: ${limit.low.toLocaleString()}円 / ストップ高: ${limit.high.toLocaleString()}円)`}
+                                >
+                                  {limit.displayText}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()
                       ) : (
                         <span className="text-text-dim text-[10px]">---</span>
                       )}
@@ -1390,7 +1425,7 @@ export default function StockList({
                           onClick={() => onRefreshPrice(st.code)}
                           disabled={isRefreshingThis}
                           title={t.updatePrice}
-                          className="text-text-dim hover:text-text-bright p-0.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40 shrink-0"
+                          className="text-text-dim hover:text-text-bright p-0.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40 shrink-0 self-center"
                         >
                           <RefreshCw size={11} className={isRefreshingThis ? 'animate-spin text-text-bright' : ''} />
                         </button>

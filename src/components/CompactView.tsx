@@ -8,6 +8,7 @@ import { Language, i18n } from '../i18n';
 import { Theme } from '../App';
 import { tankenCategories } from '../data/tankenData';
 import { openExternalWindow } from '../lib/windowUtils';
+import { getPriceLimit } from '../lib/priceLimitUtils';
 
 interface Props {
   categories: Category[];
@@ -475,15 +476,31 @@ export default function CompactView({
 
                     {/* Price Display */}
                     <div className="flex items-center gap-2 shrink-0 pl-1">
-                      <span 
-                        className="text-text-bright tabular-nums text-right font-bold font-mono"
-                        style={{ 
-                          fontSize: priceFontSize || undefined, 
-                          color: priceColor === 'red' ? '#C41414' : undefined 
-                        }}
-                      >
-                        {stock.price && stock.price !== '?' ? `¥${stock.price}` : (stock.price || '---')}
-                      </span>
+                      {(() => {
+                        const limit = getPriceLimit(stock.price);
+                        return (
+                          <div className="flex flex-col items-end leading-tight font-mono">
+                            <span 
+                              className="text-text-bright tabular-nums text-right font-bold"
+                              style={{ 
+                                fontSize: priceFontSize || undefined, 
+                                color: priceColor === 'red' ? '#C41414' : undefined 
+                              }}
+                              title={limit ? `制限値幅: ${limit.fullText}` : undefined}
+                            >
+                              {stock.price && stock.price !== '?' ? `¥${stock.price}` : (stock.price || '---')}
+                            </span>
+                            {limit && (
+                              <span 
+                                className="text-[9px] text-text-dim tabular-nums tracking-tighter"
+                                title={`制限値幅: ${limit.fullText} (ストップ安: ${limit.low.toLocaleString()} / ストップ高: ${limit.high.toLocaleString()})`}
+                              >
+                                {limit.displayText}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 );

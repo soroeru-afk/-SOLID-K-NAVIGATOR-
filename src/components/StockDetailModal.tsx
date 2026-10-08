@@ -4,6 +4,7 @@ import { Stock, Category, StockMemo } from '../types';
 import { Language, i18n } from '../i18n';
 import { Theme } from '../App';
 import { openExternalWindow } from '../lib/windowUtils';
+import { getPriceLimit } from '../lib/priceLimitUtils';
 
 interface Props {
   stock: Stock | null;
@@ -424,6 +425,7 @@ export default function StockDetailModal({
   const kabutanKessanUrl = `https://kabutan.jp/stock/finance?code=${stock.code}`;
   const kabutanNewsUrl = `https://kabutan.jp/stock/news?code=${stock.code}`;
   const kabutanKaijiUrl = `https://kabutan.jp/stock/kabutan_disclose?code=${stock.code}`;
+  const yahooFinanceUrl = `https://finance.yahoo.co.jp/quote/${stock.code}.T`;
 
   const maxPrice = history.length > 0 ? Math.max(...history) : null;
   const minPrice = history.length > 0 ? Math.min(...history) : null;
@@ -517,6 +519,20 @@ export default function StockDetailModal({
               >
                 {stock.price && stock.price !== '?' ? `¥${stock.price}` : '未取得'}
               </div>
+              {(() => {
+                const limit = getPriceLimit(stock.price);
+                if (!limit) return null;
+                return (
+                  <div 
+                    className="text-[11px] font-mono text-text-dim mt-0.5 select-all"
+                    title={`東証公定制限値幅: ${limit.fullText} (ストップ安: ${limit.low.toLocaleString()}円 / ストップ高: ${limit.high.toLocaleString()}円)`}
+                  >
+                    <span className="text-text-normal font-bold">値幅: </span>
+                    <span className="text-text-bright font-bold">{limit.displayText}</span>
+                    <span className="text-[10px] text-text-dim/80 ml-1">(±{limit.range.toLocaleString()}円)</span>
+                  </div>
+                );
+              })()}
               {stock.priceUpdatedAt && (
                 <div className="text-[9px] text-text-dim mt-0.5">
                   更新: {new Date(stock.priceUpdatedAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
@@ -661,13 +677,13 @@ export default function StockDetailModal({
             )}
           </div>
 
-          {/* Direct Quick Links to Kabutan */}
+          {/* Direct Quick Links to Kabutan & Yahoo Finance */}
           <div>
             <div className="text-[10px] text-text-dim font-bold tracking-wider mb-2 flex items-center gap-1.5">
               <ExternalLink size={12} />
-              <span>{t.links} (KABUTAN)</span>
+              <span>{t.links} (KABUTAN / YAHOO)</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
               <a
                 href={kabutanBaseUrl}
                 target="_blank"
@@ -732,11 +748,25 @@ export default function StockDetailModal({
                   e.preventDefault();
                   openExternalWindow(kabutanKaijiUrl);
                 }}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-[11px] col-span-2 sm:col-span-1"
+                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-[11px]"
                 title="株探の適時開示画面を完全に独立した新規ウィンドウで開く"
               >
                 <FileText size={12} className="text-[#f85149]" />
                 {t.openKaiji}
+              </a>
+              <a
+                href={yahooFinanceUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openExternalWindow(yahooFinanceUrl);
+                }}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-[11px] col-span-2 sm:col-span-1"
+                title="Yahoo!ファイナンス公式ページを開く（板情報・値幅制限・掲示板）"
+              >
+                <ExternalLink size={12} className="text-text-dim group-hover:text-text-bright" />
+                <span>Yahoo!板/値幅</span>
               </a>
             </div>
           </div>
