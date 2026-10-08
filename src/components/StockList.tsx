@@ -52,7 +52,7 @@ export interface ListColumnWidths {
 }
 
 const DEFAULT_COLUMN_WIDTHS: ListColumnWidths = {
-  code: 90,
+  code: 105,
   name: 160,
   price: 90,
   description: 320,
@@ -63,7 +63,7 @@ const DEFAULT_COLUMN_WIDTHS: ListColumnWidths = {
 
 // 文字が欠けないための各項目の最小幅
 const MIN_COLUMN_WIDTHS: Record<keyof ListColumnWidths, number> = {
-  code: 75,
+  code: 85,
   name: 110,      // 銘柄名が欠けない最小幅
   price: 80,      // 現在値が欠けない最小幅
   description: 140, // メモ最小幅
@@ -1302,15 +1302,6 @@ export default function StockList({
                         )}
                       </button>
 
-                      {st.isShortcut && (
-                        <span 
-                          className="font-mono text-[9px] px-1 py-0 border border-border-main bg-base-bg text-text-dim flex items-center gap-0.5 shrink-0 select-none mr-1"
-                          title={language === 'EN' ? 'Shortcut (Synced with original)' : 'ショートカット銘柄（実体と連動）'}
-                        >
-                          <CornerUpRight size={8} />
-                          <span>SC</span>
-                        </span>
-                      )}
                       <a
                         href={`https://kabutan.jp/stock/?code=${st.code}`}
                         target="_blank"
@@ -1319,7 +1310,7 @@ export default function StockList({
                           e.preventDefault();
                           openExternalWindow(`https://kabutan.jp/stock/?code=${st.code}`);
                         }}
-                        className={`font-bold tracking-widest hover:underline truncate ${
+                        className={`font-mono font-bold tracking-widest hover:underline truncate shrink-0 ${
                           theme === 'light' ? 'text-black' : 'text-white'
                         }`}
                         style={{ fontSize: Math.max(10, Math.round(listFontSize * 0.9)) }}
@@ -1327,6 +1318,16 @@ export default function StockList({
                       >
                         {st.code}
                       </a>
+
+                      {st.isShortcut && (
+                        <span 
+                          className="font-mono text-[9px] px-1 py-0 border border-border-main bg-base-bg text-text-dim flex items-center gap-0.5 shrink-0 select-none ml-1"
+                          title={language === 'EN' ? 'Shortcut (Synced with original)' : 'ショートカット銘柄（実体と連動）'}
+                        >
+                          <CornerUpRight size={8} />
+                          <span>SC</span>
+                        </span>
+                      )}
                     </div>
 
                     {/* Col 2: Name */}
