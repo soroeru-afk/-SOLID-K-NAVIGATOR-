@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  ExternalLink, Plus, Trash2, ArrowUp, ArrowDown, Pencil, Check, X, 
+  ExternalLink, Plus, Trash2, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Pencil, Check, X, 
   LineChart, Folder, ChevronRight, Globe, Link2, Sparkles, Compass, 
   Search, Tag, LayoutGrid, List
 } from 'lucide-react';
@@ -97,6 +97,24 @@ export default function MarketDataView({
     }
   };
 
+  const handleMoveToTop = (index: number) => {
+    if (index > 0) {
+      const item = links[index];
+      const filtered = links.filter((_, i) => i !== index);
+      onUpdateLinks([item, ...filtered]);
+    }
+  };
+
+  const handleMoveToBottom = (index: number) => {
+    if (index < links.length - 1) {
+      const item = links[index];
+      const filtered = links.filter((_, i) => i !== index);
+      onUpdateLinks([...filtered, item]);
+    }
+  };
+
+  const [addInsertPosition, setAddInsertPosition] = useState<'top' | 'bottom'>('top');
+
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newUrl.trim()) return;
@@ -108,7 +126,11 @@ export default function MarketDataView({
       title: newTitle.trim(),
       url: formattedUrl
     };
-    onUpdateLinks([...links, newLink]);
+    if (addInsertPosition === 'top') {
+      onUpdateLinks([newLink, ...links]);
+    } else {
+      onUpdateLinks([...links, newLink]);
+    }
     setNewTitle('');
     setNewUrl('');
     setIsAdding(false);
@@ -262,46 +284,81 @@ export default function MarketDataView({
 
           {/* Inline Add Link Form */}
           {isAdding && (
-            <form onSubmit={handleAdd} className="bg-base-bg border border-border-main p-3 mb-3 shrink-0 flex flex-col sm:flex-row gap-2 items-center">
-              <div className="w-full sm:w-1/3">
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={e => setNewTitle(e.target.value)}
-                  placeholder={language === 'EN' ? 'Title (e.g. 決算速報)' : 'タイトル (例: 決算速報)'}
-                  className="w-full h-8 px-2.5 bg-panel-bg border border-border-main text-text-bright text-xs focus:outline-none focus:border-border-light font-medium"
-                  autoFocus
-                />
+            <form onSubmit={handleAdd} className="bg-base-bg border border-border-main p-3 mb-3 shrink-0 flex flex-col gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 items-center">
+                <div className="w-full sm:w-1/3">
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={e => setNewTitle(e.target.value)}
+                    placeholder={language === 'EN' ? 'Title (e.g. 決算速報)' : 'タイトル (例: 決算速報)'}
+                    className="w-full h-8 px-2.5 bg-panel-bg border border-border-main text-text-bright text-xs focus:outline-none focus:border-border-light font-medium"
+                    autoFocus
+                  />
+                </div>
+                <div className="w-full sm:flex-1">
+                  <input
+                    type="text"
+                    value={newUrl}
+                    onChange={e => setNewUrl(e.target.value)}
+                    placeholder="URL (https://...)"
+                    className="w-full h-8 px-2.5 bg-panel-bg border border-border-main text-text-bright text-xs font-mono focus:outline-none focus:border-border-light"
+                  />
+                </div>
               </div>
-              <div className="w-full sm:flex-1">
-                <input
-                  type="text"
-                  value={newUrl}
-                  onChange={e => setNewUrl(e.target.value)}
-                  placeholder="URL (https://...)"
-                  className="w-full h-8 px-2.5 bg-panel-bg border border-border-main text-text-bright text-xs font-mono focus:outline-none focus:border-border-light"
-                />
-              </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button
-                  type="submit"
-                  className="px-3 h-8 bg-border-main hover:bg-border-light border border-border-light text-text-bright text-xs font-bold transition-colors"
-                >
-                  {language === 'EN' ? 'ADD' : '追加'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsAdding(false)}
-                  className="px-2.5 h-8 border border-border-main hover:bg-border-main text-text-dim text-xs transition-colors"
-                >
-                  {language === 'EN' ? 'CANCEL' : '取消'}
-                </button>
+
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-border-main/50">
+                <div className="flex items-center gap-2 text-[11px]">
+                  <span className="text-text-dim font-bold">追加位置:</span>
+                  <div className="inline-flex border border-border-main rounded-xs overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setAddInsertPosition('top')}
+                      className={`px-2 py-0.5 font-bold transition-colors flex items-center gap-1 ${
+                        addInsertPosition === 'top'
+                          ? 'bg-border-main text-text-bright border-r border-border-main'
+                          : 'bg-panel-bg text-text-dim hover:text-text-bright border-r border-border-main'
+                      }`}
+                    >
+                      <ChevronsUp size={11} />
+                      <span>一番上</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAddInsertPosition('bottom')}
+                      className={`px-2 py-0.5 font-bold transition-colors flex items-center gap-1 ${
+                        addInsertPosition === 'bottom'
+                          ? 'bg-border-main text-text-bright'
+                          : 'bg-panel-bg text-text-dim hover:text-text-bright'
+                      }`}
+                    >
+                      <ChevronsDown size={11} />
+                      <span>一番下</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    className="px-3.5 h-7 bg-border-main hover:bg-border-light border border-border-light text-text-bright text-xs font-bold transition-colors"
+                  >
+                    {language === 'EN' ? 'ADD' : '追加'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAdding(false)}
+                    className="px-2.5 h-7 border border-border-main hover:bg-border-main text-text-dim text-xs transition-colors"
+                  >
+                    {language === 'EN' ? 'CANCEL' : '取消'}
+                  </button>
+                </div>
               </div>
             </form>
           )}
 
           {/* Links Content (Card or List) */}
-          <div className="flex-1 overflow-y-auto pr-1">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1">
             {linkViewMode === 'card' ? (
               /* CARD VIEW */
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -354,9 +411,17 @@ export default function MarketDataView({
                               
                               <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                                 <button
+                                  onClick={() => handleMoveToTop(idx)}
+                                  disabled={idx === 0}
+                                  title="一番上へ移動"
+                                  className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
+                                >
+                                  <ChevronsUp size={12} />
+                                </button>
+                                <button
                                   onClick={() => handleMove(idx, 'up')}
                                   disabled={idx === 0}
-                                  title="上へ移動"
+                                  title="1つ上へ移動"
                                   className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
                                 >
                                   <ArrowUp size={11} />
@@ -364,10 +429,18 @@ export default function MarketDataView({
                                 <button
                                   onClick={() => handleMove(idx, 'down')}
                                   disabled={idx === filteredLinks.length - 1}
-                                  title="下へ移動"
+                                  title="1つ下へ移動"
                                   className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
                                 >
                                   <ArrowDown size={11} />
+                                </button>
+                                <button
+                                  onClick={() => handleMoveToBottom(idx)}
+                                  disabled={idx === filteredLinks.length - 1}
+                                  title="一番下へ移動"
+                                  className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
+                                >
+                                  <ChevronsDown size={12} />
                                 </button>
                                 <button
                                   onClick={() => handleStartEdit(link)}
@@ -523,9 +596,17 @@ export default function MarketDataView({
                       <div className="flex items-center gap-1 shrink-0">
                         <div className="flex items-center opacity-60 group-hover:opacity-100 transition-opacity">
                           <button
+                            onClick={() => handleMoveToTop(idx)}
+                            disabled={idx === 0}
+                            title="一番上へ移動"
+                            className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
+                          >
+                            <ChevronsUp size={13} />
+                          </button>
+                          <button
                             onClick={() => handleMove(idx, 'up')}
                             disabled={idx === 0}
-                            title="上へ移動"
+                            title="1つ上へ移動"
                             className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
                           >
                             <ArrowUp size={12} />
@@ -533,10 +614,18 @@ export default function MarketDataView({
                           <button
                             onClick={() => handleMove(idx, 'down')}
                             disabled={idx === filteredLinks.length - 1}
-                            title="下へ移動"
+                            title="1つ下へ移動"
                             className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
                           >
                             <ArrowDown size={12} />
+                          </button>
+                          <button
+                            onClick={() => handleMoveToBottom(idx)}
+                            disabled={idx === filteredLinks.length - 1}
+                            title="一番下へ移動"
+                            className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
+                          >
+                            <ChevronsDown size={13} />
                           </button>
                           <button
                             onClick={() => handleStartEdit(link)}
@@ -548,7 +637,7 @@ export default function MarketDataView({
                           <button
                             onClick={() => handleDelete(link.id)}
                             title="削除"
-                            className="p-1 text-text-dim hover:text-[#ff7b72] transition-colors"
+                            className="p-1 text-text-dim hover:text-text-bright transition-colors"
                           >
                             <Trash2 size={12} />
                           </button>

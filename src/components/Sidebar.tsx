@@ -442,7 +442,7 @@ export default function Sidebar({
                 )}
 
                 {/* Category name */}
-                <span className="truncate font-bold text-left" style={{ fontSize: sidebarFontSize }}>
+                <span className="truncate font-bold text-left min-w-0 flex-1" style={{ fontSize: sidebarFontSize }}>
                   {c.name}
                 </span>
               </div>
@@ -541,7 +541,7 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="w-full h-full md:h-screen border-b md:border-b-0 md:border-r border-border-main bg-base-bg flex flex-col p-4 gap-4 overflow-y-auto z-10">
+      <aside className="w-full h-full md:h-screen border-b md:border-b-0 md:border-r border-border-main bg-base-bg flex flex-col p-4 gap-4 overflow-y-auto overflow-x-hidden z-10">
         
         {/* Header Branding */}
         <div className="flex items-center gap-3">
@@ -605,7 +605,7 @@ export default function Sidebar({
           </div>
           
           {/* Scrollable Explorer List: Holds + New Dir, Market Data, All Data, Categories, and Unassigned */}
-          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1 scrollbar-thin mt-1">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col gap-2 pr-1 scrollbar-thin mt-1">
             {!isAdding ? (
               <button 
                 onClick={() => {
@@ -660,9 +660,9 @@ export default function Sidebar({
                     : 'border-transparent text-text-normal hover:text-text-bright hover:bg-border-main/20'
                 }`}
               >
-                <div className="flex-1 flex items-center gap-2 text-left">
+                <div className="flex-1 flex items-center gap-2 text-left min-w-0">
                   <LineChart size={13} className={`shrink-0 ${isMarketDataOpen ? 'text-text-bright' : 'text-text-normal'}`} />
-                  <span className="font-bold truncate" style={{ fontSize: sidebarFontSize }}>[ STOCK MARKET DATA ]</span>
+                  <span className="font-bold truncate min-w-0 flex-1" style={{ fontSize: sidebarFontSize }}>[ STOCK MARKET DATA ]</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button 
@@ -722,7 +722,7 @@ export default function Sidebar({
 
                   {/* Tab 1: 市場リンク */}
                   {marketTab === 'links' && (
-                    <div className="flex flex-col gap-1 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin">
+                    <div className="flex flex-col gap-1 max-h-[280px] overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin">
                       <div className="flex items-center justify-between px-1 pb-1 text-[9px] text-text-normal border-b border-border-main/30">
                         <span>クイックリンク ({marketLinks.length})</span>
                         <button
@@ -743,11 +743,11 @@ export default function Sidebar({
                             e.preventDefault();
                             openExternalWindow(link.url);
                           }}
-                          className="flex items-center justify-between text-text-normal hover:text-text-bright hover:bg-border-main/50 px-2 py-1 rounded transition-colors group"
+                          className="flex items-center justify-between text-text-normal hover:text-text-bright hover:bg-border-main/50 px-2 py-1 rounded transition-colors group min-w-0 w-full"
                           title={`${link.title}（別ウィンドウで開く）`}
                         >
-                          <span className="truncate pr-1 font-medium" style={{ fontSize: Math.max(11, sidebarFontSize - 1) }}>{link.title}</span>
-                          <ExternalLink size={10} className="shrink-0 opacity-60 group-hover:opacity-100 group-hover:text-text-bright" />
+                          <span className="truncate pr-1 font-medium min-w-0 flex-1" style={{ fontSize: Math.max(11, sidebarFontSize - 1) }}>{link.title}</span>
+                          <ExternalLink size={10} className="shrink-0 opacity-60 group-hover:opacity-100 group-hover:text-text-bright ml-1" />
                         </a>
                       ))}
                     </div>
@@ -791,13 +791,11 @@ export default function Sidebar({
                       </div>
 
                       {/* Links list */}
-                      <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin pt-1">
+                      <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin pt-1">
                         {(tankenCategories.find(c => c.id === tankenSubTab)?.groups || []).map((group, gIdx) => (
                           <div key={gIdx} className="space-y-0.5">
-                            <div className={`text-[10px] font-bold px-1 py-0.5 flex items-center gap-1 border-b ${
-                              tankenSubTab === 'fundamentals' ? 'text-[#f59e0b] border-[#d97706]/30' : 'text-[#4ade80] border-[#16a34a]/30'
-                            }`}>
-                              <span className={`w-1 h-2 rounded-xs ${tankenSubTab === 'fundamentals' ? 'bg-[#f59e0b]' : 'bg-[#4ade80]'}`} />
+                            <div className="text-[10px] font-bold px-1 py-0.5 flex items-center gap-1 border-b border-border-main/50 text-text-bright">
+                              <span className="w-1 h-2 rounded-xs bg-border-light" />
                               <span className="truncate">{group.groupName}</span>
                             </div>
                             {group.items.map((item, itemIdx) => (
@@ -810,10 +808,10 @@ export default function Sidebar({
                                   e.preventDefault();
                                   openExternalWindow(item.url);
                                 }}
-                                className="group flex items-center justify-between px-2 py-0.5 text-text-normal hover:text-text-bright hover:bg-border-main/50 rounded transition-colors"
+                                className="group flex items-center justify-between px-2 py-0.5 text-text-normal hover:text-text-bright hover:bg-border-main/50 rounded transition-colors min-w-0 w-full"
                                 title={`${item.title}（別ウィンドウで開く）`}
                               >
-                                <span className="truncate group-hover:underline font-medium" style={{ fontSize: Math.max(11, sidebarFontSize - 1) }}>{item.title}</span>
+                                <span className="truncate group-hover:underline font-medium min-w-0 flex-1" style={{ fontSize: Math.max(11, sidebarFontSize - 1) }}>{item.title}</span>
                                 <ExternalLink size={9} className="shrink-0 opacity-0 group-hover:opacity-100 text-text-bright ml-1" />
                               </a>
                             ))}
@@ -835,17 +833,17 @@ export default function Sidebar({
                   : 'border-transparent text-text-normal hover:text-text-bright'
               }`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1 text-left">
                 <Folders size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, activeCategory === null, true)}`} />
-                <span className="font-bold" style={{ fontSize: sidebarFontSize }}>[ {t.allData} ]</span>
+                <span className="font-bold truncate min-w-0 flex-1" style={{ fontSize: sidebarFontSize }}>[ {t.allData} ]</span>
               </div>
-              <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold">
+              <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold shrink-0 ml-1">
                 {stocksLength}
               </span>
             </button>
             
             {/* Hierarchical Categories Tree */}
-            <div className="flex flex-col gap-0.5 mt-1">
+            <div className="flex flex-col gap-0.5 mt-1 min-w-0">
               {rootCategories.map(c => renderCategoryItem(c, 0))}
 
               {/* UNASSIGNED item */}
@@ -854,7 +852,7 @@ export default function Sidebar({
                 onDragOver={handleUnassignedDragOver}
                 onDragLeave={handleUnassignedDragLeave}
                 onDrop={handleUnassignedDrop}
-                className={`w-full flex items-center justify-between px-2.5 py-1.5 border transition-colors group/unassigned mt-1 ${
+                className={`w-full flex items-center justify-between px-2.5 py-1.5 border transition-colors group/unassigned mt-1 shrink-0 ${
                   dragOverUnassigned
                     ? 'border-[#58a6ff] bg-[#58a6ff]/20 text-text-bright ring-2 ring-[#58a6ff]/60 font-bold shadow-sm'
                     : (activeCategory === 'UNASSIGNED' 
@@ -862,11 +860,11 @@ export default function Sidebar({
                         : 'border-transparent text-text-normal hover:text-text-bright')
                 }`}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0 flex-1 text-left">
                   <FolderOpen size={13} className={`shrink-0 transition-colors ${dragOverUnassigned ? 'text-[#58a6ff]' : getFolderColorClass(folderColor, activeCategory === 'UNASSIGNED', false)}`} />
-                  <span className="truncate flex-1 text-left font-bold" style={{ fontSize: sidebarFontSize }}>{t.unassigned}</span>
+                  <span className="truncate flex-1 text-left font-bold min-w-0" style={{ fontSize: sidebarFontSize }}>{t.unassigned}</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0 ml-1">
                   {dragOverUnassigned ? (
                     <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-[#58a6ff] text-black rounded-xs animate-pulse">
                       {language === 'EN' ? '+ MOVE' : '+ 移動'}

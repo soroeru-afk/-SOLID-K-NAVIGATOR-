@@ -249,6 +249,7 @@ export default function App() {
   const [sidebarWidth, setSidebarWidth] = useState(370);
 
   const defaultMarketLinks: MarketLink[] = [
+    { id: 'm0', title: "市場ニュース（総合）", url: "https://kabutan.jp/news/marketnews/" },
     { id: 'm1', title: "決算速報", url: "https://kabutan.jp/news/" },
     { id: 'm5', title: "今日の上昇率", url: "https://kabutan.jp/warning/?mode=2_1" },
     { id: 'm6', title: "今日の下落率", url: "https://kabutan.jp/warning/?mode=2_2" },
@@ -266,9 +267,24 @@ export default function App() {
   const [marketLinks, setMarketLinks] = useState<MarketLink[]>(() => {
     const saved = localStorage.getItem('knav_market_links');
     if (saved) {
-      try { return JSON.parse(saved); } catch(e) {}
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // If the user's saved list doesn't have 市場ニュース（総合）, insert it at the top
+          const hasM0 = parsed.some((l: MarketLink) => l.id === 'm0' || l.title === '市場ニュース（総合）');
+          if (!hasM0) {
+            return [
+              { id: 'm0', title: '市場ニュース（総合）', url: 'https://kabutan.jp/news/marketnews/' },
+              ...parsed
+            ];
+          }
+          return parsed;
+        }
+      } catch(e) {}
     }
-    return defaultMarketLinks;
+    return (enrichedPreset.marketLinks && enrichedPreset.marketLinks.length > 0)
+      ? enrichedPreset.marketLinks
+      : defaultMarketLinks;
   });
 
   useEffect(() => {
@@ -731,7 +747,9 @@ export default function App() {
       bwpCache: enrichedPreset.bwpCache || {},
       categories: enrichedPreset.categories,
       stocks: enrichedPreset.stocks,
-      marketLinks: enrichedPreset.marketLinks || marketLinks,
+      marketLinks: (enrichedPreset.marketLinks && enrichedPreset.marketLinks.length > 0)
+        ? enrichedPreset.marketLinks
+        : (marketLinks.length > 0 ? marketLinks : defaultMarketLinks),
       exportedAt: new Date().toLocaleString('ja-JP'),
       version: 'Simple-X-Web'
     };
@@ -756,7 +774,9 @@ export default function App() {
       if (data.memoCache) Object.keys(data.memoCache).forEach(c => localStorage.setItem('KNAV_SX_MEMO_' + c, JSON.stringify(data.memoCache[c])));
       if (data.bwpCache) Object.keys(data.bwpCache).forEach(c => localStorage.setItem('KNAV_SX_BWP_' + c, JSON.stringify(data.bwpCache[c])));
       if (data.manualBwp) Object.keys(data.manualBwp).forEach(c => localStorage.setItem('KNAV_SX_BWP_' + c, JSON.stringify(data.manualBwp[c])));
-      if (data.marketLinks) setMarketLinks(data.marketLinks);
+      if (data.marketLinks && Array.isArray(data.marketLinks) && data.marketLinks.length > 0) {
+        setMarketLinks(data.marketLinks);
+      }
 
       let loadedCategories: Category[] = [];
       let loadedStocks: Stock[] = [];
@@ -840,8 +860,10 @@ export default function App() {
           localStorage.setItem('KNAV_SX_BWP_' + c, JSON.stringify(enrichedPreset.bwpCache![c]));
         });
       }
-      if (enrichedPreset.marketLinks) {
+      if (enrichedPreset.marketLinks && enrichedPreset.marketLinks.length > 0) {
         setMarketLinks(enrichedPreset.marketLinks);
+      } else {
+        setMarketLinks(defaultMarketLinks);
       }
       setActiveCategoryId(null);
       alert(`最新データ（全${enrichedPreset.stocks.length}銘柄・サイバーセキュリティ等概要付き、${enrichedPreset.categories.length}フォルダー）を正常に復元・反映しました。`);

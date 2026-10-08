@@ -242,7 +242,7 @@ export default function CompactView({
 
               {/* Content for TAB 1: リンク (高さいっぱいにスクロール可能) */}
               {marketTab === 'links' && (
-                <div className="flex-1 min-h-0 overflow-y-auto pr-1 scrollbar-thin flex flex-col gap-1">
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin flex flex-col gap-1">
                   {marketLinks.map(link => (
                     <a
                       key={link.id}
@@ -253,13 +253,13 @@ export default function CompactView({
                         e.preventDefault();
                         openExternalWindow(link.url);
                       }}
-                      className="flex items-center justify-between text-text-dim hover:text-text-bright hover:bg-border-main/50 px-2.5 py-1.5 rounded-xs transition-colors group border border-transparent hover:border-border-main bg-base-bg/30"
+                      className="flex items-center justify-between text-text-dim hover:text-text-bright hover:bg-border-main/50 px-2.5 py-1.5 rounded-xs transition-colors group border border-transparent hover:border-border-main bg-base-bg/30 min-w-0 w-full"
                       title={`${link.title}（別ウィンドウで開く）`}
                     >
-                      <span className="truncate pr-1 text-[12px] font-medium group-hover:text-[#58a6ff] transition-colors">
+                      <span className="truncate pr-1 text-[12px] font-medium min-w-0 flex-1 group-hover:text-text-bright transition-colors">
                         {link.title}
                       </span>
-                      <ExternalLink size={11} className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:text-[#58a6ff]" />
+                      <ExternalLink size={11} className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:text-text-bright ml-1" />
                     </a>
                   ))}
                 </div>
@@ -295,7 +295,7 @@ export default function CompactView({
                 }[tankenSize];
 
                 return (
-                  <div className="flex-1 min-h-0 overflow-y-auto pr-1 scrollbar-thin flex flex-col gap-1.5">
+                  <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin flex flex-col gap-1.5">
                     {/* Header: ファンダ / テクニカル 切り替え ＆ 大・中・小 サイズ切替 */}
                     <div className="flex items-center justify-between gap-1.5 pb-1.5 border-b border-border-main/40 shrink-0">
                       <div className="flex items-center gap-1 flex-1">
@@ -349,7 +349,7 @@ export default function CompactView({
                       {(tankenCategories.find(c => c.id === tankenSubTab)?.groups || []).map((group, gIdx) => (
                         <div key={gIdx} className={`space-y-1`}>
                           <div className={`${sizeConfig.groupTitle} font-bold text-text-dim px-1 pt-1 flex items-center gap-1.5`}>
-                            <span className={`w-1.5 h-2 rounded-xs ${tankenSubTab === 'fundamentals' ? 'bg-[#f59e0b]' : 'bg-[#4ade80]'}`} />
+                            <span className="w-1.5 h-2 rounded-xs bg-border-light" />
                             <span className="truncate">{group.groupName}</span>
                           </div>
                           <div className={`flex flex-col ${sizeConfig.itemGap}`}>
@@ -363,10 +363,10 @@ export default function CompactView({
                                   e.preventDefault();
                                   openExternalWindow(item.url);
                                 }}
-                                className={`group flex items-center justify-between ${sizeConfig.itemPadding} text-text-dim hover:text-text-bright hover:bg-border-main/50 bg-base-bg/40 border border-border-main/30 hover:border-border-main rounded-xs transition-colors`}
+                                className={`group flex items-center justify-between ${sizeConfig.itemPadding} text-text-dim hover:text-text-bright hover:bg-border-main/50 bg-base-bg/40 border border-border-main/30 hover:border-border-main rounded-xs transition-colors min-w-0 w-full`}
                                 title={`${item.title}（別ウィンドウで開く）`}
                               >
-                                <span className={`truncate group-hover:text-[#58a6ff] ${sizeConfig.title} font-medium tracking-normal`}>
+                                <span className={`truncate min-w-0 flex-1 group-hover:text-text-bright ${sizeConfig.title} font-medium tracking-normal`}>
                                   {item.title}
                                 </span>
                                 <ExternalLink size={sizeConfig.iconSize} className="shrink-0 opacity-0 group-hover:opacity-100 ml-1.5 text-text-bright" />
@@ -421,7 +421,7 @@ export default function CompactView({
           </div>
 
           {/* Stock List Scroll Area */}
-          <div className="flex-1 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 pr-1 scrollbar-thin">
             {stocks.length === 0 ? (
               <div className="text-center text-text-dim py-8 text-[11px]">
                 銘柄データがありません
