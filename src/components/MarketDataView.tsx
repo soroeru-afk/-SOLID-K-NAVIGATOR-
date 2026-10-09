@@ -182,7 +182,7 @@ export default function MarketDataView({
               onClick={() => setActiveTab('tanken')}
               className={`px-3 py-1 font-bold transition-colors rounded-xs flex items-center gap-1.5 ${
                 activeTab === 'tanken'
-                  ? 'bg-border-main text-[#f59e0b] border border-border-light shadow-xs'
+                  ? 'bg-border-main text-text-bright border border-border-light shadow-xs'
                   : 'text-text-dim hover:text-text-normal'
               }`}
             >
