@@ -155,7 +155,7 @@ export default function CompactView({
   return (
     <div 
       ref={containerRef}
-      className={`h-screen w-full bg-base-bg flex flex-col p-2.5 text-xs uppercase tracking-wider overflow-hidden ${
+      className={`h-screen w-full max-w-[440px] mx-auto bg-base-bg flex flex-col p-2.5 text-xs uppercase tracking-wider overflow-hidden border-x border-border-main shadow-2xl ${
         isDragging ? 'select-none cursor-row-resize' : ''
       }`}
     >

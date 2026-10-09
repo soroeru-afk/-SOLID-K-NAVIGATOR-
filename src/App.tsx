@@ -28,6 +28,20 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('knav_theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
+
+    // Dynamic meta theme-color sync for header & PWA status bar
+    let themeColorHex = '#0a0d12'; // default black
+    if (theme === 'dark') themeColorHex = '#151e2f';
+    else if (theme === 'red') themeColorHex = '#160808';
+    else if (theme === 'light') themeColorHex = '#f8fafc';
+
+    let metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (!metaTheme) {
+      metaTheme = document.createElement('meta');
+      metaTheme.setAttribute('name', 'theme-color');
+      document.head.appendChild(metaTheme);
+    }
+    metaTheme.setAttribute('content', themeColorHex);
   }, [theme]);
 
   const [fontType, setFontType] = useState<FontType>(
