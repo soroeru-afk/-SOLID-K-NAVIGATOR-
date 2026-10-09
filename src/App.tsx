@@ -29,11 +29,11 @@ export default function App() {
     localStorage.setItem('knav_theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
 
-    // Dynamic meta theme-color sync for header & PWA status bar (matching sidebar background panel-bg)
-    let themeColorHex = '#10141b'; // default black
-    if (theme === 'dark') themeColorHex = '#151e2f';
-    else if (theme === 'red') themeColorHex = '#160808';
-    else if (theme === 'light') themeColorHex = '#f8fafc';
+    // Dynamic meta theme-color sync for browser header/titlebar (matching sidebar background base-bg)
+    let themeColorHex = '#0a0d12'; // default black
+    if (theme === 'dark') themeColorHex = '#0d131f';
+    else if (theme === 'red') themeColorHex = '#0d0404';
+    else if (theme === 'light') themeColorHex = '#e2e8f0';
 
     let metaTheme = document.querySelector('meta[name="theme-color"]');
     if (!metaTheme) {
