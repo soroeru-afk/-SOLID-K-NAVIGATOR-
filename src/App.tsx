@@ -29,8 +29,8 @@ export default function App() {
     localStorage.setItem('knav_theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
 
-    // Dynamic meta theme-color sync for header & PWA status bar
-    let themeColorHex = '#0a0d12'; // default black
+    // Dynamic meta theme-color sync for header & PWA status bar (matching sidebar background panel-bg)
+    let themeColorHex = '#10141b'; // default black
     if (theme === 'dark') themeColorHex = '#151e2f';
     else if (theme === 'red') themeColorHex = '#160808';
     else if (theme === 'light') themeColorHex = '#f8fafc';
@@ -52,8 +52,47 @@ export default function App() {
     return localStorage.getItem('knav_compact_mode') === 'true';
   });
 
+  const lastFullWindowSizeRef = useRef<{ width: number; height: number }>({
+    width: window.outerWidth || 1280,
+    height: window.outerHeight || 800
+  });
+
   useEffect(() => {
     localStorage.setItem('knav_compact_mode', String(isCompactMode));
+
+    // Handle desktop Chrome PWA window resizing (similar to Solid Audio Music Player mini panel)
+    if (typeof window !== 'undefined' && 'resizeTo' in window) {
+      try {
+        if (isCompactMode) {
+          // Save current full window dimensions before shrinking
+          if (window.outerWidth > 550) {
+            lastFullWindowSizeRef.current = {
+              width: window.outerWidth,
+              height: window.outerHeight
+            };
+            localStorage.setItem('knav_last_full_win_size', JSON.stringify(lastFullWindowSizeRef.current));
+          }
+          // Resize window to compact width (~450px)
+          const targetH = Math.min(window.outerHeight, 880);
+          window.resizeTo(450, targetH);
+        } else {
+          // Restore full window dimensions
+          const savedFull = localStorage.getItem('knav_last_full_win_size');
+          let restoreW = lastFullWindowSizeRef.current.width;
+          let restoreH = lastFullWindowSizeRef.current.height;
+          if (savedFull) {
+            try {
+              const parsed = JSON.parse(savedFull);
+              if (parsed.width && parsed.width > 550) restoreW = parsed.width;
+              if (parsed.height && parsed.height > 400) restoreH = parsed.height;
+            } catch(e){}
+          }
+          window.resizeTo(Math.max(1000, restoreW), Math.max(650, restoreH));
+        }
+      } catch (e) {
+        // Ignored if browser restricts resizeTo
+      }
+    }
   }, [isCompactMode]);
 
   const [language, setLanguage] = useState<Language>(
