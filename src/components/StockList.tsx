@@ -1115,14 +1115,19 @@ export default function StockList({
                       return (
                         <div 
                           className="bg-base-bg/40 border border-border-main/50 p-2.5 mb-3 min-h-[64px] transition-colors rounded-xs flex flex-col justify-center relative group/desc"
+                          onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
+                          onMouseLeave={handleDetailMouseLeave}
                         >
                           {st.description ? (
                             <div>
                               <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
                                 <div 
-                                  onClick={() => setSelectedStockForDetail(st)}
+                                  onClick={() => {
+                                    setHoveredDetail(null);
+                                    setSelectedStockForDetail(st);
+                                  }}
                                   className="text-text-bright font-bold tracking-wider flex items-center gap-1 cursor-pointer hover:underline"
-                                  title="クリックで詳細モーダルを開く"
+                                  title="マウスオーバーで拡大表示 / クリックで詳細モーダルを開く"
                                 >
                                   <span>[ 企業概要・詳細情報 ]</span>
                                 </div>
@@ -1138,10 +1143,13 @@ export default function StockList({
                                 )}
                               </div>
                               <p 
-                                onClick={() => setSelectedStockForDetail(st)}
+                                onClick={() => {
+                                  setHoveredDetail(null);
+                                  setSelectedStockForDetail(st);
+                                }}
                                 className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
                                 style={{ fontSize: `${memoFontSize}px` }}
-                                title="クリックで詳細モーダルを開く"
+                                title="マウスオーバーで拡大表示 / クリックで詳細モーダルを開く"
                               >
                                 {st.description}
                               </p>
@@ -1150,9 +1158,12 @@ export default function StockList({
                             <div>
                               <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
                                 <div 
-                                  onClick={() => setSelectedStockForDetail(st)}
+                                  onClick={() => {
+                                    setHoveredDetail(null);
+                                    setSelectedStockForDetail(st);
+                                  }}
                                   className="text-text-dim font-bold tracking-wider flex items-center gap-1 cursor-pointer hover:underline"
-                                  title="クリックで詳細モーダルを開く"
+                                  title="マウスオーバーで拡大表示 / クリックで詳細モーダルを開く"
                                 >
                                   <span>[ メモ・考察 ]</span>
                                 </div>
@@ -1168,10 +1179,13 @@ export default function StockList({
                                 )}
                               </div>
                               <p 
-                                onClick={() => setSelectedStockForDetail(st)}
+                                onClick={() => {
+                                  setHoveredDetail(null);
+                                  setSelectedStockForDetail(st);
+                                }}
                                 className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
                                 style={{ fontSize: `${memoFontSize}px` }}
-                                title="クリックで詳細モーダルを開く"
+                                title="マウスオーバーで拡大表示 / クリックで詳細モーダルを開く"
                               >
                                 {memo.text}
                               </p>
