@@ -49,18 +49,6 @@ export default function CompactView({
   const [isMarketDataOpen, setIsMarketDataOpen] = useState(true);
   const [marketTab, setMarketTab] = useState<'links' | 'tanken'>('links');
   const [tankenSubTab, setTankenSubTab] = useState<'fundamentals' | 'technicals'>('fundamentals');
-
-  // 銘柄探検の文字サイズ・行間（大・中・小 ＆ LocalStorage記憶）
-  const [tankenSize, setTankenSize] = useState<'sm' | 'md' | 'lg'>(() => {
-    const saved = localStorage.getItem('KNAV_COMPACT_TANKEN_SIZE');
-    if (saved === 'sm' || saved === 'md' || saved === 'lg') return saved;
-    return 'md'; // デフォルト「中」で以前より大きめ・ゆったり
-  });
-
-  const handleTankenSizeChange = (sz: 'sm' | 'md' | 'lg') => {
-    setTankenSize(sz);
-    localStorage.setItem('KNAV_COMPACT_TANKEN_SIZE', sz);
-  };
   const [marketHeight, setMarketHeight] = useState<number>(() => {
     const saved = localStorage.getItem('KNAV_COMPACT_MARKET_HEIGHT');
     if (saved) {
@@ -207,7 +195,10 @@ export default function CompactView({
             onClick={() => setIsMarketDataOpen(!isMarketDataOpen)}
             className="flex items-center justify-between px-2.5 py-1.5 cursor-pointer bg-base-bg/60 border-b border-border-main hover:bg-border-main/30 transition-colors select-none shrink-0"
           >
-            <div className="flex items-center gap-2 text-text-bright font-bold text-[11px]">
+            <div 
+              className="flex items-center gap-2 text-text-bright font-bold text-[11px]"
+              style={{ fontSize: fontSize ? Math.max(11, fontSize - 1) : undefined }}
+            >
               <LineChart size={13} className="text-text-bright" />
               <span>[ STOCK MARKET DATA ]</span>
             </div>
@@ -220,7 +211,10 @@ export default function CompactView({
           {isMarketDataOpen && (
             <div className="p-2 flex-1 min-h-0 flex flex-col">
               {/* Tab Buttons: [リンク] [探検] */}
-              <div className="grid grid-cols-2 gap-1 mb-2 border-b border-border-main/60 pb-1.5 text-[10px] shrink-0">
+              <div 
+                className="grid grid-cols-2 gap-1 mb-2 border-b border-border-main/60 pb-1.5 text-[10px] shrink-0"
+                style={{ fontSize: fontSize ? Math.max(10, fontSize - 1) : undefined }}
+              >
                 <button
                   type="button"
                   onClick={() => setMarketTab('links')}
@@ -274,119 +268,76 @@ export default function CompactView({
               )}
 
               {/* Content for TAB 2: 銘柄探検 (高さいっぱいにスクロール可能) */}
-              {marketTab === 'tanken' && (() => {
-                const sizeConfig = {
-                  sm: {
-                    title: 'text-[11px]',
-                    groupTitle: 'text-[10px]',
-                    itemPadding: 'py-1 px-2',
-                    groupGap: 'space-y-1',
-                    itemGap: 'gap-0.5',
-                    iconSize: 9,
-                  },
-                  md: {
-                    title: 'text-[12.5px]',
-                    groupTitle: 'text-[11px]',
-                    itemPadding: 'py-1.5 px-2.5',
-                    groupGap: 'space-y-1.5',
-                    itemGap: 'gap-1',
-                    iconSize: 11,
-                  },
-                  lg: {
-                    title: 'text-[14px]',
-                    groupTitle: 'text-[12px]',
-                    itemPadding: 'py-2 px-2.5',
-                    groupGap: 'space-y-2',
-                    itemGap: 'gap-1.5',
-                    iconSize: 12,
-                  },
-                }[tankenSize];
-
-                return (
-                  <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin flex flex-col gap-1.5">
-                    {/* Header: ファンダ / テクニカル 切り替え ＆ 大・中・小 サイズ切替 */}
-                    <div className="flex items-center justify-between gap-1.5 pb-1.5 border-b border-border-main/40 shrink-0">
-                      <div className="flex items-center gap-1 flex-1">
-                        <button
-                          type="button"
-                          onClick={() => setTankenSubTab('fundamentals')}
-                          className={`flex-1 py-1 text-center font-bold rounded-xs transition-colors text-[10px] ${
-                            tankenSubTab === 'fundamentals'
-                              ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
-                              : 'text-text-dim hover:text-text-normal bg-base-bg'
-                          }`}
-                        >
-                          ファンダ
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setTankenSubTab('technicals')}
-                          className={`flex-1 py-1 text-center font-bold rounded-xs transition-colors text-[10px] ${
-                            tankenSubTab === 'technicals'
-                              ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
-                              : 'text-text-dim hover:text-text-normal bg-base-bg'
-                          }`}
-                        >
-                          テクニカル
-                        </button>
-                      </div>
-
-                      {/* 文字サイズ・行間切り替え（大・中・小） */}
-                      <div className="flex items-center gap-0.5 bg-base-bg border border-border-main p-0.5 rounded-xs shrink-0">
-                        <span className="text-[9px] text-text-dim px-1 font-mono">文字:</span>
-                        {(['sm', 'md', 'lg'] as const).map((sz) => (
-                          <button
-                            key={sz}
-                            type="button"
-                            onClick={() => handleTankenSizeChange(sz)}
-                            className={`px-1.5 py-0.5 font-bold rounded-2xs transition-colors text-[9px] ${
-                              tankenSize === sz
-                                ? 'bg-border-main text-text-bright border border-border-light/60 shadow-2xs'
-                                : 'text-text-dim hover:text-text-bright'
-                            }`}
-                            title={`文字・行間サイズ: ${sz === 'sm' ? '小' : sz === 'md' ? '中 (推奨)' : '大'}`}
-                          >
-                            {sz === 'sm' ? '小' : sz === 'md' ? '中' : '大'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* リスト表示 */}
-                    <div className={`flex flex-col ${sizeConfig.groupGap}`}>
-                      {(tankenCategories.find(c => c.id === tankenSubTab)?.groups || []).map((group, gIdx) => (
-                        <div key={gIdx} className={`space-y-1`}>
-                          <div className={`${sizeConfig.groupTitle} font-bold text-text-dim px-1 pt-1 flex items-center gap-1.5`}>
-                            <span className="w-1.5 h-2 rounded-xs bg-border-light" />
-                            <span className="truncate">{group.groupName}</span>
-                          </div>
-                          <div className={`flex flex-col ${sizeConfig.itemGap}`}>
-                            {group.items.map((item, itemIdx) => (
-                              <a
-                                key={itemIdx}
-                                href={item.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  openExternalWindow(item.url);
-                                }}
-                                className={`group flex items-center justify-between ${sizeConfig.itemPadding} text-text-dim hover:text-text-bright hover:bg-border-main/50 bg-base-bg/40 border border-border-main/30 hover:border-border-main rounded-xs transition-colors min-w-0 w-full`}
-                                title={`${item.title}（別ウィンドウで開く）`}
-                              >
-                                <span className={`truncate min-w-0 flex-1 group-hover:text-text-bright ${sizeConfig.title} font-medium tracking-normal`}>
-                                  {item.title}
-                                </span>
-                                <ExternalLink size={sizeConfig.iconSize} className="shrink-0 opacity-0 group-hover:opacity-100 ml-1.5 text-text-bright" />
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
+              {marketTab === 'tanken' && (
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin flex flex-col gap-1.5">
+                  {/* Header: ファンダ / テクニカル 切り替え（2等分で横幅いっぱいに拡大） */}
+                  <div className="flex items-center justify-between gap-1.5 pb-1.5 border-b border-border-main/40 shrink-0">
+                    <div className="flex items-center gap-1 w-full">
+                      <button
+                        type="button"
+                        onClick={() => setTankenSubTab('fundamentals')}
+                        className={`flex-1 py-1 text-center font-bold rounded-xs transition-colors text-[10px] ${
+                          tankenSubTab === 'fundamentals'
+                            ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
+                            : 'text-text-dim hover:text-text-normal bg-base-bg'
+                        }`}
+                      >
+                        ファンダ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTankenSubTab('technicals')}
+                        className={`flex-1 py-1 text-center font-bold rounded-xs transition-colors text-[10px] ${
+                          tankenSubTab === 'technicals'
+                            ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
+                            : 'text-text-dim hover:text-text-normal bg-base-bg'
+                        }`}
+                      >
+                        テクニカル
+                      </button>
                     </div>
                   </div>
-                );
-              })()}
+
+                  {/* リスト表示（「リンク」タブと完全に同一の文字サイズ・行余白で統一） */}
+                  <div className="flex flex-col space-y-1.5">
+                    {(tankenCategories.find(c => c.id === tankenSubTab)?.groups || []).map((group, gIdx) => (
+                      <div key={gIdx} className="space-y-1">
+                        <div 
+                          className="font-bold text-text-dim px-1 pt-1 flex items-center gap-1.5"
+                          style={{ fontSize: fontSize ? Math.max(10, fontSize - 1) : undefined }}
+                        >
+                          <span className="w-1.5 h-2 rounded-xs bg-border-light shrink-0" />
+                          <span className="truncate">{group.groupName}</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {group.items.map((item, itemIdx) => (
+                            <a
+                              key={itemIdx}
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                openExternalWindow(item.url);
+                              }}
+                              className="flex items-center justify-between px-2.5 py-1.5 text-text-dim hover:text-text-bright hover:bg-border-main/50 bg-base-bg/30 border border-transparent hover:border-border-main rounded-xs transition-colors group min-w-0 w-full"
+                              title={`${item.title}（別ウィンドウで開く）`}
+                            >
+                              <span 
+                                className="truncate min-w-0 flex-1 group-hover:text-text-bright font-medium tracking-normal text-[12px] transition-colors"
+                                style={{ fontSize: fontSize ? Math.max(11, fontSize) : undefined }}
+                              >
+                                {item.title}
+                              </span>
+                              <ExternalLink size={11} className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:text-text-bright ml-1.5" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
