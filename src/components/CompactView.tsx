@@ -19,6 +19,7 @@ interface Props {
   onSelectCategory: (id: string | null) => void;
   language: Language;
   onToggleMode: () => void;
+  stockFontSize?: number;
   priceFontSize?: number;
   limitFontSize?: number;
   priceColor?: string;
@@ -35,6 +36,7 @@ export default function CompactView({
   onSelectCategory,
   language,
   onToggleMode,
+  stockFontSize,
   priceFontSize,
   limitFontSize = 10,
   priceColor,
@@ -259,7 +261,10 @@ export default function CompactView({
                       className="flex items-center justify-between text-text-dim hover:text-text-bright hover:bg-border-main/50 px-2.5 py-1.5 rounded-xs transition-colors group border border-transparent hover:border-border-main bg-base-bg/30 min-w-0 w-full"
                       title={`${link.title}（別ウィンドウで開く）`}
                     >
-                      <span className="truncate pr-1 text-[12px] font-medium min-w-0 flex-1 group-hover:text-text-bright transition-colors">
+                      <span 
+                        className="truncate pr-1 text-[12px] font-medium min-w-0 flex-1 group-hover:text-text-bright transition-colors"
+                        style={{ fontSize: fontSize ? Math.max(11, fontSize) : undefined }}
+                      >
                         {link.title}
                       </span>
                       <ExternalLink size={11} className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:text-text-bright ml-1" />
@@ -462,7 +467,7 @@ export default function CompactView({
                           openExternalWindow(`https://kabutan.jp/stock/?code=${stock.code}`);
                         }}
                         className="text-text-bright hover:text-[#58a6ff] text-[11px] truncate font-bold transition-colors flex items-center gap-1 flex-1 min-w-0"
-                        style={{ fontSize: fontSize ? Math.max(11, fontSize - 1) : undefined }}
+                        style={{ fontSize: stockFontSize ? stockFontSize : (fontSize ? Math.max(11, fontSize) : undefined) }}
                         title={`${stock.name}（別ウィンドウで株探を開く）`}
                       >
                         <span className="truncate">{stock.name}</span>

@@ -1101,6 +1101,7 @@ export default function App() {
           onSelectCategory={setActiveCategoryId}
           language={language}
           onToggleMode={() => setIsCompactMode(false)}
+          stockFontSize={stockFontSize}
           priceFontSize={priceFontSize}
           limitFontSize={limitFontSize}
           priceColor={priceColor}
