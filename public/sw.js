@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solid-k-navigator-v10.6';
+const CACHE_NAME = 'solid-k-navigator-v10.7';
 const STATIC_ASSETS = [
   './',
   './index.html',

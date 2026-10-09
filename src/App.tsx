@@ -72,8 +72,8 @@ export default function App() {
             };
             localStorage.setItem('knav_last_full_win_size', JSON.stringify(lastFullWindowSizeRef.current));
           }
-          // Resize window to compact width (~450px)
-          const targetH = Math.min(window.outerHeight, 880);
+          // Resize window to compact width (~450px) and tall height (~820px)
+          const targetH = Math.max(800, Math.min(window.screen.availHeight ? window.screen.availHeight - 80 : 850, 850));
           window.resizeTo(450, targetH);
         } else {
           // Restore full window dimensions

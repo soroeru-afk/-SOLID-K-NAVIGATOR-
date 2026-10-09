@@ -55,7 +55,7 @@ export default function CompactView({
       const parsed = parseInt(saved, 10);
       if (!isNaN(parsed) && parsed >= 120 && parsed <= 900) return parsed;
     }
-    return 320; // デフォルト高さ（広め）
+    return 260; // デフォルト高さ（下部銘柄リストを広く確保）
   });
 
   const [isDragging, setIsDragging] = useState(false);
