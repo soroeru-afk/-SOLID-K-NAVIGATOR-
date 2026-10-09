@@ -66,6 +66,10 @@ export default function App() {
     () => parseInt(localStorage.getItem('KNAV_DETAIL_FONT_SIZE') || '14')
   );
 
+  const [limitFontSize, setLimitFontSize] = useState<number>(
+    () => parseInt(localStorage.getItem('knav_limit_font_size') || '11')
+  );
+
   const [priceColor, setPriceColor] = useState<string>(
     () => {
       const saved = localStorage.getItem('knav_price_color');
@@ -104,6 +108,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('KNAV_DETAIL_FONT_SIZE', memoFontSize.toString());
   }, [memoFontSize]);
+
+  useEffect(() => {
+    localStorage.setItem('knav_limit_font_size', limitFontSize.toString());
+  }, [limitFontSize]);
 
   useEffect(() => {
     localStorage.setItem('knav_price_color', priceColor);
@@ -246,7 +254,20 @@ export default function App() {
     }
   };
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(370);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('knav_sidebar_width');
+    const parsed = saved ? parseInt(saved, 10) : 370;
+    return (!isNaN(parsed) && parsed >= 200 && parsed <= 600) ? parsed : 370;
+  });
+
+  const lastSidebarWidthRef = useRef<number>(sidebarWidth);
+
+  useEffect(() => {
+    if (!isCompactMode && sidebarWidth >= 200) {
+      lastSidebarWidthRef.current = sidebarWidth;
+      localStorage.setItem('knav_sidebar_width', String(sidebarWidth));
+    }
+  }, [sidebarWidth, isCompactMode]);
 
   const defaultMarketLinks: MarketLink[] = [
     { id: 'm0', title: "市場ニュース（総合）", url: "https://kabutan.jp/news/marketnews/" },
@@ -1028,6 +1049,7 @@ export default function App() {
           language={language}
           onToggleMode={() => setIsCompactMode(false)}
           priceFontSize={priceFontSize}
+          limitFontSize={limitFontSize}
           priceColor={priceColor}
           theme={theme}
           fontSize={listFontSize}
@@ -1127,6 +1149,8 @@ export default function App() {
           onStockFontSizeChange={setStockFontSize}
           priceFontSize={priceFontSize}
           onPriceFontSizeChange={setPriceFontSize}
+          limitFontSize={limitFontSize}
+          onLimitFontSizeChange={setLimitFontSize}
           memoFontSize={memoFontSize}
           onMemoFontSizeChange={setMemoFontSize}
           priceColor={priceColor}
@@ -1164,6 +1188,7 @@ export default function App() {
               listFontSize={listFontSize}
               stockFontSize={stockFontSize}
               priceFontSize={priceFontSize}
+              limitFontSize={limitFontSize}
               memoFontSize={memoFontSize}
               onMemoFontSizeChange={setMemoFontSize}
               priceColor={priceColor}

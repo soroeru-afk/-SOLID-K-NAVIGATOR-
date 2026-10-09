@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { 
   Database, FileText, Trash2, CheckSquare, Square, Pencil, ExternalLink, 
   ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, X, LayoutGrid, List as ListIcon, 
@@ -33,6 +33,7 @@ interface Props {
   listFontSize: number;
   stockFontSize: number;
   priceFontSize: number;
+  limitFontSize?: number;
   memoFontSize: number;
   onMemoFontSizeChange: (size: number) => void;
   priceColor: string;
@@ -91,6 +92,7 @@ export default function StockList({
   listFontSize,
   stockFontSize,
   priceFontSize,
+  limitFontSize = 11,
   memoFontSize,
   onMemoFontSizeChange,
   priceColor,
@@ -110,6 +112,44 @@ export default function StockList({
   const [selectedStockForDetail, setSelectedStockForDetail] = useState<Stock | null>(null);
   const [movingStocks, setMovingStocks] = useState<Stock[] | null>(null);
   const [movingMode, setMovingMode] = useState<'move' | 'shortcut'>('move');
+
+  // Hovered Detail preview state for List (Table) view popup
+  const [hoveredDetail, setHoveredDetail] = useState<{
+    stock: Stock;
+    rect: DOMRect;
+  } | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Expanded description IDs for Card view (カード表示での全文展開トグル)
+  const [expandedDescIds, setExpandedDescIds] = useState<Set<string>>(new Set());
+
+  const handleDetailMouseEnter = (stock: Stock, e: React.MouseEvent<HTMLDivElement | HTMLSpanElement>) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    const rect = e.currentTarget.getBoundingClientRect();
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredDetail({ stock, rect });
+    }, 80);
+  };
+
+  const handleDetailMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredDetail(null);
+    }, 200);
+  };
+
+  const toggleExpandDesc = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedDescIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   // Drag & drop state for stocks
   const [draggingStockIds, setDraggingStockIds] = useState<string[]>([]);
@@ -1047,12 +1087,13 @@ export default function StockList({
                         if (!limit) return null;
                         return (
                           <div 
-                            className="flex items-center gap-1 text-[10px] text-text-dim border-l border-border-main pl-2 select-all"
+                            className="flex items-center gap-1 text-text-dim border-l border-border-main pl-2 select-all leading-tight font-mono"
+                            style={{ fontSize: limitFontSize }}
                             title={`制限値幅: ${limit.fullText} (ストップ安: ${limit.low.toLocaleString()}円 / ストップ高: ${limit.high.toLocaleString()}円)`}
                           >
-                            <span>値幅:</span>
+                            <span className="opacity-80">値幅:</span>
                             <span className="text-text-bright font-bold">{limit.displayText}</span>
-                            <span className="text-[9px] text-text-dim/80">({limit.range >= 0 ? `±${limit.range.toLocaleString()}` : ''})</span>
+                            <span className="text-text-dim/80 text-[0.85em]">({limit.range >= 0 ? `±${limit.range.toLocaleString()}` : ''})</span>
                           </div>
                         );
                       })()}
@@ -1066,43 +1107,88 @@ export default function StockList({
                     </div>
 
                     {/* Company Description / Overview Preview (or Memo fallback) */}
-                    <div 
-                      onClick={() => setSelectedStockForDetail(st)}
-                      className="cursor-pointer bg-base-bg/40 hover:bg-base-bg border border-border-main/50 p-2.5 mb-3 min-h-[64px] transition-colors rounded-xs flex flex-col justify-center"
-                    >
-                      {st.description ? (
-                        <div>
-                          <div className="text-text-bright font-bold tracking-wider mb-1 flex items-center gap-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
-                            <span>[ 企業概要・詳細情報 ]</span>
-                          </div>
-                          <p 
-                            className="text-text-bright line-clamp-3 leading-relaxed whitespace-pre-wrap"
-                            style={{ fontSize: `${memoFontSize}px` }}
-                          >
-                            {st.description}
-                          </p>
-                        </div>
-                      ) : memo && memo.text ? (
-                        <div>
-                          <div className="text-text-dim font-bold tracking-wider mb-1 flex items-center gap-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
-                            <span>[ メモ・考察 ]</span>
-                          </div>
-                          <p 
-                            className="text-text-bright line-clamp-3 leading-relaxed whitespace-pre-wrap"
-                            style={{ fontSize: `${memoFontSize}px` }}
-                          >
-                            {memo.text}
-                          </p>
-                        </div>
-                      ) : (
+                    {(() => {
+                      const isExpanded = expandedDescIds.has(st.id);
+                      const hasText = Boolean(st.description || (memo && memo.text));
+                      const textLength = (st.description || memo?.text || '').length;
+
+                      return (
                         <div 
-                          className="h-full flex items-center justify-center text-text-dim/60 italic"
-                          style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}
+                          className="bg-base-bg/40 border border-border-main/50 p-2.5 mb-3 min-h-[64px] transition-colors rounded-xs flex flex-col justify-center relative group/desc"
                         >
-                          詳細情報・メモ未登録
+                          {st.description ? (
+                            <div>
+                              <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
+                                <div 
+                                  onClick={() => setSelectedStockForDetail(st)}
+                                  className="text-text-bright font-bold tracking-wider flex items-center gap-1 cursor-pointer hover:underline"
+                                  title="クリックで詳細モーダルを開く"
+                                >
+                                  <span>[ 企業概要・詳細情報 ]</span>
+                                </div>
+                                {textLength > 60 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => toggleExpandDesc(st.id, e)}
+                                    className="text-[9px] font-mono text-text-dim hover:text-text-bright px-1 py-0.5 border border-border-main/60 bg-base-bg rounded-xs transition-colors shrink-0"
+                                    title={isExpanded ? '3行表示に戻す' : 'カード内で全文を表示する'}
+                                  >
+                                    {isExpanded ? '折りたたむ' : '全文読む'}
+                                  </button>
+                                )}
+                              </div>
+                              <p 
+                                onClick={() => setSelectedStockForDetail(st)}
+                                className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
+                                style={{ fontSize: `${memoFontSize}px` }}
+                                title="クリックで詳細モーダルを開く"
+                              >
+                                {st.description}
+                              </p>
+                            </div>
+                          ) : memo && memo.text ? (
+                            <div>
+                              <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
+                                <div 
+                                  onClick={() => setSelectedStockForDetail(st)}
+                                  className="text-text-dim font-bold tracking-wider flex items-center gap-1 cursor-pointer hover:underline"
+                                  title="クリックで詳細モーダルを開く"
+                                >
+                                  <span>[ メモ・考察 ]</span>
+                                </div>
+                                {textLength > 60 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => toggleExpandDesc(st.id, e)}
+                                    className="text-[9px] font-mono text-text-dim hover:text-text-bright px-1 py-0.5 border border-border-main/60 bg-base-bg rounded-xs transition-colors shrink-0"
+                                    title={isExpanded ? '3行表示に戻す' : 'カード内で全文を表示する'}
+                                  >
+                                    {isExpanded ? '折りたたむ' : '全文読む'}
+                                  </button>
+                                )}
+                              </div>
+                              <p 
+                                onClick={() => setSelectedStockForDetail(st)}
+                                className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
+                                style={{ fontSize: `${memoFontSize}px` }}
+                                title="クリックで詳細モーダルを開く"
+                              >
+                                {memo.text}
+                              </p>
+                            </div>
+                          ) : (
+                            <div 
+                              onClick={() => setSelectedStockForDetail(st)}
+                              className="h-full flex items-center justify-center text-text-dim/60 italic cursor-pointer hover:text-text-dim"
+                              style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}
+                              title="クリックして詳細情報・メモを登録"
+                            >
+                              詳細情報・メモ未登録
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Card Footer (Char count, Category, and "開く →" action) */}
@@ -1408,7 +1494,8 @@ export default function StockList({
                               </span>
                               {limit && (
                                 <span 
-                                  className="text-[10px] text-text-dim font-mono tracking-tight truncate select-all hover:text-text-normal transition-colors"
+                                  className="text-text-dim font-mono tracking-tight truncate select-all hover:text-text-normal transition-colors"
+                                  style={{ fontSize: limitFontSize }}
                                   title={`制限値幅: ${limit.fullText} (ストップ安: ${limit.low.toLocaleString()}円 / ストップ高: ${limit.high.toLocaleString()}円)`}
                                 >
                                   {limit.displayText}
@@ -1432,23 +1519,53 @@ export default function StockList({
                       )}
                     </div>
 
-                    {/* Col 4: Description / Memo preview (Flexible Middle Column) */}
+                    {/* Col 4: Description / Memo preview (Flexible Middle Column - 2段表示＆[詳細]ホバーでポップアップ) */}
                     <div 
                       style={{ minWidth: Math.max(MIN_COLUMN_WIDTHS.description, columnWidths.description) }}
-                      onClick={() => setSelectedStockForDetail(st)}
-                      className="flex-1 flex items-center px-2 py-1.5 text-text-dim hover:text-text-bright cursor-pointer truncate text-[11px] min-w-0 overflow-hidden"
-                      title={st.description || memo?.text || ''}
+                      className="flex-1 flex flex-col justify-center px-2 py-1 text-text-dim min-w-0 overflow-hidden"
                     >
                       {st.description ? (
-                        <span className="text-text-bright truncate" style={{ fontSize: `${memoFontSize}px` }}>
-                          <span className="text-text-bright font-bold mr-1 shrink-0" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>[詳細]</span>
+                        <div 
+                          className="line-clamp-2 leading-snug text-text-bright" 
+                          style={{ fontSize: `${memoFontSize}px` }}
+                        >
+                          <span 
+                            onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
+                            onMouseLeave={handleDetailMouseLeave}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedStockForDetail(st);
+                              setHoveredDetail(null);
+                            }}
+                            className="text-text-bright font-bold mr-1 shrink-0 inline-block px-1 py-0 border border-border-main bg-base-bg/80 hover:bg-border-main hover:text-text-bright cursor-pointer select-none rounded-2xs transition-colors" 
+                            style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}
+                            title="マウスオーバーで全文ポップアップ / クリックで詳細モーダル"
+                          >
+                            [詳細]
+                          </span>
                           {st.description}
-                        </span>
+                        </div>
                       ) : memo?.text ? (
-                        <span className="truncate" style={{ fontSize: `${memoFontSize}px` }}>
-                          <span className="text-text-dim font-bold mr-1 shrink-0" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>[メモ]</span>
+                        <div 
+                          className="line-clamp-2 leading-snug text-text-dim" 
+                          style={{ fontSize: `${memoFontSize}px` }}
+                        >
+                          <span 
+                            onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
+                            onMouseLeave={handleDetailMouseLeave}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedStockForDetail(st);
+                              setHoveredDetail(null);
+                            }}
+                            className="text-text-dim font-bold mr-1 shrink-0 inline-block px-1 py-0 border border-border-main bg-base-bg/80 hover:bg-border-main hover:text-text-bright cursor-pointer select-none rounded-2xs transition-colors" 
+                            style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}
+                            title="マウスオーバーで全文ポップアップ / クリックで詳細モーダル"
+                          >
+                            [メモ]
+                          </span>
                           {memo.text}
-                        </span>
+                        </div>
                       ) : (
                         <span className="text-text-dim/40 italic" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>未登録</span>
                       )}
@@ -1515,6 +1632,74 @@ export default function StockList({
         )}
       </div>
 
+      {/* Floating Rich Detail Popup for List View */}
+      {hoveredDetail && (() => {
+        const targetStock = hoveredDetail.stock;
+        const targetMemo = getMemoData(targetStock.code);
+        const textContent = targetStock.description || targetMemo?.text;
+        if (!textContent) return null;
+
+        const spaceBelow = window.innerHeight - hoveredDetail.rect.bottom;
+        const showAbove = spaceBelow < 260 && hoveredDetail.rect.top > 260;
+        
+        const top = showAbove 
+          ? undefined 
+          : Math.min(window.innerHeight - 320, hoveredDetail.rect.bottom + 6);
+        const bottom = showAbove 
+          ? (window.innerHeight - hoveredDetail.rect.top + 6) 
+          : undefined;
+        const left = Math.max(16, Math.min(hoveredDetail.rect.left, window.innerWidth - 520));
+
+        return (
+          <div 
+            className="fixed z-50 w-[440px] sm:w-[520px] max-w-[92vw] p-3.5 bg-white text-slate-900 border-2 border-slate-700 shadow-2xl rounded-xs flex flex-col gap-2 pointer-events-auto font-sans"
+            style={{ 
+              top, 
+              bottom, 
+              left,
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.2)',
+              maxHeight: 'min(75vh, 480px)'
+            }}
+            onMouseEnter={() => {
+              if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+            }}
+            onMouseLeave={() => setHoveredDetail(null)}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 text-[9px] font-mono text-slate-500 tracking-wider">
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="text-slate-900 font-bold">[{targetStock.code}] {targetStock.name}</span>
+                <span>•</span>
+                <span className="font-bold text-slate-700">{targetStock.description ? '企業概要・詳細' : 'メモ・考察'}</span>
+              </div>
+              <span className="shrink-0 text-slate-500 font-bold">{textContent.length} 文字</span>
+            </div>
+
+            {/* Scrollable Full Content (Font size scales with memoFontSize!) */}
+            <div 
+              className="overflow-y-auto pr-1 text-slate-950 font-normal leading-relaxed whitespace-pre-wrap select-text scrollbar-thin"
+              style={{ fontSize: `${memoFontSize}px` }}
+            >
+              {textContent}
+            </div>
+
+            {/* Footer / Hint */}
+            <div className="pt-1.5 border-t border-slate-200 flex items-center justify-between text-[9px] font-mono text-slate-600">
+              <span 
+                onClick={() => {
+                  setSelectedStockForDetail(targetStock);
+                  setHoveredDetail(null);
+                }}
+                className="text-slate-800 hover:text-black font-bold cursor-pointer underline hover:no-underline"
+              >
+                クリックで詳細・編集モーダルを開く ↗
+              </span>
+              <span className="text-slate-500 font-bold">POPUP SIZE: {memoFontSize}PX</span>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
@@ -1553,6 +1738,7 @@ export default function StockList({
           language={language}
           theme={theme}
           priceColor={priceColor}
+          limitFontSize={limitFontSize}
           memoFontSize={memoFontSize}
           onMemoFontSizeChange={onMemoFontSizeChange}
         />

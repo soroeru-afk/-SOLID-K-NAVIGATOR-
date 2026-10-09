@@ -92,6 +92,8 @@ export const i18n = {
     openKessan: "FINANCIALS",
     openNews: "NEWS",
     openKaiji: "DISCLOSURES",
+    openYahoo: "YAHOO TOP",
+    openYahooBbs: "YAHOO BBS",
   },
   JP: {
     appTitle: "SOLID K-NAVIGATOR",
@@ -184,5 +186,7 @@ export const i18n = {
     openKessan: "決算速報",
     openNews: "ニュース",
     openKaiji: "適時開示",
+    openYahoo: "Yahoo!トップ",
+    openYahooBbs: "Yahoo!掲示板",
   }
 };

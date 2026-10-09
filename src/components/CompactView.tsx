@@ -20,6 +20,7 @@ interface Props {
   language: Language;
   onToggleMode: () => void;
   priceFontSize?: number;
+  limitFontSize?: number;
   priceColor?: string;
   theme: Theme;
   fontSize?: number;
@@ -35,6 +36,7 @@ export default function CompactView({
   language,
   onToggleMode,
   priceFontSize,
+  limitFontSize = 10,
   priceColor,
   theme,
   fontSize
@@ -492,7 +494,8 @@ export default function CompactView({
                             </span>
                             {limit && (
                               <span 
-                                className="text-[9px] text-text-dim tabular-nums tracking-tighter"
+                                className="text-text-dim tabular-nums tracking-tighter"
+                                style={{ fontSize: limitFontSize }}
                                 title={`制限値幅: ${limit.fullText} (ストップ安: ${limit.low.toLocaleString()} / ストップ高: ${limit.high.toLocaleString()})`}
                               >
                                 {limit.displayText}
