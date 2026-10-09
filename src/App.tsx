@@ -72,10 +72,23 @@ export default function App() {
             };
             localStorage.setItem('knav_last_full_win_size', JSON.stringify(lastFullWindowSizeRef.current));
           }
-          // Resize window to compact width (~450px) and tall height (~820px)
-          const targetH = Math.max(800, Math.min(window.screen.availHeight ? window.screen.availHeight - 80 : 850, 850));
+          // Restore user's saved compact window height if previously resized
+          const savedCompactH = localStorage.getItem('knav_compact_win_height');
+          let targetH = 850;
+          if (savedCompactH) {
+            const parsedH = parseInt(savedCompactH, 10);
+            if (!isNaN(parsedH) && parsedH >= 400 && parsedH <= 2000) {
+              targetH = parsedH;
+            }
+          } else if (window.screen.availHeight) {
+            targetH = Math.max(750, Math.min(window.screen.availHeight - 60, 950));
+          }
           window.resizeTo(450, targetH);
         } else {
+          // Save compact height before switching back to full mode
+          if (window.outerWidth <= 550 && window.outerHeight >= 300) {
+            localStorage.setItem('knav_compact_win_height', String(window.outerHeight));
+          }
           // Restore full window dimensions
           const savedFull = localStorage.getItem('knav_last_full_win_size');
           let restoreW = lastFullWindowSizeRef.current.width;
@@ -93,6 +106,18 @@ export default function App() {
         // Ignored if browser restricts resizeTo
       }
     }
+  }, [isCompactMode]);
+
+  // Continuously record user manual window height adjustments in compact mode
+  useEffect(() => {
+    if (!isCompactMode) return;
+    const handleResize = () => {
+      if (window.outerHeight >= 300) {
+        localStorage.setItem('knav_compact_win_height', String(window.outerHeight));
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [isCompactMode]);
 
   const [language, setLanguage] = useState<Language>(
