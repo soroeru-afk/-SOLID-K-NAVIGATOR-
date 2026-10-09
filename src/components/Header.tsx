@@ -91,7 +91,7 @@ export default function Header({
   }, [isSizePanelOpen]);
 
   return (
-    <header className="flex justify-between items-center w-full shrink-0 border border-border-main bg-base-bg px-2.5 sm:px-3 py-1.5 md:py-2 relative gap-2">
+    <header className="flex justify-between items-center w-full shrink-0 border border-border-main bg-panel-bg px-2.5 sm:px-3 py-1.5 md:py-2 relative gap-2">
         {/* Left Label */}
         <div className="flex items-center gap-2 shrink-0">
             <span className="text-[10px] text-text-dim font-mono tracking-wider font-bold hidden md:inline">{t.canvasEnv}</span>

@@ -332,20 +332,7 @@ export default function App() {
     }
   };
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem('knav_sidebar_width');
-    const parsed = saved ? parseInt(saved, 10) : 370;
-    return (!isNaN(parsed) && parsed >= 200 && parsed <= 600) ? parsed : 370;
-  });
-
-  const lastSidebarWidthRef = useRef<number>(sidebarWidth);
-
-  useEffect(() => {
-    if (!isCompactMode && sidebarWidth >= 200) {
-      lastSidebarWidthRef.current = sidebarWidth;
-      localStorage.setItem('knav_sidebar_width', String(sidebarWidth));
-    }
-  }, [sidebarWidth, isCompactMode]);
+  const [sidebarWidth, setSidebarWidth] = useState(370);
 
   const defaultMarketLinks: MarketLink[] = [
     { id: 'm0', title: "市場ニュース（総合）", url: "https://kabutan.jp/news/marketnews/" },
