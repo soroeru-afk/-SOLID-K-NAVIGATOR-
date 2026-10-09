@@ -1115,13 +1115,13 @@ export default function StockList({
                       return (
                         <div 
                           className="bg-base-bg/40 border border-border-main/50 p-2.5 mb-3 min-h-[64px] transition-colors rounded-xs flex flex-col justify-center relative group/desc"
-                          onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
-                          onMouseLeave={handleDetailMouseLeave}
                         >
                           {st.description ? (
                             <div>
                               <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
                                 <div 
+                                  onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
+                                  onMouseLeave={handleDetailMouseLeave}
                                   onClick={() => {
                                     setHoveredDetail(null);
                                     setSelectedStockForDetail(st);
@@ -1149,7 +1149,7 @@ export default function StockList({
                                 }}
                                 className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
                                 style={{ fontSize: `${memoFontSize}px` }}
-                                title="マウスオーバーで拡大表示 / クリックで詳細モーダルを開く"
+                                title="クリックで詳細モーダルを開く"
                               >
                                 {st.description}
                               </p>
@@ -1158,6 +1158,8 @@ export default function StockList({
                             <div>
                               <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
                                 <div 
+                                  onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
+                                  onMouseLeave={handleDetailMouseLeave}
                                   onClick={() => {
                                     setHoveredDetail(null);
                                     setSelectedStockForDetail(st);
@@ -1185,7 +1187,7 @@ export default function StockList({
                                 }}
                                 className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
                                 style={{ fontSize: `${memoFontSize}px` }}
-                                title="マウスオーバーで拡大表示 / クリックで詳細モーダルを開く"
+                                title="クリックで詳細モーダルを開く"
                               >
                                 {memo.text}
                               </p>
