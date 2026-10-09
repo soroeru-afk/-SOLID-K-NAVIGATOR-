@@ -28,6 +28,20 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('knav_theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
+
+    // Dynamic meta theme-color sync for browser header/titlebar (matching sidebar background base-bg)
+    let themeColorHex = '#0a0d12'; // default black
+    if (theme === 'dark') themeColorHex = '#0d131f';
+    else if (theme === 'red') themeColorHex = '#0d0404';
+    else if (theme === 'light') themeColorHex = '#e2e8f0';
+
+    let metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (!metaTheme) {
+      metaTheme = document.createElement('meta');
+      metaTheme.setAttribute('name', 'theme-color');
+      document.head.appendChild(metaTheme);
+    }
+    metaTheme.setAttribute('content', themeColorHex);
   }, [theme]);
 
   const [fontType, setFontType] = useState<FontType>(
@@ -38,8 +52,72 @@ export default function App() {
     return localStorage.getItem('knav_compact_mode') === 'true';
   });
 
+  const lastFullWindowSizeRef = useRef<{ width: number; height: number }>({
+    width: window.outerWidth || 1280,
+    height: window.outerHeight || 800
+  });
+
   useEffect(() => {
     localStorage.setItem('knav_compact_mode', String(isCompactMode));
+
+    // Handle desktop Chrome PWA window resizing (similar to Solid Audio Music Player mini panel)
+    if (typeof window !== 'undefined' && 'resizeTo' in window) {
+      try {
+        if (isCompactMode) {
+          // Save current full window dimensions before shrinking
+          if (window.outerWidth > 550) {
+            lastFullWindowSizeRef.current = {
+              width: window.outerWidth,
+              height: window.outerHeight
+            };
+            localStorage.setItem('knav_last_full_win_size', JSON.stringify(lastFullWindowSizeRef.current));
+          }
+          // Restore user's saved compact window height if previously resized
+          const savedCompactH = localStorage.getItem('knav_compact_win_height');
+          let targetH = 850;
+          if (savedCompactH) {
+            const parsedH = parseInt(savedCompactH, 10);
+            if (!isNaN(parsedH) && parsedH >= 400 && parsedH <= 2000) {
+              targetH = parsedH;
+            }
+          } else if (window.screen.availHeight) {
+            targetH = Math.max(750, Math.min(window.screen.availHeight - 60, 950));
+          }
+          window.resizeTo(450, targetH);
+        } else {
+          // Save compact height before switching back to full mode
+          if (window.outerWidth <= 550 && window.outerHeight >= 300) {
+            localStorage.setItem('knav_compact_win_height', String(window.outerHeight));
+          }
+          // Restore full window dimensions
+          const savedFull = localStorage.getItem('knav_last_full_win_size');
+          let restoreW = lastFullWindowSizeRef.current.width;
+          let restoreH = lastFullWindowSizeRef.current.height;
+          if (savedFull) {
+            try {
+              const parsed = JSON.parse(savedFull);
+              if (parsed.width && parsed.width > 550) restoreW = parsed.width;
+              if (parsed.height && parsed.height > 400) restoreH = parsed.height;
+            } catch(e){}
+          }
+          window.resizeTo(Math.max(1000, restoreW), Math.max(650, restoreH));
+        }
+      } catch (e) {
+        // Ignored if browser restricts resizeTo
+      }
+    }
+  }, [isCompactMode]);
+
+  // Continuously record user manual window height adjustments in compact mode
+  useEffect(() => {
+    if (!isCompactMode) return;
+    const handleResize = () => {
+      if (window.outerHeight >= 300) {
+        localStorage.setItem('knav_compact_win_height', String(window.outerHeight));
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [isCompactMode]);
 
   const [language, setLanguage] = useState<Language>(
@@ -1035,6 +1113,7 @@ export default function App() {
           onSelectCategory={setActiveCategoryId}
           language={language}
           onToggleMode={() => setIsCompactMode(false)}
+          stockFontSize={stockFontSize}
           priceFontSize={priceFontSize}
           limitFontSize={limitFontSize}
           priceColor={priceColor}
