@@ -44,6 +44,8 @@ export default function CompactView({
   fontSize
 }: Props) {
   const t = i18n[language];
+  const effectiveFontSize = fontSize ? Math.min(20, Math.max(12, fontSize)) : 13;
+  const marketLinkFontSize = Math.max(11, effectiveFontSize - 1);
 
   // STOCK MARKET DATA の開閉状態
   const [isMarketDataOpen, setIsMarketDataOpen] = useState(true);
@@ -55,7 +57,7 @@ export default function CompactView({
       const parsed = parseInt(saved, 10);
       if (!isNaN(parsed) && parsed >= 120 && parsed <= 900) return parsed;
     }
-    return 210; // デフォルト高さ（下部銘柄リストを広く確保）
+    return 320; // デフォルト高さ（広め）
   });
 
   const [isDragging, setIsDragging] = useState(false);
@@ -145,7 +147,7 @@ export default function CompactView({
   return (
     <div 
       ref={containerRef}
-      className={`h-screen w-screen bg-base-bg flex flex-col p-2.5 text-xs uppercase tracking-wider overflow-hidden ${
+      className={`h-screen w-full bg-base-bg flex flex-col p-2.5 text-xs uppercase tracking-wider overflow-hidden ${
         isDragging ? 'select-none cursor-row-resize' : ''
       }`}
     >
@@ -196,10 +198,10 @@ export default function CompactView({
             className="flex items-center justify-between px-2.5 py-1.5 cursor-pointer bg-base-bg/60 border-b border-border-main hover:bg-border-main/30 transition-colors select-none shrink-0"
           >
             <div 
-              className="flex items-center gap-2 text-text-bright font-bold text-[11px]"
-              style={{ fontSize: fontSize ? Math.max(11, fontSize - 1) : undefined }}
+              className="flex items-center gap-2 text-text-bright font-bold"
+              style={{ fontSize: effectiveFontSize }}
             >
-              <LineChart size={13} className="text-text-bright" />
+              <LineChart size={Math.max(12, effectiveFontSize - 1)} className="text-text-bright shrink-0" />
               <span>[ STOCK MARKET DATA ]</span>
             </div>
             <div className="flex items-center gap-1 text-text-dim text-[10px]">
@@ -211,10 +213,7 @@ export default function CompactView({
           {isMarketDataOpen && (
             <div className="p-2 flex-1 min-h-0 flex flex-col">
               {/* Tab Buttons: [リンク] [探検] */}
-              <div 
-                className="grid grid-cols-2 gap-1 mb-2 border-b border-border-main/60 pb-1.5 text-[10px] shrink-0"
-                style={{ fontSize: fontSize ? Math.max(10, fontSize - 1) : undefined }}
-              >
+              <div className="grid grid-cols-2 gap-1 mb-2 border-b border-border-main/60 pb-1.5 text-[10px] shrink-0">
                 <button
                   type="button"
                   onClick={() => setMarketTab('links')}
@@ -223,6 +222,7 @@ export default function CompactView({
                       ? 'bg-border-main text-text-bright border border-border-light/50 shadow-xs'
                       : 'text-text-dim hover:text-text-normal bg-base-bg'
                   }`}
+                  style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
                 >
                   リンク
                 </button>
@@ -234,6 +234,7 @@ export default function CompactView({
                       ? 'bg-border-main text-text-bright border border-border-light/50 shadow-xs'
                       : 'text-text-dim hover:text-text-normal bg-base-bg'
                   }`}
+                  style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
                 >
                   銘柄探検
                 </button>
@@ -256,60 +257,60 @@ export default function CompactView({
                       title={`${link.title}（別ウィンドウで開く）`}
                     >
                       <span 
-                        className="truncate pr-1 text-[12px] font-medium min-w-0 flex-1 group-hover:text-text-bright transition-colors"
-                        style={{ fontSize: fontSize ? Math.max(11, fontSize) : undefined }}
+                        className="truncate pr-1 font-medium min-w-0 flex-1 group-hover:text-text-bright transition-colors"
+                        style={{ fontSize: marketLinkFontSize }}
                       >
                         {link.title}
                       </span>
-                      <ExternalLink size={11} className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:text-text-bright ml-1" />
+                      <ExternalLink size={Math.max(10, marketLinkFontSize - 2)} className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:text-text-bright ml-1" />
                     </a>
                   ))}
                 </div>
               )}
 
-              {/* Content for TAB 2: 銘柄探検 (高さいっぱいにスクロール可能) */}
+              {/* Content for TAB 2: 銘柄探検 (リンクタブと完全連動した文字サイズ) */}
               {marketTab === 'tanken' && (
                 <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin flex flex-col gap-1.5">
-                  {/* Header: ファンダ / テクニカル 切り替え（2等分で横幅いっぱいに拡大） */}
-                  <div className="flex items-center justify-between gap-1.5 pb-1.5 border-b border-border-main/40 shrink-0">
-                    <div className="flex items-center gap-1 w-full">
-                      <button
-                        type="button"
-                        onClick={() => setTankenSubTab('fundamentals')}
-                        className={`flex-1 py-1 text-center font-bold rounded-xs transition-colors text-[10px] ${
-                          tankenSubTab === 'fundamentals'
-                            ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
-                            : 'text-text-dim hover:text-text-normal bg-base-bg'
-                        }`}
-                      >
-                        ファンダ
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTankenSubTab('technicals')}
-                        className={`flex-1 py-1 text-center font-bold rounded-xs transition-colors text-[10px] ${
-                          tankenSubTab === 'technicals'
-                            ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
-                            : 'text-text-dim hover:text-text-normal bg-base-bg'
-                        }`}
-                      >
-                        テクニカル
-                      </button>
-                    </div>
+                  {/* Header: ファンダ / テクニカル 切り替え */}
+                  <div className="grid grid-cols-2 gap-1 pb-1.5 border-b border-border-main/40 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setTankenSubTab('fundamentals')}
+                      className={`py-1 text-center font-bold rounded-xs transition-colors ${
+                        tankenSubTab === 'fundamentals'
+                          ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
+                          : 'text-text-dim hover:text-text-normal bg-base-bg'
+                      }`}
+                      style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
+                    >
+                      ファンダ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTankenSubTab('technicals')}
+                      className={`py-1 text-center font-bold rounded-xs transition-colors ${
+                        tankenSubTab === 'technicals'
+                          ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
+                          : 'text-text-dim hover:text-text-normal bg-base-bg'
+                      }`}
+                      style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
+                    >
+                      テクニカル
+                    </button>
                   </div>
 
-                  {/* リスト表示（「リンク」タブと完全に同一の文字サイズ・行余白で統一） */}
-                  <div className="flex flex-col space-y-1.5">
+                  {/* リスト表示 */}
+                  <div className="flex flex-col gap-2">
                     {(tankenCategories.find(c => c.id === tankenSubTab)?.groups || []).map((group, gIdx) => (
-                      <div key={gIdx} className="space-y-1">
+                      <div key={gIdx} className="space-y-0.5">
                         <div 
-                          className="font-bold text-text-dim px-1 pt-1 flex items-center gap-1.5"
-                          style={{ fontSize: fontSize ? Math.max(10, fontSize - 1) : undefined }}
+                          className="font-bold text-text-dim px-1 pt-0.5 pb-0.5 flex items-center gap-1.5"
+                          style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
                         >
                           <span className="w-1.5 h-2 rounded-xs bg-border-light shrink-0" />
                           <span className="truncate">{group.groupName}</span>
                         </div>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-0.5">
                           {group.items.map((item, itemIdx) => (
                             <a
                               key={itemIdx}
@@ -320,16 +321,16 @@ export default function CompactView({
                                 e.preventDefault();
                                 openExternalWindow(item.url);
                               }}
-                              className="flex items-center justify-between px-2.5 py-1.5 text-text-dim hover:text-text-bright hover:bg-border-main/50 bg-base-bg/30 border border-transparent hover:border-border-main rounded-xs transition-colors group min-w-0 w-full"
+                              className="group flex items-center justify-between px-2.5 py-1.5 text-text-dim hover:text-text-bright hover:bg-border-main/50 bg-base-bg/30 border border-transparent hover:border-border-main rounded-xs transition-colors min-w-0 w-full"
                               title={`${item.title}（別ウィンドウで開く）`}
                             >
                               <span 
-                                className="truncate min-w-0 flex-1 group-hover:text-text-bright font-medium tracking-normal text-[12px] transition-colors"
-                                style={{ fontSize: fontSize ? Math.max(11, fontSize) : undefined }}
+                                className="truncate min-w-0 flex-1 group-hover:text-text-bright font-medium tracking-normal"
+                                style={{ fontSize: marketLinkFontSize }}
                               >
                                 {item.title}
                               </span>
-                              <ExternalLink size={11} className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:text-text-bright ml-1.5" />
+                              <ExternalLink size={Math.max(10, marketLinkFontSize - 2)} className="shrink-0 opacity-40 group-hover:opacity-100 ml-1.5 text-text-bright" />
                             </a>
                           ))}
                         </div>
@@ -418,13 +419,13 @@ export default function CompactView({
                           openExternalWindow(`https://kabutan.jp/stock/?code=${stock.code}`);
                         }}
                         className="text-text-bright hover:text-[#58a6ff] text-[11px] truncate font-bold transition-colors flex items-center gap-1 flex-1 min-w-0"
-                        style={{ fontSize: stockFontSize ? stockFontSize : (fontSize ? Math.max(11, fontSize) : undefined) }}
+                        style={{ fontSize: stockFontSize ? Math.max(11, stockFontSize - 1) : (fontSize ? Math.max(11, fontSize - 1) : undefined) }}
                         title={`${stock.name}（別ウィンドウで株探を開く）`}
                       >
                         <span className="truncate">{stock.name}</span>
                         <span 
                           className={`tabular-nums shrink-0 font-mono text-[10px] ${
-                            theme === 'light' ? 'text-black' : 'text-text-dim group-hover:text-text-bright'
+                            (theme === 'light' || theme === 'paper') ? 'text-black' : 'text-text-dim group-hover:text-text-bright'
                           }`}
                         >
                           {stock.code}

@@ -96,13 +96,9 @@ export default function TankenExplorerModal({ onClose }: Props) {
               return (
                 <div key={category.id} className="flex flex-col border border-border-main bg-base-bg/50 overflow-hidden">
                   {/* Category Title Banner */}
-                  <div className={`px-3.5 py-2 font-bold text-xs text-white flex items-center justify-between shadow-sm ${
-                    isFundamentals 
-                      ? 'bg-gradient-to-r from-[#d97706] to-[#b45309] border-b border-[#f59e0b]' 
-                      : 'bg-gradient-to-r from-[#15803d] to-[#166534] border-b border-[#22c55e]'
-                  }`}>
+                  <div className="px-3.5 py-2 font-bold text-xs flex items-center justify-between bg-border-main/50 border-b border-border-main text-text-bright">
                     <span className="tracking-wider">{category.title}</span>
-                    <span className="text-[10px] font-normal opacity-90 font-mono">
+                    <span className="text-[10px] font-normal font-mono text-text-dim px-1.5 py-0.5 bg-base-bg border border-border-main/60 rounded-2xs">
                       {filteredGroups.reduce((acc, g) => acc + g.items.length, 0)} 項目
                     </span>
                   </div>
@@ -117,12 +113,8 @@ export default function TankenExplorerModal({ onClose }: Props) {
                       filteredGroups.map((group, gIdx) => (
                         <div key={gIdx} className="space-y-1.5">
                           {/* Group Sub-heading */}
-                          <div className={`text-[11px] font-bold pb-1 border-b flex items-center gap-1.5 ${
-                            isFundamentals 
-                              ? 'text-[#f59e0b] border-[#d97706]/30' 
-                              : 'text-[#4ade80] border-[#16a34a]/30'
-                          }`}>
-                            <span className={`w-1.5 h-3 rounded-xs ${isFundamentals ? 'bg-[#f59e0b]' : 'bg-[#4ade80]'}`} />
+                          <div className="text-[11px] font-bold pb-1 border-b border-border-main/60 flex items-center gap-1.5 text-text-bright">
+                            <span className="w-1.5 h-3 rounded-xs bg-border-light" />
                             <span>{group.groupName}</span>
                           </div>
 

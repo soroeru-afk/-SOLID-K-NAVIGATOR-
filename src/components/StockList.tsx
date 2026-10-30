@@ -927,7 +927,7 @@ export default function StockList({
                       : (isSelected ? 'border-border-light ring-1 ring-border-light' : 'border-border-main hover:border-border-light')
                   }`}
                   style={{
-                    backgroundColor: theme === 'light' ? '#FFFFFF' : undefined,
+                    backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined,
                     padding: '12px'
                   }}
                 >
@@ -962,8 +962,10 @@ export default function StockList({
                             e.preventDefault();
                             openExternalWindow(`https://kabutan.jp/stock/?code=${st.code}`);
                           }}
-                          className={`font-mono font-black tracking-widest px-1.5 py-0.5 border border-border-main hover:underline ${
-                            theme === 'light' ? 'bg-black text-white' : 'bg-white text-black'
+                          className={`font-mono font-black tracking-widest px-1.5 py-0.5 border hover:underline transition-colors ${
+                            theme === 'paper'
+                              ? 'border-[#c24523] bg-[#d95430] hover:bg-[#c24523] text-white shadow-xs'
+                              : `border-border-main ${theme === 'light' ? 'bg-black text-white' : 'bg-white text-black'}`
                           }`}
                           style={{ fontSize: Math.max(10, Math.round(listFontSize * 0.9)) }}
                           title={`${st.code}（別ウィンドウで株探を開く）`}
@@ -1120,14 +1122,15 @@ export default function StockList({
                             <div>
                               <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
                                 <div 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedStockForDetail(st);
+                                    setHoveredDetail(null);
+                                  }}
                                   onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
                                   onMouseLeave={handleDetailMouseLeave}
-                                  onClick={() => {
-                                    setHoveredDetail(null);
-                                    setSelectedStockForDetail(st);
-                                  }}
                                   className="text-text-bright font-bold tracking-wider flex items-center gap-1 cursor-pointer hover:underline"
-                                  title="マウスオーバーで拡大表示 / クリックで詳細モーダルを開く"
+                                  title="マウスオーバーで全文ポップアップ / クリックで詳細モーダル"
                                 >
                                   <span>[ 企業概要・詳細情報 ]</span>
                                 </div>
@@ -1143,9 +1146,10 @@ export default function StockList({
                                 )}
                               </div>
                               <p 
-                                onClick={() => {
-                                  setHoveredDetail(null);
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setSelectedStockForDetail(st);
+                                  setHoveredDetail(null);
                                 }}
                                 className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
                                 style={{ fontSize: `${memoFontSize}px` }}
@@ -1158,14 +1162,15 @@ export default function StockList({
                             <div>
                               <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
                                 <div 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedStockForDetail(st);
+                                    setHoveredDetail(null);
+                                  }}
                                   onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
                                   onMouseLeave={handleDetailMouseLeave}
-                                  onClick={() => {
-                                    setHoveredDetail(null);
-                                    setSelectedStockForDetail(st);
-                                  }}
                                   className="text-text-dim font-bold tracking-wider flex items-center gap-1 cursor-pointer hover:underline"
-                                  title="マウスオーバーで拡大表示 / クリックで詳細モーダルを開く"
+                                  title="マウスオーバーで全文ポップアップ / クリックで詳細モーダル"
                                 >
                                   <span>[ メモ・考察 ]</span>
                                 </div>
@@ -1181,9 +1186,10 @@ export default function StockList({
                                 )}
                               </div>
                               <p 
-                                onClick={() => {
-                                  setHoveredDetail(null);
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setSelectedStockForDetail(st);
+                                  setHoveredDetail(null);
                                 }}
                                 className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
                                 style={{ fontSize: `${memoFontSize}px` }}
@@ -1397,8 +1403,15 @@ export default function StockList({
                     } ${
                       isDropTarget
                         ? (dragInsertPosition === 'before' ? 'border-t-2 border-t-border-light bg-border-main/30' : 'border-b-2 border-b-border-light bg-border-main/30')
-                        : (isSelected ? 'border-border-light bg-border-main/20' : 'border-border-main hover:border-border-light bg-base-bg/30 hover:bg-base-bg/80')
+                        : (isSelected 
+                            ? 'border-border-light bg-border-main/20' 
+                            : ((theme === 'light' || theme === 'paper') 
+                                ? 'border-border-main hover:border-border-light bg-white hover:bg-[#faf8f5]' 
+                                : 'border-border-main hover:border-border-light bg-base-bg/30 hover:bg-base-bg/80'))
                     }`}
+                    style={{
+                      backgroundColor: !isSelected && !isDropTarget && (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                    }}
                   >
                     {/* Col 1: Code & Checkbox */}
                     <div 
@@ -1432,8 +1445,10 @@ export default function StockList({
                           e.preventDefault();
                           openExternalWindow(`https://kabutan.jp/stock/?code=${st.code}`);
                         }}
-                        className={`font-mono font-bold tracking-widest hover:underline truncate shrink-0 ${
-                          theme === 'light' ? 'text-black' : 'text-white'
+                        className={`font-mono font-bold tracking-widest hover:underline truncate shrink-0 transition-colors ${
+                          theme === 'paper'
+                            ? 'px-1 py-0.5 border border-[#c24523] bg-[#d95430] hover:bg-[#c24523] text-white shadow-2xs rounded-xs'
+                            : (theme === 'light' ? 'text-black' : 'text-white')
                         }`}
                         style={{ fontSize: Math.max(10, Math.round(listFontSize * 0.9)) }}
                         title={`${st.code}（別ウィンドウで株探を開く）`}
@@ -1625,11 +1640,16 @@ export default function StockList({
 
                     {/* Col 7: Actions (Tight Fit "OPEN ⇒" Only, Seamless Integration) */}
                     <div 
-                      style={{ width: columnWidths.actions, minWidth: MIN_COLUMN_WIDTHS.actions, flexShrink: 0 }}
+                      style={{ 
+                        width: columnWidths.actions, 
+                        minWidth: MIN_COLUMN_WIDTHS.actions, 
+                        flexShrink: 0,
+                        backgroundColor: !isSelected && (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                      }}
                       className={`sticky right-0 z-10 self-stretch flex items-center justify-end px-1.5 overflow-hidden transition-colors ${
                         isSelected 
-                          ? (theme === 'light' ? 'bg-[#cbd5e1]' : 'bg-[#1c2128]') 
-                          : (theme === 'light' ? 'bg-[#ffffff] group-hover:bg-[#f1f5f9]' : 'bg-[#0d1117] group-hover:bg-[#161b22]')
+                          ? (theme === 'light' ? 'bg-[#cbd5e1]' : theme === 'paper' ? 'bg-[#E5DEC9]' : 'bg-[#1c2128]') 
+                          : ((theme === 'light' || theme === 'paper') ? 'bg-[#ffffff] group-hover:bg-[#faf8f5]' : 'bg-[#0d1117] group-hover:bg-[#161b22]')
                       }`}
                     >
                       <button

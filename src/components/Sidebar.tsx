@@ -7,10 +7,10 @@ import {
 } from 'lucide-react';
 import { Category, MarketLink, Stock, FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
+import { Theme } from '../App';
 import MarketLinkEditor from './MarketLinkEditor';
 import { getChildCategories, countStocksInCategory, getFlattenedCategoryTree } from '../lib/categoryUtils';
 import { tankenCategories } from '../data/tankenData';
-import TankenExplorerModal from './TankenExplorerModal';
 import ProxySettingsModal from './ProxySettingsModal';
 import { openExternalWindow } from '../lib/windowUtils';
 import { getFolderColorClass } from '../lib/folderUtils';
@@ -44,6 +44,7 @@ interface Props {
   onDownloadEnrichedData?: () => void;
   onFillMissingDescriptions?: () => void;
   folderColor?: FolderColor;
+  theme?: Theme;
 }
 
 export default function Sidebar({
@@ -73,7 +74,8 @@ export default function Sidebar({
   onLoadEnrichedData,
   onDownloadEnrichedData,
   onFillMissingDescriptions,
-  folderColor = 'theme'
+  folderColor = 'theme',
+  theme = 'paper'
 }: Props) {
   const [newCatName, setNewCatName] = useState('');
   const [newCatParentId, setNewCatParentId] = useState<string | null>(null);
@@ -84,7 +86,6 @@ export default function Sidebar({
   const [isMarketLinkEditorOpen, setIsMarketLinkEditorOpen] = useState(false);
   const [marketTab, setMarketTab] = useState<'links' | 'tanken'>('links');
   const [tankenSubTab, setTankenSubTab] = useState<'fundamentals' | 'technicals'>('fundamentals');
-  const [isTankenModalOpen, setIsTankenModalOpen] = useState(false);
   const [collapsedCatIds, setCollapsedCatIds] = useState<Set<string>>(new Set());
   const [isRestoreConfirmOpen, setIsRestoreConfirmOpen] = useState(false);
   const [isProxyModalOpen, setIsProxyModalOpen] = useState(false);
@@ -372,6 +373,8 @@ export default function Sidebar({
     const isDraggingThisCat = draggingCatId === c.id;
     const isDragOverThisCat = dragOverCatId === c.id;
 
+    const isPaper = theme === 'paper';
+
     return (
       <div key={c.id} className="flex flex-col">
         <div className="relative group/cat">
@@ -408,7 +411,7 @@ export default function Sidebar({
                       ? 'border-[#58a6ff] bg-[#58a6ff]/20 text-text-bright ring-2 ring-[#58a6ff]/60 font-bold shadow-sm' 
                       : (dragCatInsertPos === 'before' ? 'border-t-2 border-t-border-light bg-border-main/30' : 'border-b-2 border-b-border-light bg-border-main/30'))
                   : (isSelected 
-                      ? 'border-border-light bg-border-main text-text-bright' 
+                      ? (isPaper ? 'border-[#c24523] bg-[#d95430] text-white shadow-xs' : 'border-border-light bg-border-main text-text-bright') 
                       : 'border-transparent text-text-normal hover:text-text-bright hover:bg-border-main/30')
               }`}
               style={{ paddingLeft: `${level * 14 + 4}px` }}
@@ -436,7 +439,7 @@ export default function Sidebar({
 
                 {/* Folder icon */}
                 {isSelected || (isDragOverThisCat && dragOverIsStock) ? (
-                  <FolderOpen size={13} className={`shrink-0 transition-colors ${isDragOverThisCat && dragOverIsStock ? 'text-[#58a6ff]' : getFolderColorClass(folderColor, true, level === 0)}`} />
+                  <FolderOpen size={13} className={`shrink-0 transition-colors ${isDragOverThisCat && dragOverIsStock ? 'text-[#58a6ff]' : ((isSelected && isPaper) ? 'text-white' : getFolderColorClass(folderColor, true, level === 0))}`} />
                 ) : (
                   <Folder size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, false, level === 0)}`} />
                 )}
@@ -456,7 +459,9 @@ export default function Sidebar({
                 ) : (
                   <>
                     {/* Count badge (SOLID style: [ 13 ]) */}
-                    <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold">
+                    <span className={`text-[10px] font-mono tabular-nums px-1.5 py-0.2 border font-bold ${
+                      (isSelected && isPaper) ? 'bg-black/20 border-white/40 text-white' : 'bg-base-bg border-border-main text-text-normal'
+                    }`}>
                       {displayCount}
                     </span>
 
@@ -545,8 +550,10 @@ export default function Sidebar({
         
         {/* Header Branding */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-border-main border border-border-light flex items-center justify-center text-text-bright shrink-0">
-            <LayoutGrid size={16} />
+          <div className={`w-8 h-8 flex items-center justify-center shrink-0 border border-border-light ${
+            theme === 'paper' ? 'bg-[#73634F] text-white shadow-xs' : 'bg-border-main text-text-bright'
+          }`}>
+            <LayoutGrid size={16} className={theme === 'paper' ? 'text-white' : undefined} />
           </div>
           <div className="flex flex-col">
             <h1 className="font-bold text-[13px] text-text-bright tracking-widest leading-tight">{t.appTitle}</h1>
@@ -688,7 +695,7 @@ export default function Sidebar({
                   <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-border-main/50 text-[10px]">
                     <span className="text-text-normal font-bold">市場データ・リンク</span>
                     <button
-                      onClick={() => onSelectCategory('MARKET_DATA')}
+                      onClick={() => onSelectCategory(marketTab === 'tanken' ? 'MARKET_DATA_TANKEN' : 'MARKET_DATA')}
                       className="flex items-center gap-1 text-text-normal hover:text-text-bright hover:underline font-bold"
                     >
                       <Maximize2 size={10} />
@@ -702,7 +709,7 @@ export default function Sidebar({
                       onClick={() => setMarketTab('links')}
                       className={`py-1 text-center font-bold transition-colors rounded-xs ${
                         marketTab === 'links'
-                          ? 'bg-border-main text-text-bright border border-border-light/50 shadow-xs'
+                          ? (theme === 'paper' ? 'bg-[#d95430] text-white border border-[#c24523] shadow-xs' : 'bg-border-main text-text-bright border border-border-light/50 shadow-xs')
                           : 'text-text-normal hover:text-text-bright bg-panel-bg'
                       }`}
                     >
@@ -712,7 +719,7 @@ export default function Sidebar({
                       onClick={() => setMarketTab('tanken')}
                       className={`py-1 text-center font-bold transition-colors rounded-xs ${
                         marketTab === 'tanken'
-                          ? 'bg-border-main text-text-bright border border-border-light/50 shadow-xs'
+                          ? (theme === 'paper' ? 'bg-[#d95430] text-white border border-[#c24523] shadow-xs' : 'bg-border-main text-text-bright border border-border-light/50 shadow-xs')
                           : 'text-text-normal hover:text-text-bright bg-panel-bg'
                       }`}
                     >
@@ -763,7 +770,7 @@ export default function Sidebar({
                             onClick={() => setTankenSubTab('fundamentals')}
                             className={`flex-1 py-0.5 text-center font-bold rounded-xs transition-colors text-[10px] ${
                               tankenSubTab === 'fundamentals'
-                                ? 'bg-border-main text-text-bright border border-border-light/50'
+                                ? (theme === 'paper' ? 'bg-[#d95430] text-white border border-[#c24523] shadow-xs' : 'bg-border-main text-text-bright border border-border-light/50')
                                 : 'text-text-normal hover:text-text-bright bg-panel-bg'
                             }`}
                           >
@@ -773,7 +780,7 @@ export default function Sidebar({
                             onClick={() => setTankenSubTab('technicals')}
                             className={`flex-1 py-0.5 text-center font-bold rounded-xs transition-colors text-[10px] ${
                               tankenSubTab === 'technicals'
-                                ? 'bg-border-main text-text-bright border border-border-light/50'
+                                ? (theme === 'paper' ? 'bg-[#d95430] text-white border border-[#c24523] shadow-xs' : 'bg-border-main text-text-bright border border-border-light/50')
                                 : 'text-text-normal hover:text-text-bright bg-panel-bg'
                             }`}
                           >
@@ -781,9 +788,9 @@ export default function Sidebar({
                           </button>
                         </div>
                         <button
-                          onClick={() => setIsTankenModalOpen(true)}
+                          onClick={() => onSelectCategory('MARKET_DATA_TANKEN')}
                           className="px-1.5 py-0.5 bg-panel-bg hover:bg-border-main border border-border-main text-text-normal hover:text-text-bright flex items-center gap-1 rounded-xs transition-colors text-[10px]"
-                          title="全画面で2列表示"
+                          title="メイン画面で2列表示"
                         >
                           <Maximize2 size={10} />
                           <span>全画面</span>
@@ -829,15 +836,17 @@ export default function Sidebar({
               onClick={() => onSelectCategory(null)}
               className={`w-full flex items-center justify-between px-2.5 py-1.5 border transition-colors mt-1 shrink-0 ${
                 activeCategory === null 
-                  ? 'border-border-light bg-border-main text-text-bright' 
+                  ? (theme === 'paper' ? 'border-[#c24523] bg-[#d95430] text-white shadow-xs' : 'border-border-light bg-border-main text-text-bright') 
                   : 'border-transparent text-text-normal hover:text-text-bright'
               }`}
             >
               <div className="flex items-center gap-2 min-w-0 flex-1 text-left">
-                <Folders size={13} className={`shrink-0 transition-colors ${getFolderColorClass(folderColor, activeCategory === null, true)}`} />
+                <Folders size={13} className={`shrink-0 transition-colors ${(activeCategory === null && theme === 'paper') ? 'text-white' : getFolderColorClass(folderColor, activeCategory === null, true)}`} />
                 <span className="font-bold truncate min-w-0 flex-1" style={{ fontSize: sidebarFontSize }}>[ {t.allData} ]</span>
               </div>
-              <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.2 bg-base-bg border border-border-main text-text-normal font-bold shrink-0 ml-1">
+              <span className={`text-[10px] font-mono tabular-nums px-1.5 py-0.2 border font-bold shrink-0 ml-1 ${
+                (activeCategory === null && theme === 'paper') ? 'bg-black/20 border-white/40 text-white' : 'bg-base-bg border-border-main text-text-normal'
+              }`}>
                 {stocksLength}
               </span>
             </button>
@@ -856,7 +865,7 @@ export default function Sidebar({
                   dragOverUnassigned
                     ? 'border-[#58a6ff] bg-[#58a6ff]/20 text-text-bright ring-2 ring-[#58a6ff]/60 font-bold shadow-sm'
                     : (activeCategory === 'UNASSIGNED' 
-                        ? 'border-border-light bg-border-main text-text-bright' 
+                        ? (theme === 'paper' ? 'border-[#c24523] bg-[#d95430] text-white shadow-xs' : 'border-border-light bg-border-main text-text-bright') 
                         : 'border-transparent text-text-normal hover:text-text-bright')
                 }`}
               >
@@ -983,12 +992,6 @@ export default function Sidebar({
           onSave={handleSaveMarketLinks}
           onClose={() => setIsMarketLinkEditorOpen(false)}
           language={language}
-        />
-      )}
-
-      {isTankenModalOpen && (
-        <TankenExplorerModal
-          onClose={() => setIsTankenModalOpen(false)}
         />
       )}
 

@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Database, Type, Plus } from 'lucide-react';
 import { Category } from '../types';
 import { Language, i18n } from '../i18n';
+import { Theme } from '../App';
 import { getFlattenedCategoryTree } from '../lib/categoryUtils';
 
 interface Props {
   categories: Category[];
   onAdd: (items: {code: string, name: string, categoryId: string}[]) => void;
   language: Language;
+  theme?: Theme;
 }
 
-export default function AddStockForm({ categories, onAdd, language }: Props) {
+export default function AddStockForm({ categories, onAdd, language, theme = 'paper' }: Props) {
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [isOpen, setIsOpen] = useState(true);
   const [name, setName] = useState('');
@@ -140,9 +142,13 @@ export default function AddStockForm({ categories, onAdd, language }: Props) {
               {/* Submit Button */}
               <button 
                 type="submit"
-                className="w-full sm:w-auto h-7 px-3 bg-border-main hover:bg-border-light text-text-bright border border-border-light text-xs font-bold shrink-0 tracking-wider flex items-center justify-center gap-1 transition-colors"
+                className={`w-full sm:w-auto h-7 px-3.5 text-xs font-bold shrink-0 tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
+                  theme === 'paper'
+                    ? 'bg-[#d95430] hover:bg-[#c24523] text-white border border-[#c24523] shadow-xs'
+                    : 'bg-border-main hover:bg-border-light text-text-bright border border-border-light'
+                }`}
               >
-                <Plus size={12} />
+                <Plus size={13} className={theme === 'paper' ? 'text-white' : undefined} />
                 <span>{language === 'EN' ? 'ALLOCATE' : '登録'}</span>
               </button>
             </div>
@@ -173,9 +179,13 @@ export default function AddStockForm({ categories, onAdd, language }: Props) {
                 </div>
                 <button 
                   type="submit"
-                  className="h-7 px-3 bg-border-main hover:bg-border-light text-text-bright border border-border-light text-xs font-bold tracking-wider flex items-center gap-1 transition-colors"
+                  className={`h-7 px-3.5 text-xs font-bold tracking-wider flex items-center gap-1.5 transition-colors ${
+                    theme === 'paper'
+                      ? 'bg-[#d95430] hover:bg-[#c24523] text-white border border-[#c24523] shadow-xs'
+                      : 'bg-border-main hover:bg-border-light text-text-bright border border-border-light'
+                  }`}
                 >
-                  <Database size={11} /> {t.extractAllocate}
+                  <Database size={12} className={theme === 'paper' ? 'text-white' : undefined} /> {t.extractAllocate}
                 </button>
               </div>
             </div>

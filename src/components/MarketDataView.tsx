@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ExternalLink, Plus, Trash2, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Pencil, Check, X, 
   LineChart, Folder, ChevronRight, Globe, Link2, Sparkles, Compass, 
@@ -19,6 +19,7 @@ interface Props {
   theme: Theme;
   fontSize: number;
   folderColor?: FolderColor;
+  initialTab?: 'links' | 'tanken';
 }
 
 export default function MarketDataView({
@@ -28,9 +29,16 @@ export default function MarketDataView({
   language,
   theme,
   fontSize,
-  folderColor = 'theme'
+  folderColor = 'theme',
+  initialTab = 'links'
 }: Props) {
-  const [activeTab, setActiveTab] = useState<'links' | 'tanken'>('links');
+  const [activeTab, setActiveTab] = useState<'links' | 'tanken'>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   
   // Custom Links state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -170,11 +178,11 @@ export default function MarketDataView({
               onClick={() => setActiveTab('links')}
               className={`px-3 py-1 font-bold transition-colors rounded-xs flex items-center gap-1.5 ${
                 activeTab === 'links'
-                  ? 'bg-border-main text-text-bright border border-border-light shadow-xs'
+                  ? (theme === 'paper' ? 'bg-[#d95430] text-white border border-[#c24523] shadow-xs' : 'bg-border-main text-text-bright border border-border-light shadow-xs')
                   : 'text-text-dim hover:text-text-normal'
               }`}
             >
-              <Link2 size={12} />
+              <Link2 size={12} className={activeTab === 'links' && theme === 'paper' ? 'text-white' : undefined} />
               <span>市場リンク ({links.length})</span>
             </button>
 
@@ -182,11 +190,11 @@ export default function MarketDataView({
               onClick={() => setActiveTab('tanken')}
               className={`px-3 py-1 font-bold transition-colors rounded-xs flex items-center gap-1.5 ${
                 activeTab === 'tanken'
-                  ? 'bg-border-main text-text-bright border border-border-light shadow-xs'
+                  ? (theme === 'paper' ? 'bg-[#d95430] text-white border border-[#c24523] shadow-xs' : 'bg-border-main text-text-bright border border-border-light shadow-xs')
                   : 'text-text-dim hover:text-text-normal'
               }`}
             >
-              <Compass size={12} />
+              <Compass size={12} className={activeTab === 'tanken' && theme === 'paper' ? 'text-white' : undefined} />
               <span>銘柄探検 (31条件)</span>
             </button>
           </div>
@@ -368,7 +376,10 @@ export default function MarketDataView({
                   return (
                     <div 
                       key={link.id} 
-                      className="group flex flex-col justify-between border border-border-main bg-panel-bg p-3.5 hover:border-border-light transition-all relative shadow-sm"
+                      className="group flex flex-col justify-between border border-border-main p-3.5 hover:border-border-light transition-all relative shadow-sm"
+                      style={{
+                        backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                      }}
                     >
                       {isEditing ? (
                         <div className="flex flex-col gap-2">
@@ -517,7 +528,12 @@ export default function MarketDataView({
               </div>
             ) : (
               /* LIST VIEW */
-              <div className="flex flex-col border border-border-main bg-panel-bg divide-y divide-border-main">
+              <div 
+                className="flex flex-col border border-border-main divide-y divide-border-main"
+                style={{
+                  backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                }}
+              >
                 {filteredLinks.map((link, idx) => {
                   const isEditing = editingId === link.id;
 
@@ -681,7 +697,7 @@ export default function MarketDataView({
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
             <div className="text-xs text-text-dim flex items-center gap-1.5">
-              <Compass size={13} className="text-text-dim" />
+              <Compass size={13} className="text-text-bright" />
               <span>株探「銘柄探検」公式プリセット検索リンク集（ファンダメンタルズ / テクニカル）</span>
             </div>
 
@@ -717,10 +733,16 @@ export default function MarketDataView({
                 }).filter(group => group.items.length > 0);
 
                 return (
-                  <div key={category.id} className="flex flex-col border border-border-main bg-base-bg/50">
-                    <div className="px-4 py-2 bg-border-main/50 border-b border-border-main text-text-bright font-bold text-xs flex items-center justify-between">
+                  <div 
+                    key={category.id} 
+                    className="flex flex-col border border-border-main"
+                    style={{
+                      backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                    }}
+                  >
+                    <div className="px-4 py-2.5 font-bold text-xs flex items-center justify-between bg-border-main/50 border-b border-border-main text-text-bright">
                       <span className="tracking-wider">{category.title}</span>
-                      <span className="text-[10px] font-mono font-normal text-text-dim px-1.5 py-0.5 border border-border-main bg-base-bg rounded-xs">
+                      <span className="text-[10px] font-normal font-mono text-text-dim px-1.5 py-0.5 bg-base-bg border border-border-main/60 rounded-2xs">
                         {filteredGroups.reduce((acc, g) => acc + g.items.length, 0)} 条件
                       </span>
                     </div>
@@ -733,8 +755,8 @@ export default function MarketDataView({
                       ) : (
                         filteredGroups.map((group, gIdx) => (
                           <div key={gIdx} className="space-y-1.5">
-                            <div className="text-xs font-bold pb-1 border-b border-border-main/40 text-text-bright flex items-center gap-1.5">
-                              <span className="w-1.5 h-3 bg-border-light rounded-xs" />
+                            <div className="text-xs font-bold pb-1 border-b border-border-main/60 flex items-center gap-1.5 text-text-bright">
+                              <span className="w-1.5 h-3 rounded-xs bg-border-light" />
                               <span>{group.groupName}</span>
                             </div>
 

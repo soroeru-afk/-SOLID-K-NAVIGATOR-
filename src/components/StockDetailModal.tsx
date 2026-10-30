@@ -436,14 +436,16 @@ export default function StockDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
       <div 
         className="w-full max-w-4xl max-h-[92vh] flex flex-col bg-panel-bg border border-border-main shadow-2xl overflow-hidden font-sans"
-        style={{ color: theme === 'light' ? '#24292f' : '#adbac7' }}
+        style={{ color: (theme === 'light' || theme === 'paper') ? '#24292f' : '#adbac7' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border-main bg-base-bg">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <span 
-              className={`font-mono text-lg sm:text-xl font-black px-2.5 py-1 border border-border-main tracking-wider shrink-0 ${
-                theme === 'light' ? 'bg-black text-white' : 'bg-white text-black'
+              className={`font-mono text-lg sm:text-xl font-black px-2.5 py-1 border tracking-wider shrink-0 ${
+                theme === 'paper'
+                  ? 'border-[#c24523] bg-[#d95430] text-white shadow-xs'
+                  : `border-border-main ${theme === 'light' ? 'bg-black text-white' : 'bg-white text-black'}`
               }`}
             >
               {stock.code}
@@ -868,7 +870,7 @@ export default function StockDetailModal({
                     className={`w-[72px] min-w-[72px] max-w-[72px] h-6 flex items-center justify-center gap-1 font-bold text-xs transition-colors rounded-xs border-[1.5px] ml-0.5 shrink-0 box-border ${
                       isSpeaking
                         ? 'bg-red-500/20 text-red-400 border-red-500/60 hover:bg-red-500/30'
-                        : theme === 'light'
+                        : (theme === 'light' || theme === 'paper')
                           ? 'bg-panel-bg text-black border-slate-500 hover:border-black hover:bg-border-main'
                           : 'bg-panel-bg text-white border-white/50 hover:border-white/80 hover:bg-border-main'
                     }`}
@@ -880,11 +882,11 @@ export default function StockDetailModal({
                       ) : (
                         <Volume2 
                           size={12} 
-                          className={theme === 'light' ? 'text-black shrink-0' : 'text-white shrink-0'} 
+                          className={(theme === 'light' || theme === 'paper') ? 'text-black shrink-0' : 'text-white shrink-0'} 
                         />
                       )}
                     </span>
-                    <span className={`shrink-0 leading-none ${theme === 'light' ? (isSpeaking ? 'text-red-600' : 'text-black') : (isSpeaking ? 'text-red-400' : 'text-white')}`}>
+                    <span className={`shrink-0 leading-none ${(theme === 'light' || theme === 'paper') ? (isSpeaking ? 'text-red-600' : 'text-black') : (isSpeaking ? 'text-red-400' : 'text-white')}`}>
                       {isSpeaking ? '停止' : '再生'}
                     </span>
                   </button>
@@ -966,12 +968,12 @@ export default function StockDetailModal({
                     onClick={() => setMemoViewMode('preview')}
                     className={`h-full px-2.5 text-xs font-bold transition-colors flex items-center gap-1.5 rounded-xs ${
                       memoViewMode === 'preview'
-                        ? 'bg-border-main text-text-bright shadow-2xs'
+                        ? (theme === 'paper' ? 'bg-[#73634F] text-white shadow-2xs' : 'bg-border-main text-text-bright shadow-2xs')
                         : 'text-text-dim hover:text-text-bright'
                     }`}
                     title="段落ごとにクリックして読み上げる閲覧モード"
                   >
-                    <List size={13} />
+                    <List size={13} className={memoViewMode === 'preview' && theme === 'paper' ? 'text-white' : undefined} />
                     <span>段落再生</span>
                   </button>
                   <button
@@ -979,12 +981,12 @@ export default function StockDetailModal({
                     onClick={() => setMemoViewMode('edit')}
                     className={`h-full px-2.5 text-xs font-bold transition-colors flex items-center gap-1.5 rounded-xs ${
                       memoViewMode === 'edit'
-                        ? 'bg-border-main text-text-bright shadow-2xs'
+                        ? (theme === 'paper' ? 'bg-[#73634F] text-white shadow-2xs' : 'bg-border-main text-text-bright shadow-2xs')
                         : 'text-text-dim hover:text-text-bright'
                     }`}
                     title="文章を編集するモード"
                   >
-                    <Edit3 size={13} />
+                    <Edit3 size={13} className={memoViewMode === 'edit' && theme === 'paper' ? 'text-white' : undefined} />
                     <span>編集</span>
                   </button>
                 </div>
@@ -993,16 +995,20 @@ export default function StockDetailModal({
                 <button
                   type="button"
                   onClick={handleSaveMemo}
-                  className="h-8 flex items-center gap-1.5 px-3.5 bg-border-main hover:bg-border-light text-text-bright font-bold text-xs border border-border-light rounded-xs transition-colors shrink-0 box-border"
+                  className={`h-8 flex items-center gap-1.5 px-3.5 font-bold text-xs rounded-xs transition-colors shrink-0 box-border ${
+                    theme === 'paper'
+                      ? 'bg-[#73634F] hover:bg-[#85735c] text-white border border-[#8e7d69] shadow-xs'
+                      : 'bg-border-main hover:bg-border-light text-text-bright border border-border-light'
+                  }`}
                 >
                   {isSaved ? (
                     <>
-                      <Check size={14} className="text-[#2ea043]" />
+                      <Check size={14} className={theme === 'paper' ? 'text-white' : 'text-[#2ea043]'} />
                       <span>保存しました</span>
                     </>
                   ) : (
                     <>
-                      <Save size={14} />
+                      <Save size={14} className={theme === 'paper' ? 'text-white' : undefined} />
                       <span>{t.save}</span>
                     </>
                   )}

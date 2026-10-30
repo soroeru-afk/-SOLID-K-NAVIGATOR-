@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Theme, FontType } from '../App';
 import { FolderColor } from '../types';
 import { Language, i18n } from '../i18n';
-import { PanelLeft, PanelRight, Minimize2, Palette, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
+import { PanelLeft, PanelRight, Minimize2, Palette, SlidersHorizontal, ChevronDown, Check, X } from 'lucide-react';
 import { getFolderColorBadgeClass } from '../lib/folderUtils';
 
 interface Props {
@@ -31,6 +31,14 @@ interface Props {
   onToggleCompactMode: () => void;
 }
 
+const THEME_OPTIONS: { key: Theme; label: string; dotColor: string }[] = [
+  { key: 'paper', label: 'PAPER', dotColor: '#D95430' },
+  { key: 'dark', label: 'NAVY', dotColor: '#2563eb' },
+  { key: 'black', label: 'BLACK', dotColor: '#1f2530' },
+  { key: 'red', label: 'RED', dotColor: '#dc2626' },
+  { key: 'light', label: 'LIGHT', dotColor: '#0284c7' },
+];
+
 export default function Header({ 
   theme, 
   onThemeChange, 
@@ -58,27 +66,39 @@ export default function Header({
 }: Props) {
   const t = i18n[language];
   const [isSizePanelOpen, setIsSizePanelOpen] = useState(false);
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const themeDropdownRef = useRef<HTMLDivElement>(null);
 
   // Close panel on outside click or ESC key
   useEffect(() => {
-    if (!isSizePanelOpen) return;
+    if (!isSizePanelOpen && !isThemeMenuOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
       if (
+        isSizePanelOpen &&
         panelRef.current && 
-        !panelRef.current.contains(e.target as Node) &&
+        !panelRef.current.contains(target) &&
         buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
+        !buttonRef.current.contains(target)
       ) {
         setIsSizePanelOpen(false);
+      }
+      if (
+        isThemeMenuOpen &&
+        themeDropdownRef.current &&
+        !themeDropdownRef.current.contains(target)
+      ) {
+        setIsThemeMenuOpen(false);
       }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsSizePanelOpen(false);
+        setIsThemeMenuOpen(false);
       }
     };
 
@@ -88,7 +108,7 @@ export default function Header({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isSizePanelOpen]);
+  }, [isSizePanelOpen, isThemeMenuOpen]);
 
   return (
     <header className="flex justify-between items-center w-full shrink-0 border border-border-main bg-panel-bg px-2.5 sm:px-3 py-1.5 md:py-2 relative gap-2">
@@ -296,27 +316,95 @@ export default function Header({
                 </select>
             </div>
 
-            {/* THEME BUTTON */}
-            <div className="flex items-center shrink-0">
-                <button
+            {/* THEME PULLDOWN BUTTON */}
+            {(() => {
+              const currentTheme = THEME_OPTIONS.find(o => o.key === theme) || THEME_OPTIONS[0];
+              return (
+                <div className="relative shrink-0" ref={themeDropdownRef}>
+                  <button
                     type="button"
-                    onClick={() => {
-                      const next = theme === 'black' ? 'dark' : theme === 'dark' ? 'red' : theme === 'red' ? 'light' : 'black';
-                      onThemeChange(next);
-                    }}
-                    className="w-[125px] sm:w-[135px] h-[22px] px-1.5 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors flex items-center justify-center gap-1 uppercase text-[9px] font-mono shrink-0 rounded-xs"
-                >
-                    <Palette size={11} className="text-text-dim shrink-0" />
-                    <span className="truncate">
-                      THEME: {
-                        theme === 'black' ? (t.blackTheme || 'ONYX') :
-                        theme === 'dark' ? t.navyDark :
-                        theme === 'red' ? (t.redTheme || 'CRIMSON') :
-                        t.paperLight
-                      }
-                    </span>
-                </button>
-            </div>
+                    onClick={() => setIsThemeMenuOpen(prev => !prev)}
+                    className={`h-[22px] flex items-stretch border bg-base-bg rounded-xs transition-colors shrink-0 font-mono text-[10px] cursor-pointer ${
+                      theme === 'paper' 
+                        ? 'border-[#D95430] hover:border-[#D95430]' 
+                        : 'border-border-main hover:border-border-light'
+                    }`}
+                    title="THEME SWITCH"
+                  >
+                    {/* Left: Color Dot & Label */}
+                    <div className="flex items-center gap-1.5 px-2 py-0.5">
+                      <span 
+                        className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" 
+                        style={{ backgroundColor: currentTheme.dotColor }} 
+                      />
+                      <span className="font-bold text-text-bright tracking-wide">
+                        {currentTheme.label}
+                      </span>
+                    </div>
+
+                    {/* Divider */}
+                    <div className={`w-[1px] my-0.5 ${theme === 'paper' ? 'bg-[#D95430]/40' : 'bg-border-main'}`} />
+
+                    {/* Right: Chevron Toggle */}
+                    <div className="flex items-center justify-center px-1.5 text-text-dim hover:text-text-bright">
+                      <ChevronDown 
+                        size={11} 
+                        className={`transition-transform duration-150 ${isThemeMenuOpen ? 'rotate-180 text-text-bright' : ''}`} 
+                      />
+                    </div>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isThemeMenuOpen && (
+                    <div 
+                      className="absolute right-0 top-full mt-1.5 z-50 w-[175px] bg-panel-bg border border-border-main shadow-2xl rounded-xs py-1 flex flex-col font-mono"
+                      style={{ backdropFilter: 'blur(6px)' }}
+                    >
+                      {/* Header */}
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border-main/50 text-text-dim text-[9px] font-bold tracking-wider">
+                        <Palette size={11} className="text-text-dim shrink-0" />
+                        <span>THEME SWITCH</span>
+                      </div>
+
+                      {/* Theme List */}
+                      <div className="flex flex-col py-0.5">
+                        {THEME_OPTIONS.map((opt) => {
+                          const isSelected = opt.key === theme;
+                          return (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              onClick={() => {
+                                onThemeChange(opt.key);
+                                setIsThemeMenuOpen(false);
+                              }}
+                              className={`w-full px-3 py-1.5 flex items-center justify-between text-left text-[10px] font-bold transition-colors cursor-pointer ${
+                                isSelected 
+                                  ? (opt.key === 'paper' 
+                                      ? 'bg-[#D95430]/15 text-text-bright' 
+                                      : 'bg-border-main/40 text-text-bright')
+                                  : 'text-text-normal hover:bg-border-main/30 hover:text-text-bright'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span 
+                                  className="w-3 h-3 rounded-full shrink-0 shadow-xs" 
+                                  style={{ backgroundColor: opt.dotColor }} 
+                                />
+                                <span>{opt.label}</span>
+                              </div>
+                              {isSelected && (
+                                <Check size={12} className={opt.key === 'paper' ? 'text-[#D95430]' : 'text-text-bright'} />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             
             {/* Action Toggles: EN/JP, Sidebar, Compact */}
             <div className="flex items-center gap-1.5 border-l border-border-main pl-2 sm:pl-2.5 shrink-0">

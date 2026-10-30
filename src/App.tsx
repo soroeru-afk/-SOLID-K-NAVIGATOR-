@@ -14,14 +14,14 @@ import { enrichedPreset } from './data/enrichedPreset';
 import { getAllDescendantCategoryIds } from './lib/categoryUtils';
 import { safeFetch } from './lib/apiUtils';
 
-export type Theme = 'light' | 'dark' | 'black' | 'red';
+export type Theme = 'light' | 'dark' | 'black' | 'red' | 'paper';
 export type FontType = 'mono' | 'gothic' | 'meiryo' | 'maru';
 
 export default function App() {
   const [theme, setTheme] = useState<Theme>(
     () => {
       const saved = localStorage.getItem('knav_theme') as Theme;
-      return (saved === 'light' || saved === 'dark' || saved === 'black' || saved === 'red') ? saved : 'black';
+      return (saved === 'light' || saved === 'dark' || saved === 'black' || saved === 'red' || saved === 'paper') ? saved : 'paper';
     }
   );
 
@@ -34,6 +34,7 @@ export default function App() {
     if (theme === 'dark') themeColorHex = '#0d131f';
     else if (theme === 'red') themeColorHex = '#0d0404';
     else if (theme === 'light') themeColorHex = '#e2e8f0';
+    else if (theme === 'paper') themeColorHex = '#F2EFE6';
 
     let metaTheme = document.querySelector('meta[name="theme-color"]');
     if (!metaTheme) {
@@ -327,13 +328,23 @@ export default function App() {
   };
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
-    const saved = localStorage.getItem('knav_sidebar_width');
-    if (saved) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed >= 200 && parsed <= 600) return parsed;
+    try {
+      const saved = localStorage.getItem('knav_sidebar_width');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 180 && parsed <= 1200) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
     }
     return 370;
   });
+
+  useEffect(() => {
+    localStorage.setItem('knav_sidebar_width', sidebarWidth.toString());
+  }, [sidebarWidth]);
 
   const defaultMarketLinks: MarketLink[] = [
     { id: 'm0', title: "市場ニュース（総合）", url: "https://kabutan.jp/news/marketnews/" },
@@ -382,26 +393,29 @@ export default function App() {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDraggingSidebar) return;
       e.preventDefault();
+      const maxAllowed = Math.max(300, Math.min(window.innerWidth - 250, 850));
       if (sidebarPos === 'right') {
-        setSidebarWidth(Math.max(200, Math.min(window.innerWidth - e.clientX, 600)));
+        setSidebarWidth(Math.max(200, Math.min(window.innerWidth - e.clientX, maxAllowed)));
       } else {
-        setSidebarWidth(Math.max(200, Math.min(e.clientX, 600)));
+        setSidebarWidth(Math.max(200, Math.min(e.clientX, maxAllowed)));
       }
     };
     const handleMouseUp = () => {
       setIsDraggingSidebar(false);
-      setSidebarWidth(curr => {
-        localStorage.setItem('knav_sidebar_width', String(Math.round(curr)));
-        return curr;
-      });
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
 
     if (isDraggingSidebar) {
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }
 
     return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
@@ -1100,7 +1114,7 @@ export default function App() {
   };
 
   const filteredStocks = useMemo(() => {
-    if (!activeCategoryId || activeCategoryId === 'MARKET_DATA' || activeCategoryId === 'MARKET_LINKS') return stocks;
+    if (!activeCategoryId || activeCategoryId === 'MARKET_DATA' || activeCategoryId === 'MARKET_DATA_TANKEN' || activeCategoryId === 'MARKET_LINKS') return stocks;
     if (activeCategoryId === 'UNASSIGNED') return stocks.filter(st => !st.categoryId);
     const targetIds = new Set([activeCategoryId, ...getAllDescendantCategoryIds(activeCategoryId, categories)]);
     return stocks.filter(st => st.categoryId && targetIds.has(st.categoryId));
@@ -1160,6 +1174,7 @@ export default function App() {
           folderColor={folderColor}
           onReorderCategory={reorderCategory}
           onMoveStocksToCategory={moveStocksToCategory}
+          theme={theme}
         />
         <div 
            className={`absolute top-0 ${sidebarPos === 'right' ? 'left-0 -ml-1' : 'right-0'} w-2 h-full cursor-col-resize hover:bg-border-light/30 active:bg-border-light/50 transition-colors z-20`}
@@ -1199,6 +1214,7 @@ export default function App() {
           folderColor={folderColor}
           onReorderCategory={reorderCategory}
           onMoveStocksToCategory={moveStocksToCategory}
+          theme={theme}
         />
       </div>
 
@@ -1228,7 +1244,7 @@ export default function App() {
           onPriceColorChange={setPriceColor}
           onToggleCompactMode={() => setIsCompactMode(true)}
         />
-        {activeCategoryId === 'MARKET_DATA' ? (
+        {activeCategoryId === 'MARKET_DATA' || activeCategoryId === 'MARKET_DATA_TANKEN' ? (
           <MarketDataView
             links={marketLinks}
             onUpdateLinks={setMarketLinks}
@@ -1237,10 +1253,11 @@ export default function App() {
             theme={theme}
             fontSize={listFontSize}
             folderColor={folderColor}
+            initialTab={activeCategoryId === 'MARKET_DATA_TANKEN' ? 'tanken' : 'links'}
           />
         ) : (
           <>
-            <AddStockForm categories={categories} onAdd={addStocks} language={language} />
+            <AddStockForm categories={categories} onAdd={addStocks} language={language} theme={theme} />
             <StockList 
               stocks={filteredStocks} 
               categories={categories} 
