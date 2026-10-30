@@ -563,7 +563,7 @@ export default function Sidebar({
 
         {/* Status Box */}
         <div className="border border-border-main bg-panel-bg p-3 relative flex flex-col">
-          <div className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold">
+          <div className="absolute top-0 left-0 bg-base-bg border border-border-main px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold select-none">
             {t.systemStatus}
           </div>
           <div className="flex flex-col gap-1.5 text-[10px] text-text-dim mt-1">
@@ -607,21 +607,25 @@ export default function Sidebar({
 
         {/* Directory Explorer Sets */}
         <div className="border border-border-main bg-panel-bg p-3 pt-3.5 relative flex flex-col flex-1 min-h-0">
-          <div className="absolute top-0 left-0 bg-base-bg px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold z-10 select-none">
+          <div className="absolute top-0 left-0 bg-base-bg border border-border-main px-2 -mt-[0.6rem] ml-4 text-[10px] text-text-dim font-bold z-10 select-none">
             {t.directorySets}
           </div>
           
           {/* Scrollable Explorer List: Holds + New Dir, Market Data, All Data, Categories, and Unassigned */}
-          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col gap-2 pr-1 scrollbar-thin mt-1">
+          <div className="flex-1 min-h-0 flex flex-col gap-2 mt-1">
             {!isAdding ? (
               <button 
                 onClick={() => {
                   setNewCatParentId(null);
                   setIsAdding(true);
                 }}
-                className="w-full h-7 flex items-center justify-center gap-2 border border-border-light hover:bg-border-main text-text-bright transition-colors text-xs font-bold shrink-0"
+                className={`w-full h-7 flex items-center justify-center gap-2 border text-xs font-bold shrink-0 transition-colors ${
+                  theme === 'paper'
+                    ? 'bg-[#73634F] hover:bg-[#85735c] text-white border-[#8e7d69] shadow-xs'
+                    : 'border-border-light hover:bg-border-main text-text-bright'
+                }`}
               >
-                <Plus size={12} /> {t.newDir}
+                <Plus size={12} className={theme === 'paper' ? 'text-white' : undefined} /> {t.newDir}
               </button>
             ) : (
               <form onSubmit={handleAdd} className="flex flex-col gap-1.5 p-2 bg-base-bg border border-border-light shrink-0">
@@ -657,8 +661,17 @@ export default function Sidebar({
               </form>
             )}
 
-            {/* STOCK MARKET DATA */}
-            <div className="mt-1 shrink-0">
+            {/* Tree & Links White Container (Link Manager style) */}
+            <div 
+              className={`flex-1 min-h-0 border border-border-main p-1.5 flex flex-col gap-1 overflow-y-auto overflow-x-hidden scrollbar-thin ${
+                (theme === 'light' || theme === 'paper') ? 'bg-white' : 'bg-base-bg/30'
+              }`}
+              style={{
+                backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+              }}
+            >
+              {/* STOCK MARKET DATA */}
+              <div className="shrink-0">
               <div 
                 onClick={() => setIsMarketDataOpen(!isMarketDataOpen)}
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 transition-colors cursor-pointer group border ${
@@ -896,6 +909,7 @@ export default function Sidebar({
                   )}
                 </div>
               </button>
+            </div>
             </div>
           </div>
 

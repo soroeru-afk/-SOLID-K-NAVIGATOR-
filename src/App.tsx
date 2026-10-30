@@ -190,6 +190,21 @@ export default function App() {
     localStorage.setItem('knav_price_color', priceColor);
   }, [priceColor]);
 
+  // Synchronize size settings and theme across windows and PWA in real-time
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.newValue) return;
+      if (e.key === 'knav_list_font_size') setListFontSize(parseInt(e.newValue, 10));
+      if (e.key === 'knav_stock_font_size') setStockFontSize(parseInt(e.newValue, 10));
+      if (e.key === 'knav_price_font_size') setPriceFontSize(parseInt(e.newValue, 10));
+      if (e.key === 'knav_limit_font_size') setLimitFontSize(parseInt(e.newValue, 10));
+      if (e.key === 'knav_price_color') setPriceColor(e.newValue);
+      if (e.key === 'knav_theme') setTheme(e.newValue as Theme);
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -308,7 +323,7 @@ export default function App() {
 
   // Safeguard: if activeCategoryId is set but no longer exists in categories, fallback to null (ALL DATA)
   useEffect(() => {
-    if (activeCategoryId && activeCategoryId !== 'MARKET_DATA' && activeCategoryId !== 'MARKET_LINKS' && activeCategoryId !== 'UNASSIGNED') {
+    if (activeCategoryId && activeCategoryId !== 'MARKET_DATA' && activeCategoryId !== 'MARKET_DATA_TANKEN' && activeCategoryId !== 'MARKET_LINKS' && activeCategoryId !== 'UNASSIGNED') {
       const exists = categories.some(c => c.id === activeCategoryId);
       if (!exists) {
         setActiveCategoryId(null);

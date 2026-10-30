@@ -44,8 +44,60 @@ export default function CompactView({
   fontSize
 }: Props) {
   const t = i18n[language];
-  const effectiveFontSize = fontSize ? Math.min(20, Math.max(12, fontSize)) : 13;
-  const marketLinkFontSize = Math.max(11, effectiveFontSize - 1);
+
+  // メイン画面のサイズ設定（localStorage および props）と完全連動
+  const [syncedListFontSize, setSyncedListFontSize] = useState<number>(() => {
+    return fontSize || parseInt(localStorage.getItem('knav_list_font_size') || '13', 10);
+  });
+  const [syncedStockFontSize, setSyncedStockFontSize] = useState<number>(() => {
+    return stockFontSize || parseInt(localStorage.getItem('knav_stock_font_size') || '16', 10);
+  });
+  const [syncedPriceFontSize, setSyncedPriceFontSize] = useState<number>(() => {
+    return priceFontSize || parseInt(localStorage.getItem('knav_price_font_size') || '16', 10);
+  });
+  const [syncedLimitFontSize, setSyncedLimitFontSize] = useState<number>(() => {
+    return limitFontSize || parseInt(localStorage.getItem('knav_limit_font_size') || '11', 10);
+  });
+  const [syncedPriceColor, setSyncedPriceColor] = useState<string>(() => {
+    return priceColor || localStorage.getItem('knav_price_color') || 'default';
+  });
+
+  useEffect(() => {
+    if (fontSize) setSyncedListFontSize(fontSize);
+  }, [fontSize]);
+
+  useEffect(() => {
+    if (stockFontSize) setSyncedStockFontSize(stockFontSize);
+  }, [stockFontSize]);
+
+  useEffect(() => {
+    if (priceFontSize) setSyncedPriceFontSize(priceFontSize);
+  }, [priceFontSize]);
+
+  useEffect(() => {
+    if (limitFontSize) setSyncedLimitFontSize(limitFontSize);
+  }, [limitFontSize]);
+
+  useEffect(() => {
+    if (priceColor) setSyncedPriceColor(priceColor);
+  }, [priceColor]);
+
+  // 別ウィンドウ・PWA間でもリアルタイムでスライダー変更を即座に検知・反映
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.newValue) return;
+      if (e.key === 'knav_list_font_size') setSyncedListFontSize(parseInt(e.newValue, 10));
+      if (e.key === 'knav_stock_font_size') setSyncedStockFontSize(parseInt(e.newValue, 10));
+      if (e.key === 'knav_price_font_size') setSyncedPriceFontSize(parseInt(e.newValue, 10));
+      if (e.key === 'knav_limit_font_size') setSyncedLimitFontSize(parseInt(e.newValue, 10));
+      if (e.key === 'knav_price_color') setSyncedPriceColor(e.newValue);
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const effectiveFontSize = syncedListFontSize;
+  const marketLinkFontSize = syncedListFontSize;
 
   // STOCK MARKET DATA の開閉状態
   const [isMarketDataOpen, setIsMarketDataOpen] = useState(true);
@@ -154,8 +206,12 @@ export default function CompactView({
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-border-main pb-2 mb-2 shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-panel-bg border border-border-main flex items-center justify-center text-text-bright shrink-0 shadow-2xs">
-            <LayoutGrid size={15} />
+          <div className={`w-7 h-7 border flex items-center justify-center shrink-0 shadow-2xs ${
+            theme === 'paper' 
+              ? 'bg-[#73634F] text-white border-[#8e7d69]' 
+              : 'bg-panel-bg border-border-main text-text-bright'
+          }`}>
+            <LayoutGrid size={15} className={theme === 'paper' ? 'text-white' : undefined} />
           </div>
           <div className="flex flex-col">
             <h1 className="font-bold text-[12px] text-text-bright tracking-widest leading-tight">{t.appTitle}</h1>
@@ -219,10 +275,12 @@ export default function CompactView({
                   onClick={() => setMarketTab('links')}
                   className={`py-1 text-center font-bold transition-colors rounded-xs ${
                     marketTab === 'links'
-                      ? 'bg-border-main text-text-bright border border-border-light/50 shadow-xs'
+                      ? (theme === 'paper' 
+                          ? 'bg-[#d95430] text-white border border-[#c24523] shadow-xs' 
+                          : 'bg-border-main text-text-bright border border-border-light/50 shadow-xs')
                       : 'text-text-dim hover:text-text-normal bg-base-bg'
                   }`}
-                  style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
+                  style={{ fontSize: Math.max(10, syncedListFontSize - 1) }}
                 >
                   リンク
                 </button>
@@ -231,10 +289,12 @@ export default function CompactView({
                   onClick={() => setMarketTab('tanken')}
                   className={`py-1 text-center font-bold transition-colors rounded-xs ${
                     marketTab === 'tanken'
-                      ? 'bg-border-main text-text-bright border border-border-light/50 shadow-xs'
+                      ? (theme === 'paper' 
+                          ? 'bg-[#d95430] text-white border border-[#c24523] shadow-xs' 
+                          : 'bg-border-main text-text-bright border border-border-light/50 shadow-xs')
                       : 'text-text-dim hover:text-text-normal bg-base-bg'
                   }`}
-                  style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
+                  style={{ fontSize: Math.max(10, syncedListFontSize - 1) }}
                 >
                   銘柄探検
                 </button>
@@ -278,10 +338,12 @@ export default function CompactView({
                       onClick={() => setTankenSubTab('fundamentals')}
                       className={`py-1 text-center font-bold rounded-xs transition-colors ${
                         tankenSubTab === 'fundamentals'
-                          ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
+                          ? (theme === 'paper' 
+                              ? 'bg-[#d95430] text-white border border-[#c24523] shadow-2xs' 
+                              : 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs')
                           : 'text-text-dim hover:text-text-normal bg-base-bg'
                       }`}
-                      style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
+                      style={{ fontSize: Math.max(10, syncedListFontSize - 1) }}
                     >
                       ファンダ
                     </button>
@@ -290,10 +352,12 @@ export default function CompactView({
                       onClick={() => setTankenSubTab('technicals')}
                       className={`py-1 text-center font-bold rounded-xs transition-colors ${
                         tankenSubTab === 'technicals'
-                          ? 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs'
+                          ? (theme === 'paper' 
+                              ? 'bg-[#d95430] text-white border border-[#c24523] shadow-2xs' 
+                              : 'bg-border-main text-text-bright border border-border-light/50 shadow-2xs')
                           : 'text-text-dim hover:text-text-normal bg-base-bg'
                       }`}
-                      style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
+                      style={{ fontSize: Math.max(10, syncedListFontSize - 1) }}
                     >
                       テクニカル
                     </button>
@@ -305,7 +369,7 @@ export default function CompactView({
                       <div key={gIdx} className="space-y-0.5">
                         <div 
                           className="font-bold text-text-dim px-1 pt-0.5 pb-0.5 flex items-center gap-1.5"
-                          style={{ fontSize: Math.max(10, effectiveFontSize - 2) }}
+                          style={{ fontSize: Math.max(10, syncedListFontSize - 1) }}
                         >
                           <span className="w-1.5 h-2 rounded-xs bg-border-light shrink-0" />
                           <span className="truncate">{group.groupName}</span>
@@ -366,7 +430,8 @@ export default function CompactView({
               <select
                 value={selectedCatValue}
                 onChange={(e) => handleCategoryChange(e.target.value)}
-                className="w-full bg-base-bg border border-border-main text-text-bright px-2.5 py-1.5 focus:outline-none focus:border-border-light text-[11px] font-bold tracking-wider cursor-pointer rounded-xs truncate pr-6"
+                className="w-full bg-base-bg border border-border-main text-text-bright px-2.5 py-1.5 focus:outline-none focus:border-border-light font-bold tracking-wider cursor-pointer rounded-xs truncate pr-6"
+                style={{ fontSize: syncedListFontSize }}
               >
                 <option value="">[ {t.allData} ]</option>
                 {categories.map(c => (
@@ -375,13 +440,16 @@ export default function CompactView({
                 <option value="UNASSIGNED">{t.unassigned}</option>
               </select>
             </div>
-            <span className="text-[10px] font-mono tabular-nums px-2 py-1 bg-base-bg border border-border-main text-text-dim font-bold rounded-xs shrink-0">
+            <span 
+              className="font-mono tabular-nums px-2 py-1 bg-base-bg border border-border-main text-text-dim font-bold rounded-xs shrink-0"
+              style={{ fontSize: Math.max(9, syncedListFontSize - 2) }}
+            >
               {stocks.length} 件
             </span>
           </div>
 
           {/* Stock List Scroll Area */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 pr-1 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-1.5 pr-1 scrollbar-thin">
             {stocks.length === 0 ? (
               <div className="text-center text-text-dim py-8 text-[11px]">
                 銘柄データがありません
@@ -391,7 +459,14 @@ export default function CompactView({
                 return (
                   <div 
                     key={stock.id} 
-                    className="group flex items-center justify-between bg-base-bg/70 border border-border-main/70 px-2 py-1.5 hover:border-border-light hover:bg-border-main/30 transition-colors rounded-xs"
+                    className={`group flex items-center justify-between border px-2.5 py-1.5 hover:border-border-light transition-colors rounded-xs ${
+                      (theme === 'light' || theme === 'paper')
+                        ? 'bg-white border-border-main shadow-2xs hover:bg-[#FAF9F5]'
+                        : 'bg-base-bg/70 border-border-main/70 hover:bg-border-main/30'
+                    }`}
+                    style={{
+                      backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                    }}
                   >
                     <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0 pr-2">
                       {/* Chart Link */}
@@ -403,7 +478,14 @@ export default function CompactView({
                           e.preventDefault();
                           openExternalWindow(`https://kabutan.jp/stock/chart?code=${stock.code}`);
                         }}
-                        className="w-6 h-6 flex items-center justify-center bg-panel-bg text-text-dim shrink-0 border border-border-main hover:bg-border-light hover:text-text-bright transition-colors rounded-2xs"
+                        className={`w-6 h-6 flex items-center justify-center shrink-0 border border-border-main transition-colors rounded-2xs ${
+                          (theme === 'light' || theme === 'paper')
+                            ? 'bg-white text-text-dim hover:bg-border-main/20 hover:text-text-bright'
+                            : 'bg-panel-bg text-text-dim hover:bg-border-light hover:text-text-bright'
+                        }`}
+                        style={{
+                          backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                        }}
                         title="株探チャート（別ウィンドウで開く）"
                       >
                         <FileText size={12} />
@@ -418,15 +500,20 @@ export default function CompactView({
                           e.preventDefault();
                           openExternalWindow(`https://kabutan.jp/stock/?code=${stock.code}`);
                         }}
-                        className="text-text-bright hover:text-[#58a6ff] text-[11px] truncate font-bold transition-colors flex items-center gap-1 flex-1 min-w-0"
-                        style={{ fontSize: stockFontSize ? Math.max(11, stockFontSize - 1) : (fontSize ? Math.max(11, fontSize - 1) : undefined) }}
+                        className="text-text-bright hover:text-[#58a6ff] truncate font-bold transition-colors flex items-center gap-1.5 flex-1 min-w-0"
                         title={`${stock.name}（別ウィンドウで株探を開く）`}
                       >
-                        <span className="truncate">{stock.name}</span>
                         <span 
-                          className={`tabular-nums shrink-0 font-mono text-[10px] ${
+                          className="truncate font-bold tracking-wide"
+                          style={{ fontSize: syncedStockFontSize }}
+                        >
+                          {stock.name}
+                        </span>
+                        <span 
+                          className={`tabular-nums shrink-0 font-mono ${
                             (theme === 'light' || theme === 'paper') ? 'text-black' : 'text-text-dim group-hover:text-text-bright'
                           }`}
+                          style={{ fontSize: Math.max(9, Math.round(syncedListFontSize * 0.85)) }}
                         >
                           {stock.code}
                         </span>
@@ -442,8 +529,8 @@ export default function CompactView({
                             <span 
                               className="text-text-bright tabular-nums text-right font-bold"
                               style={{ 
-                                fontSize: priceFontSize || undefined, 
-                                color: priceColor === 'red' ? '#C41414' : undefined 
+                                fontSize: syncedPriceFontSize, 
+                                color: syncedPriceColor === 'red' ? '#C41414' : undefined 
                               }}
                               title={limit ? `制限値幅: ${limit.fullText}` : undefined}
                             >
@@ -452,7 +539,7 @@ export default function CompactView({
                             {limit && (
                               <span 
                                 className="text-text-dim tabular-nums tracking-tighter"
-                                style={{ fontSize: limitFontSize }}
+                                style={{ fontSize: syncedLimitFontSize }}
                                 title={`制限値幅: ${limit.fullText} (ストップ安: ${limit.low.toLocaleString()} / ストップ高: ${limit.high.toLocaleString()})`}
                               >
                                 {limit.displayText}
