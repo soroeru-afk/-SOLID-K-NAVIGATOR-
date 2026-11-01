@@ -125,6 +125,7 @@ export default function Header({
                     ref={buttonRef}
                     type="button"
                     onClick={() => setIsSizePanelOpen(prev => !prev)}
+                    style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                     className={`h-[22px] px-2 border flex items-center justify-center gap-1.5 font-mono text-[9px] rounded-xs transition-colors shrink-0 ${
                       isSizePanelOpen 
                         ? 'border-border-light bg-border-main text-text-bright' 
@@ -142,7 +143,7 @@ export default function Header({
                     <div 
                       ref={panelRef}
                       className="absolute right-0 top-full mt-1.5 z-50 w-[280px] sm:w-[310px] p-3 bg-panel-bg border border-border-main shadow-2xl rounded-xs flex flex-col gap-3 font-mono text-[10px]"
-                      style={{ backdropFilter: 'blur(4px)' }}
+                      style={{ backdropFilter: 'blur(4px)', backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                     >
                         {/* Panel Header */}
                         <div className="flex items-center justify-between pb-1.5 border-b border-border-main text-text-dim text-[9px] font-bold tracking-wider">
@@ -204,6 +205,7 @@ export default function Header({
                                     <button
                                         type="button"
                                         onClick={() => onPriceColorChange(priceColor === 'red' ? 'default' : 'red')}
+                                        style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                                         className="px-1.5 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 text-[9px] font-mono rounded-xs"
                                         title="株価表示色切替 (THEME / RED)"
                                     >
@@ -293,6 +295,7 @@ export default function Header({
                       const next = colorOrder[(currentIndex + 1) % colorOrder.length];
                       onFolderColorChange(next);
                     }}
+                    style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                     className="w-[64px] h-[22px] px-1.5 py-0.5 border border-border-main bg-base-bg text-text-bright hover:bg-border-main/50 transition-colors text-center text-[9px] font-mono flex items-center justify-center gap-1 shrink-0 rounded-xs"
                     title="フォルダーアイコン色：THEME(同系色) / AMBER(琥珀) / BLUE(青) / WHITE(白) / BLACK(黒) / GRAY(灰)"
                 >
@@ -307,6 +310,7 @@ export default function Header({
                 <select
                   value={fontType}
                   onChange={(e) => onFontTypeChange(e.target.value as FontType)}
+                  style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                   className="h-[22px] bg-base-bg border border-border-main text-text-bright px-1.5 py-0.5 outline-none focus:border-border-light cursor-pointer text-[10px] rounded-xs font-mono"
                 >
                   <option value="gothic">GOTHIC</option>
@@ -324,6 +328,7 @@ export default function Header({
                   <button
                     type="button"
                     onClick={() => setIsThemeMenuOpen(prev => !prev)}
+                    style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                     className={`h-[22px] flex items-stretch border bg-base-bg rounded-xs transition-colors shrink-0 font-mono text-[10px] cursor-pointer ${
                       theme === 'paper' 
                         ? 'border-[#D95430] hover:border-[#D95430]' 
@@ -358,7 +363,7 @@ export default function Header({
                   {isThemeMenuOpen && (
                     <div 
                       className="absolute right-0 top-full mt-1.5 z-50 w-[175px] bg-panel-bg border border-border-main shadow-2xl rounded-xs py-1 flex flex-col font-mono"
-                      style={{ backdropFilter: 'blur(6px)' }}
+                      style={{ backdropFilter: 'blur(6px)', backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                     >
                       {/* Header */}
                       <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border-main/50 text-text-dim text-[9px] font-bold tracking-wider">
@@ -408,7 +413,10 @@ export default function Header({
             
             {/* Action Toggles: EN/JP, Sidebar, Compact */}
             <div className="flex items-center gap-1.5 border-l border-border-main pl-2 sm:pl-2.5 shrink-0">
-                <div className="flex border border-border-main rounded-xs text-[9px] font-mono overflow-hidden leading-none shrink-0 bg-base-bg h-[22px]">
+                <div 
+                  style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
+                  className="flex border border-border-main rounded-xs text-[9px] font-mono overflow-hidden leading-none shrink-0 bg-base-bg h-[22px]"
+                >
                   <button
                     type="button"
                     onClick={() => onLanguageChange('EN')}
@@ -428,6 +436,7 @@ export default function Header({
                 <button
                     type="button"
                     onClick={() => onSidebarPosChange(sidebarPos === 'left' ? 'right' : 'left')}
+                    style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                     className="w-[22px] h-[22px] flex items-center justify-center border border-border-main rounded-xs text-text-dim hover:text-text-normal hover:bg-border-main/50 transition-colors shrink-0"
                     title="サイドバー位置切替"
                 >
@@ -437,6 +446,7 @@ export default function Header({
                     type="button"
                     onClick={onToggleCompactMode}
                     title="Compact Mode"
+                    style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                     className="w-[22px] h-[22px] flex items-center justify-center border border-border-main rounded-xs text-text-dim hover:text-text-bright hover:bg-border-main/50 transition-colors shrink-0"
                 >
                     <Minimize2 size={13} />

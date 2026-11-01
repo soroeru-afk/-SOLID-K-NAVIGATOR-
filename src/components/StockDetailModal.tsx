@@ -117,6 +117,28 @@ export default function StockDetailModal({
     localStorage.setItem('KNAV_TTS_VOICE', newVoice);
   };
 
+  // Helper for voice button styling: active gets theme accent with white text, inactive gets white background
+  const getVoiceButtonClass = (isActive: boolean) => {
+    if (!isActive) {
+      return (theme === 'light' || theme === 'paper')
+        ? 'bg-white text-text-dim hover:text-text-bright'
+        : 'bg-panel-bg text-text-dim hover:text-text-bright';
+    }
+    switch (theme) {
+      case 'paper':
+        return 'bg-[#D95430] text-white shadow-xs';
+      case 'dark':
+        return 'bg-[#2563eb] text-white shadow-xs';
+      case 'black':
+        return 'bg-[#2e3646] text-white shadow-xs';
+      case 'red':
+        return 'bg-[#dc2626] text-white shadow-xs';
+      case 'light':
+      default:
+        return 'bg-[#020617] text-white shadow-xs';
+    }
+  };
+
   const handleRateChange = (newRate: number) => {
     const cleanRate = Math.round(newRate * 10) / 10;
     if (voiceType === 'ichiro') {
@@ -504,7 +526,12 @@ export default function StockDetailModal({
         <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5 text-xs">
           
           {/* Price & Target Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-base-bg p-4 border border-border-main">
+          <div 
+            className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 border border-border-main"
+            style={{
+              backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+            }}
+          >
             <div>
               <div className="text-xs text-text-dim font-bold tracking-wider mb-1.5 flex items-center justify-between">
                 <span>{language === 'EN' ? 'CURRENT PRICE' : '現在値 / 終値'}</span>
@@ -558,7 +585,10 @@ export default function StockDetailModal({
                   value={targetPrice}
                   onChange={(e) => setTargetPrice(e.target.value)}
                   placeholder="---"
-                  className="w-28 bg-panel-bg border border-border-main px-2 py-1 text-sm sm:text-base text-text-bright focus:outline-none focus:border-border-light font-mono"
+                  className="w-28 border border-border-main px-2 py-1 text-sm sm:text-base text-text-bright focus:outline-none focus:border-border-light font-mono"
+                  style={{
+                    backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                  }}
                 />
               </div>
             </div>
@@ -593,7 +623,10 @@ export default function StockDetailModal({
                       value={bwpPriceInput}
                       onChange={(e) => setBwpPriceInput(e.target.value)}
                       placeholder="例: 2981"
-                      className="w-24 bg-panel-bg border border-border-main px-1.5 py-1 text-sm text-text-bright focus:outline-none focus:border-[#58a6ff] font-mono"
+                      className="w-24 border border-border-main px-1.5 py-1 text-sm text-text-bright focus:outline-none focus:border-[#58a6ff] font-mono"
+                      style={{
+                        backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                      }}
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleSaveBwp();
@@ -623,7 +656,10 @@ export default function StockDetailModal({
                       value={bwpDateInput}
                       onChange={(e) => setBwpDateInput(e.target.value)}
                       placeholder="設定日"
-                      className="w-28 bg-panel-bg border border-border-main/50 px-1.5 py-0.5 text-[10px] text-text-dim focus:outline-none font-mono"
+                      className="w-28 border border-border-main/50 px-1.5 py-0.5 text-[10px] text-text-dim focus:outline-none font-mono"
+                      style={{
+                        backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                      }}
                     />
                     {bwp && (
                       <button
@@ -701,7 +737,10 @@ export default function StockDetailModal({
                   e.preventDefault();
                   openExternalWindow(kabutanBaseUrl);
                 }}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main hover:border-border-light hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                style={{
+                  backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                }}
                 title="株探の基本情報を完全に独立した新規ウィンドウで開く"
               >
                 <ExternalLink size={14} className="text-text-bright" />
@@ -715,7 +754,10 @@ export default function StockDetailModal({
                   e.preventDefault();
                   openExternalWindow(kabutanChartUrl);
                 }}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main hover:border-border-light hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                style={{
+                  backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                }}
                 title="株探のチャート画面を完全に独立した新規ウィンドウで開く"
               >
                 <BarChart2 size={14} className="text-[#2ea043]" />
@@ -729,7 +771,10 @@ export default function StockDetailModal({
                   e.preventDefault();
                   openExternalWindow(kabutanKessanUrl);
                 }}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main hover:border-border-light hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                style={{
+                  backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                }}
                 title="株探の決算・業績画面を完全に独立した新規ウィンドウで開く"
               >
                 <FileSpreadsheet size={14} className="text-[#d29922]" />
@@ -743,7 +788,10 @@ export default function StockDetailModal({
                   e.preventDefault();
                   openExternalWindow(kabutanNewsUrl);
                 }}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main hover:border-border-light hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                style={{
+                  backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                }}
                 title="株探のニュース画面を完全に独立した新規ウィンドウで開く"
               >
                 <Newspaper size={14} className="text-[#a371f7]" />
@@ -757,7 +805,10 @@ export default function StockDetailModal({
                   e.preventDefault();
                   openExternalWindow(yahooFinanceUrl);
                 }}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main hover:border-border-light hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                style={{
+                  backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                }}
                 title="Yahoo!ファイナンス公式トップを開く（リアルタイム株価・板情報・制限値幅）"
               >
                 <ExternalLink size={14} className="text-[#58a6ff]" />
@@ -771,7 +822,10 @@ export default function StockDetailModal({
                   e.preventDefault();
                   openExternalWindow(yahooBbsUrl);
                 }}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main bg-base-bg hover:bg-border-main/50 hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-border-main hover:border-border-light hover:text-text-bright transition-colors font-bold text-xs sm:text-sm"
+                style={{
+                  backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                }}
                 title="Yahoo!ファイナンスの銘柄別掲示板を開く"
               >
                 <MessageSquare size={14} className="text-[#58a6ff]" />
@@ -792,31 +846,28 @@ export default function StockDetailModal({
               {/* TTS Audio Controls */}
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="h-8 px-2.5 flex items-center gap-2 bg-base-bg border border-border-main text-xs rounded-xs box-border shrink-0">
-                  {/* Voice: 一郎 / はるか */}
-                  <div className="h-6 flex items-stretch border border-border-main bg-panel-bg rounded-xs overflow-hidden box-border">
+                  {/* Voice: ICHIRO / HARUKA */}
+                  <div 
+                    className="h-6 flex items-stretch border border-border-main rounded-xs overflow-hidden box-border"
+                    style={{
+                      backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                    }}
+                  >
                     <button
                       type="button"
                       onClick={() => handleVoiceTypeChange('ichiro')}
-                      className={`px-2 flex items-center justify-center text-xs font-bold transition-colors leading-none ${
-                        voiceType === 'ichiro'
-                          ? 'bg-[#58a6ff] text-white'
-                          : 'text-text-dim hover:text-text-bright'
-                      }`}
-                      title="男性音声 (一郎) - 速度・トーンは個別に記憶・維持されます"
+                      className={`px-2.5 flex items-center justify-center text-[10px] font-mono font-bold transition-colors leading-none tracking-wider ${getVoiceButtonClass(voiceType === 'ichiro')}`}
+                      title="男性音声 (ICHIRO) - 速度・トーンは個別に記憶・維持されます"
                     >
-                      一郎
+                      ICHIRO
                     </button>
                     <button
                       type="button"
                       onClick={() => handleVoiceTypeChange('haruka')}
-                      className={`px-2 flex items-center justify-center text-xs font-bold transition-colors leading-none ${
-                        voiceType === 'haruka'
-                          ? 'bg-[#f778ba] text-white'
-                          : 'text-text-dim hover:text-text-bright'
-                      }`}
-                      title="女性音声 (はるか) - 速度・トーンは個別に記憶・維持されます"
+                      className={`px-2.5 flex items-center justify-center text-[10px] font-mono font-bold transition-colors leading-none tracking-wider ${getVoiceButtonClass(voiceType === 'haruka')}`}
+                      title="女性音声 (HARUKA) - 速度・トーンは個別に記憶・維持されます"
                     >
-                      はるか
+                      HARUKA
                     </button>
                   </div>
 
@@ -924,15 +975,23 @@ export default function StockDetailModal({
               </div>
             </div>
 
-            {/* Gray Container for Description Text (企業概要とボタンの下に配置されたグレー枠) */}
-            <div className="bg-base-bg p-4 border border-border-main">
+            {/* Container for Description Text */}
+            <div 
+              className="p-4 border border-border-main"
+              style={{
+                backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+              }}
+            >
               {isEditingDesc ? (
                 <textarea
                   value={descText}
                   onChange={(e) => setDescText(e.target.value)}
                   placeholder="事業内容、主力製品、特色、テーマ、注目ポイントなどを記入..."
-                  className="w-full h-28 bg-panel-bg border border-border-light p-3 text-text-bright leading-relaxed focus:outline-none resize-y"
-                  style={{ fontSize: `${memoFontSize}px` }}
+                  className="w-full h-28 border border-border-light p-3 text-text-bright leading-relaxed focus:outline-none resize-y"
+                  style={{ 
+                    fontSize: `${memoFontSize}px`,
+                    backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                  }}
                 />
               ) : descText ? (
                 <div 
@@ -1019,8 +1078,12 @@ export default function StockDetailModal({
             {/* Memo Display / Editor Content */}
             {memoViewMode === 'preview' ? (
               <div 
-                className="w-full min-h-[176px] bg-base-bg border border-border-main p-3 leading-relaxed font-sans overflow-y-auto max-h-[360px]"
-                style={{ fontSize: `${memoFontSize}px`, lineHeight: 1.6 }}
+                className="w-full min-h-[176px] border border-border-main p-3 leading-relaxed font-sans overflow-y-auto max-h-[360px]"
+                style={{ 
+                  fontSize: `${memoFontSize}px`, 
+                  lineHeight: 1.6,
+                  backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                }}
               >
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-border-main/50 text-xs text-text-dim">
                   <span>💡 任意の段落をクリックすると、その位置から読み上げを開始します</span>
@@ -1085,8 +1148,12 @@ export default function StockDetailModal({
                 value={memoText}
                 onChange={(e) => setMemoText(e.target.value)}
                 placeholder={language === 'EN' ? 'Enter notes, investment thesis, key levels, catalysts...' : 'この銘柄の投資理由、決算メモ、目標・サポートライン、注目ニュースなどを記入...'}
-                className="w-full h-44 bg-base-bg border border-border-main p-3 text-text-bright leading-relaxed focus:outline-none focus:border-border-light resize-y"
-                style={{ fontSize: `${memoFontSize}px`, lineHeight: 1.6 }}
+                className="w-full h-44 border border-border-main p-3 text-text-bright leading-relaxed focus:outline-none focus:border-border-light resize-y"
+                style={{ 
+                  fontSize: `${memoFontSize}px`, 
+                  lineHeight: 1.6,
+                  backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+                }}
               />
             )}
           </div>
@@ -1115,7 +1182,10 @@ export default function StockDetailModal({
           <span className="font-mono">コード: <strong className="text-text-bright font-bold">{stock.code}</strong> ({stock.name})</span>
           <button
             onClick={onClose}
-            className="px-5 py-2 border border-border-main hover:bg-border-main text-text-bright transition-colors font-bold text-xs rounded-xs"
+            className="px-5 py-2 border border-border-main hover:border-border-light text-text-bright transition-colors font-bold text-xs rounded-xs"
+            style={{
+              backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined
+            }}
           >
             {t.close}
           </button>

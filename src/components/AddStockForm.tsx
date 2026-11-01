@@ -107,6 +107,7 @@ export default function AddStockForm({ categories, onAdd, language, theme = 'pap
                   value={code}
                   onChange={e => setCode(e.target.value)}
                   placeholder="コード (7203)"
+                  style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                   className="w-full h-7 px-2.5 bg-base-bg border border-border-main text-text-bright placeholder:text-text-dim/50 text-xs font-mono focus:outline-none focus:border-border-light transition-colors"
                 />
               </div>
@@ -118,6 +119,7 @@ export default function AddStockForm({ categories, onAdd, language, theme = 'pap
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="銘柄名 (トヨタ自動車)"
+                  style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                   className="w-full h-7 px-2.5 bg-base-bg border border-border-main text-text-bright placeholder:text-text-dim/50 text-xs focus:outline-none focus:border-border-light transition-colors"
                 />
               </div>
@@ -127,6 +129,7 @@ export default function AddStockForm({ categories, onAdd, language, theme = 'pap
                 <select 
                   value={categoryId}
                   onChange={e => setCategoryId(e.target.value)}
+                  style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                   className="appearance-none w-full h-7 px-2.5 pr-6 bg-base-bg border border-border-main text-text-normal text-xs focus:outline-none focus:border-border-light transition-colors cursor-pointer"
                 >
                   <option value="">-- {t.unassigned} --</option>
@@ -159,6 +162,7 @@ export default function AddStockForm({ categories, onAdd, language, theme = 'pap
                 value={bulkText}
                 onChange={e => setBulkText(e.target.value)}
                 placeholder="7203 トヨタ自動車&#10;8001 伊藤忠商事&#10;..."
+                style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                 className="w-full h-16 p-2 bg-base-bg border border-border-main text-text-normal placeholder:text-text-dim/50 focus:outline-none focus:border-border-light transition-colors resize-none tabular-nums text-xs font-mono"
               />
               <div className="flex justify-between items-center gap-2">
@@ -166,6 +170,7 @@ export default function AddStockForm({ categories, onAdd, language, theme = 'pap
                   <select 
                     value={categoryId}
                     onChange={e => setCategoryId(e.target.value)}
+                    style={{ backgroundColor: theme === 'paper' ? '#FFFFFF' : undefined }}
                     className="appearance-none w-full h-7 px-2.5 pr-6 bg-base-bg border border-border-main text-text-normal text-xs focus:outline-none focus:border-border-light transition-colors cursor-pointer"
                   >
                     <option value="">-- {t.unassigned} --</option>

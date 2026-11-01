@@ -415,57 +415,64 @@ export default function MarketDataView({
                       ) : (
                         <>
                           <div>
-                            <div className="flex items-center justify-between border-b border-border-main pb-2 mb-2 text-[10px] text-text-dim">
-                              <span className="font-mono font-bold text-text-dim/70">
+                            <div className="flex items-center justify-between gap-1 min-w-0 overflow-hidden border-b border-border-main pb-1.5 mb-2 text-[10px] text-text-dim">
+                              <span className="font-mono font-bold text-text-dim/80 shrink-0 text-[10px]">
                                 #{String(idx + 1).padStart(2, '0')}
                               </span>
                               
-                              <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                              <div className="flex items-center gap-0.5 shrink-0 bg-base-bg/80 border border-border-main/60 px-1 py-0.5 rounded-xs opacity-80 group-hover:opacity-100 transition-opacity">
                                 <button
+                                  type="button"
                                   onClick={() => handleMoveToTop(idx)}
                                   disabled={idx === 0}
                                   title="一番上へ移動"
-                                  className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
+                                  className="w-5 h-5 flex items-center justify-center text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors shrink-0"
                                 >
-                                  <ChevronsUp size={12} />
+                                  <ChevronsUp size={11} />
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => handleMove(idx, 'up')}
                                   disabled={idx === 0}
                                   title="1つ上へ移動"
-                                  className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
+                                  className="w-5 h-5 flex items-center justify-center text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors shrink-0"
                                 >
-                                  <ArrowUp size={11} />
+                                  <ArrowUp size={10} />
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => handleMove(idx, 'down')}
                                   disabled={idx === filteredLinks.length - 1}
                                   title="1つ下へ移動"
-                                  className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
+                                  className="w-5 h-5 flex items-center justify-center text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors shrink-0"
                                 >
-                                  <ArrowDown size={11} />
+                                  <ArrowDown size={10} />
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => handleMoveToBottom(idx)}
                                   disabled={idx === filteredLinks.length - 1}
                                   title="一番下へ移動"
-                                  className="p-1 text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors"
+                                  className="w-5 h-5 flex items-center justify-center text-text-dim hover:text-text-bright disabled:opacity-20 transition-colors shrink-0"
                                 >
-                                  <ChevronsDown size={12} />
+                                  <ChevronsDown size={11} />
                                 </button>
+                                <span className="w-px h-3 bg-border-main/60 mx-0.5 shrink-0" />
                                 <button
+                                  type="button"
                                   onClick={() => handleStartEdit(link)}
                                   title="編集"
-                                  className="p-1 text-text-dim hover:text-text-bright transition-colors"
+                                  className="w-5 h-5 flex items-center justify-center text-text-dim hover:text-text-bright transition-colors shrink-0"
                                 >
-                                  <Pencil size={11} />
+                                  <Pencil size={10} />
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => handleDelete(link.id)}
                                   title="削除"
-                                  className="p-1 text-text-dim hover:text-[#ff7b72] transition-colors"
+                                  className="w-5 h-5 flex items-center justify-center text-text-dim hover:text-[#ff7b72] transition-colors shrink-0"
                                 >
-                                  <Trash2 size={11} />
+                                  <Trash2 size={10} />
                                 </button>
                               </div>
                             </div>

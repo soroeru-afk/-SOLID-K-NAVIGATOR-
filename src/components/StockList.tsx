@@ -123,6 +123,42 @@ export default function StockList({
   // Expanded description IDs for Card view (カード表示での全文展開トグル)
   const [expandedDescIds, setExpandedDescIds] = useState<Set<string>>(new Set());
 
+  // Card Columns (3, 4, 5, or 2) & Card Density (compact, normal, large)
+  const [cardColumns, setCardColumns] = useState<2 | 3 | 4 | 5>(() => {
+    const saved = localStorage.getItem('knav_card_columns');
+    const parsed = saved ? parseInt(saved, 10) : 3;
+    return (parsed === 2 || parsed === 3 || parsed === 4 || parsed === 5) ? (parsed as 2 | 3 | 4 | 5) : 3;
+  });
+
+  const [cardDensity, setCardDensity] = useState<'compact' | 'normal' | 'large'>(() => {
+    const saved = localStorage.getItem('knav_card_density') as 'compact' | 'normal' | 'large';
+    return (saved === 'compact' || saved === 'normal' || saved === 'large') ? saved : 'normal';
+  });
+
+  const handleCardColumnsChange = (cols: 2 | 3 | 4 | 5) => {
+    setCardColumns(cols);
+    localStorage.setItem('knav_card_columns', String(cols));
+  };
+
+  const handleCardDensityChange = (density: 'compact' | 'normal' | 'large') => {
+    setCardDensity(density);
+    localStorage.setItem('knav_card_density', density);
+  };
+
+  const cardGridClass = useMemo(() => {
+    switch (cardColumns) {
+      case 2:
+        return 'grid grid-cols-1 sm:grid-cols-2 gap-3 pb-4';
+      case 4:
+        return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-2.5 pb-4';
+      case 5:
+        return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-2 pb-4';
+      case 3:
+      default:
+        return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3 pb-4';
+    }
+  }, [cardColumns]);
+
   const handleDetailMouseEnter = (stock: Stock, e: React.MouseEvent<HTMLDivElement | HTMLSpanElement>) => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     const rect = e.currentTarget.getBoundingClientRect();
@@ -845,8 +881,60 @@ export default function StockList({
           )}
         </div>
 
-        {/* Right side: Sort + Reset Widths (in List View) + Card / List Switcher */}
-        <div className="flex items-center gap-3">
+        {/* Right side: Card Layout Controls (Columns & Size) + Sort + Reset Widths (in List View) + Card / List Switcher */}
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end">
+          {viewMode === 'card' && (
+            <div className="flex items-center gap-2">
+              {/* Columns Selector: 2, 3, 4, 5 */}
+              <div className="flex items-center gap-1 text-[10px] text-text-dim">
+                <span className="font-bold hidden sm:inline font-mono">列:</span>
+                <div className="h-6 inline-flex items-stretch border border-border-main bg-base-bg divide-x divide-border-main box-border">
+                  {([2, 3, 4, 5] as const).map(cols => (
+                    <button
+                      key={cols}
+                      type="button"
+                      onClick={() => handleCardColumnsChange(cols)}
+                      className={`px-1.5 sm:px-2 font-mono font-bold flex items-center justify-center transition-colors text-[10px] ${
+                        cardColumns === cols
+                          ? 'bg-border-main text-text-bright'
+                          : 'text-text-dim hover:text-text-normal'
+                      }`}
+                      title={`横${cols}列表示`}
+                    >
+                      {cols}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Card Density / Size: 小 / 中 / 大 */}
+              <div className="flex items-center gap-1 text-[10px] text-text-dim">
+                <span className="font-bold hidden sm:inline font-mono">サイズ:</span>
+                <div className="h-6 inline-flex items-stretch border border-border-main bg-base-bg divide-x divide-border-main box-border">
+                  {(['compact', 'normal', 'large'] as const).map(density => {
+                    const label = density === 'compact' ? '小' : density === 'normal' ? '中' : '大';
+                    const title = density === 'compact' ? 'コンパクト（高密度）' : density === 'normal' ? '標準サイズ' : 'ラージ（ゆったり）';
+                    return (
+                      <button
+                        key={density}
+                        type="button"
+                        onClick={() => handleCardDensityChange(density)}
+                        className={`px-1.5 sm:px-2 font-bold flex items-center justify-center transition-colors text-[10px] ${
+                          cardDensity === density
+                            ? 'bg-border-main text-text-bright'
+                            : 'text-text-dim hover:text-text-normal'
+                        }`}
+                        title={title}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {viewMode === 'list' && (
             <button
               type="button"
@@ -894,21 +982,34 @@ export default function StockList({
       </div>
 
       {/* Main Stock Content Area */}
-      <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin">
+      <div className={`flex-1 min-h-0 flex flex-col ${viewMode === 'card' ? 'overflow-y-auto pr-1 scrollbar-thin' : 'overflow-hidden'}`}>
         {filteredStocks.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-text-dim py-12 gap-2">
             <FileText size={32} className="opacity-30" />
             <p className="text-xs">{t.awaitingInit}</p>
           </div>
         ) : viewMode === 'card' ? (
-          /* CARD VIEW (Solid High-Contrast Technical Cards) */
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 pb-4">
+          /* CARD VIEW (Solid High-Contrast Technical Cards - Auto-adapting, Non-breaking Industrial Grid) */
+          <div className={cardGridClass}>
             {filteredStocks.map((st) => {
               const memo = getMemoData(st.code);
               const isSelected = selectedIds.has(st.id);
               const isRefreshingThis = refreshingCode === st.code;
               const isDragging = draggingStockIds.includes(st.id);
               const isDropTarget = dragOverStockId === st.id;
+
+              const isCompact = cardDensity === 'compact';
+              const isLarge = cardDensity === 'large';
+
+              // Dynamic density paddings and dimensions
+              const cardPaddingClass = isCompact 
+                ? 'p-2 sm:p-2.5' 
+                : isLarge 
+                  ? 'p-3.5 sm:p-4' 
+                  : 'p-3';
+
+              const buttonSizeClass = (isCompact || cardColumns >= 4) ? 'w-5 h-5' : 'w-6 h-6';
+              const buttonIconSize = (isCompact || cardColumns >= 4) ? 11 : 12;
 
               return (
                 <div
@@ -919,7 +1020,7 @@ export default function StockList({
                   onDragOver={(e) => handleDragOverStock(e, st, true)}
                   onDragLeave={(e) => handleDragLeaveStock(e, st)}
                   onDrop={(e) => handleDropStock(e, st)}
-                  className={`group relative flex flex-col justify-between border bg-base-bg/40 hover:bg-base-bg/90 transition-all shadow-sm ${
+                  className={`group relative flex flex-col justify-between border bg-base-bg/40 hover:bg-base-bg/90 transition-all shadow-sm ${cardPaddingClass} ${
                     isDragging ? 'opacity-40 border-dashed scale-[0.99]' : ''
                   } ${
                     isDropTarget 
@@ -928,29 +1029,30 @@ export default function StockList({
                   }`}
                   style={{
                     backgroundColor: (theme === 'light' || theme === 'paper') ? '#FFFFFF' : undefined,
-                    padding: '12px'
                   }}
                 >
-                  {/* Card Header Top (Checkbox, Code Badge, Quick Actions) */}
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-1.5">
+                  {/* Card Upper Section */}
+                  <div className="min-w-0">
+                    {/* 1. Header Top (Drag, Checkbox, Code Badge, SC Badge & Non-breaking Quick Actions) */}
+                    <div className="flex items-center justify-between gap-1 overflow-hidden min-w-0 mb-1.5">
+                      {/* Left: Badges group */}
+                      <div className="flex items-center gap-1 min-w-0 overflow-hidden shrink">
                         {/* Drag Handle */}
                         <div
-                          className="cursor-grab active:cursor-grabbing text-text-dim/40 group-hover:text-text-dim hover:!text-text-bright transition-colors p-0.5"
-                          title={language === 'EN' ? 'Drag to reorder or drop into sidebar folder' : 'ドラッグして並び替え、またはサイドバーのフォルダーへ移動'}
+                          className="cursor-grab active:cursor-grabbing text-text-dim/40 group-hover:text-text-dim hover:!text-text-bright transition-colors p-0.5 shrink-0"
+                          title={language === 'EN' ? 'Drag to reorder or move' : 'ドラッグして並び替え、またはフォルダーへ移動'}
                         >
-                          <GripVertical size={13} />
+                          <GripVertical size={isCompact ? 12 : 13} />
                         </div>
 
                         <button
                           onClick={(e) => toggleSelect(st.id, e)}
-                          className="text-text-dim hover:text-text-bright transition-colors"
+                          className="text-text-dim hover:text-text-bright transition-colors shrink-0"
                         >
                           {isSelected ? (
-                            <CheckSquare size={14} className="text-text-bright" />
+                            <CheckSquare size={isCompact ? 13 : 14} className="text-text-bright" />
                           ) : (
-                            <Square size={14} className="text-text-dim" />
+                            <Square size={isCompact ? 13 : 14} className="text-text-dim" />
                           )}
                         </button>
 
@@ -962,39 +1064,44 @@ export default function StockList({
                             e.preventDefault();
                             openExternalWindow(`https://kabutan.jp/stock/?code=${st.code}`);
                           }}
-                          className={`font-mono font-black tracking-widest px-1.5 py-0.5 border hover:underline transition-colors ${
+                          className={`font-mono font-black tracking-wider px-1.5 py-0.5 border hover:underline transition-colors shrink-0 ${
                             theme === 'paper'
                               ? 'border-[#c24523] bg-[#d95430] hover:bg-[#c24523] text-white shadow-xs'
                               : `border-border-main ${theme === 'light' ? 'bg-black text-white' : 'bg-white text-black'}`
                           }`}
-                          style={{ fontSize: Math.max(10, Math.round(listFontSize * 0.9)) }}
+                          style={{ 
+                            fontSize: (isCompact || cardColumns >= 4) 
+                              ? Math.max(9, Math.round(listFontSize * 0.85)) 
+                              : Math.max(10, Math.round(listFontSize * 0.9)) 
+                          }}
                           title={`${st.code}（別ウィンドウで株探を開く）`}
                         >
                           {st.code}
                         </a>
+
                         {st.isShortcut && (
                           <span 
-                            className="font-mono text-[9px] px-1 py-0.5 border border-border-main bg-base-bg text-text-dim flex items-center gap-0.5 shrink-0 select-none"
-                            title={language === 'EN' ? 'Shortcut (Synced with original)' : 'ショートカット銘柄（実体と連動）'}
+                            className="font-mono text-[8px] px-1 py-0.5 border border-border-main bg-base-bg text-text-dim flex items-center gap-0.5 shrink-0 select-none"
+                            title={language === 'EN' ? 'Shortcut' : 'ショートカット銘柄'}
                           >
-                            <CornerUpRight size={9} />
+                            <CornerUpRight size={8} />
                             <span>SC</span>
                           </span>
                         )}
                       </div>
 
-                      {/* Right Mini Action Bar */}
-                      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                      {/* Right: Quick Action Buttons (Always intact, never wraps) */}
+                      <div className="flex items-center gap-0.5 shrink-0 ml-auto opacity-80 group-hover:opacity-100 transition-opacity">
                         {/* Move to Category button */}
                         <button
                           onClick={() => {
                             setMovingMode('move');
                             setMovingStocks([st]);
                           }}
-                          className="w-6 h-6 flex items-center justify-center bg-base-bg text-text-dim hover:text-text-bright hover:border-border-light border border-border-main transition-colors"
+                          className={`${buttonSizeClass} flex items-center justify-center bg-base-bg text-text-dim hover:text-text-bright hover:border-border-light border border-border-main transition-colors shrink-0`}
                           title={language === 'EN' ? 'Move / Shortcut' : 'カテゴリー移動・ショートカット'}
                         >
-                          <FolderInput size={12} />
+                          <FolderInput size={buttonIconSize} />
                         </button>
 
                         {/* Kabutan Chart */}
@@ -1006,10 +1113,10 @@ export default function StockList({
                             e.preventDefault();
                             openExternalWindow(`https://kabutan.jp/stock/chart?code=${st.code}`);
                           }}
-                          className="w-6 h-6 flex items-center justify-center bg-base-bg text-text-dim hover:text-text-bright border border-border-main transition-colors"
+                          className={`${buttonSizeClass} flex items-center justify-center bg-base-bg text-text-dim hover:text-text-bright border border-border-main transition-colors shrink-0`}
                           title="チャート (別ウィンドウで株探を開く)"
                         >
-                          <FileText size={12} />
+                          <FileText size={buttonIconSize} />
                         </a>
 
                         {/* Single Price Refresh */}
@@ -1018,20 +1125,20 @@ export default function StockList({
                             onClick={() => onRefreshPrice(st.code)}
                             disabled={isRefreshingThis}
                             title={t.updatePrice}
-                            className="w-6 h-6 flex items-center justify-center bg-base-bg text-text-dim hover:text-text-bright border border-border-main transition-colors disabled:opacity-40"
+                            className={`${buttonSizeClass} flex items-center justify-center bg-base-bg text-text-dim hover:text-text-bright border border-border-main transition-colors disabled:opacity-40 shrink-0`}
                           >
-                            <RefreshCw size={11} className={isRefreshingThis ? 'animate-spin text-text-bright' : ''} />
+                            <RefreshCw size={buttonIconSize - 1} className={isRefreshingThis ? 'animate-spin text-text-bright' : ''} />
                           </button>
                         )}
                       </div>
                     </div>
 
-                    {/* Stock Title (Large & Bold) */}
-                    <div className="mb-2">
+                    {/* 2. Stock Title (Bold, single-line truncated, directly reflects user's slider font size without artificial cap) */}
+                    <div className="mb-1.5 min-w-0">
                       {editingId === st.id ? (
                         <input
                           type="text"
-                          className="w-full bg-base-bg border border-border-light text-text-bright px-2 py-1 text-sm focus:outline-none font-bold"
+                          className="w-full bg-base-bg border border-border-light text-text-bright px-2 py-0.5 text-xs focus:outline-none font-bold"
                           value={editName}
                           onChange={e => setEditName(e.target.value)}
                           onBlur={() => saveEdit(st.id)}
@@ -1042,7 +1149,7 @@ export default function StockList({
                           autoFocus
                         />
                       ) : (
-                        <div className="flex items-baseline justify-between gap-2">
+                        <div className="flex items-baseline justify-between gap-1 min-w-0">
                           <a
                             href={`https://kabutan.jp/stock/?code=${st.code}`}
                             target="_blank"
@@ -1051,7 +1158,7 @@ export default function StockList({
                               e.preventDefault();
                               openExternalWindow(`https://kabutan.jp/stock/?code=${st.code}`);
                             }}
-                            className="text-text-bright font-black leading-snug tracking-wide hover:underline truncate"
+                            className="text-text-bright font-black leading-snug tracking-wide hover:underline truncate min-w-0 flex-1"
                             style={{ fontSize: stockFontSize }}
                             title={`${st.name}（別ウィンドウで株探を開く）`}
                           >
@@ -1059,7 +1166,7 @@ export default function StockList({
                           </a>
                           <button 
                             onClick={(e) => startEdit(e, st)} 
-                            className="opacity-0 group-hover:opacity-100 text-text-dim hover:text-text-bright transition-opacity p-0.5"
+                            className="opacity-0 group-hover:opacity-100 text-text-dim hover:text-text-bright transition-opacity p-0.5 shrink-0"
                             title={t.edit}
                           >
                             <Pencil size={11} />
@@ -1068,59 +1175,76 @@ export default function StockList({
                       )}
                     </div>
 
-                    {/* Price, Limit Range & Target Row */}
-                    <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1 bg-base-bg/70 px-2.5 py-1.5 border border-border-main mb-3 font-mono">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-text-dim">現在値:</span>
-                        <span
-                          className="font-black text-text-bright tracking-tight"
-                          style={{
-                            fontSize: priceFontSize,
-                            color: priceColor === 'red' ? '#C41414' : undefined
-                          }}
-                        >
-                          {st.price && st.price !== '?' ? `¥${st.price}` : '---'}
-                        </span>
+                    {/* 3. Price, Limit Range & Target Box (Precision Industrial Gauge Layout - 100% Non-breaking) */}
+                    <div className={`bg-base-bg/70 border border-border-main font-mono overflow-hidden mb-2.5 ${isCompact ? 'px-2 py-1' : 'px-2.5 py-1.5'}`}>
+                      {/* Upper: Price & Target */}
+                      <div className="flex items-center justify-between gap-1.5 min-w-0">
+                        <div className="flex items-baseline gap-1 min-w-0">
+                          <span className="text-[9px] text-text-dim shrink-0">現在値:</span>
+                          <span
+                            className="font-black text-text-bright tracking-tight truncate"
+                            style={{
+                              fontSize: priceFontSize,
+                              color: priceColor === 'red' ? '#C41414' : undefined
+                            }}
+                          >
+                            {st.price && st.price !== '?' ? `¥${st.price}` : '---'}
+                          </span>
+                        </div>
+
+                        {memo?.targetPrice && (
+                          <div className="flex items-baseline gap-1 text-[9px] shrink-0 ml-auto bg-panel-bg px-1.5 py-0.2 border border-border-main/60">
+                            <span className="text-text-dim">目標:</span>
+                            <span className="text-text-bright font-bold">¥{memo.targetPrice}</span>
+                          </div>
+                        )}
                       </div>
 
-                      {/* 制限値幅 (東証公定ルールによるストップ高・ストップ安) */}
+                      {/* Lower: Limit Range Bar (Cleanly separate line with industrial gauge look) */}
                       {(() => {
                         const limit = getPriceLimit(st.price);
                         if (!limit) return null;
                         return (
                           <div 
-                            className="flex items-center gap-1 text-text-dim border-l border-border-main pl-2 select-all leading-tight font-mono"
-                            style={{ fontSize: limitFontSize }}
+                            className="mt-1 pt-1 border-t border-border-main/50 flex items-center justify-between text-[10px] text-text-dim leading-none select-all min-w-0"
+                            style={{ fontSize: isCompact ? Math.max(9, limitFontSize - 1) : limitFontSize }}
                             title={`制限値幅: ${limit.fullText} (ストップ安: ${limit.low.toLocaleString()}円 / ストップ高: ${limit.high.toLocaleString()}円)`}
                           >
-                            <span className="opacity-80">値幅:</span>
-                            <span className="text-text-bright font-bold">{limit.displayText}</span>
-                            <span className="text-text-dim/80 text-[0.85em]">({limit.range >= 0 ? `±${limit.range.toLocaleString()}` : ''})</span>
+                            <div className="flex items-center gap-1 min-w-0 truncate">
+                              <span className="opacity-70 text-[9px] shrink-0">値幅:</span>
+                              <span className="text-text-bright font-bold tracking-tight truncate">{limit.displayText}</span>
+                            </div>
+                            <span className="text-text-dim/80 text-[9px] shrink-0 font-mono ml-1">
+                              {limit.range >= 0 ? `±${limit.range.toLocaleString()}` : ''}
+                            </span>
                           </div>
                         );
                       })()}
-
-                      {memo?.targetPrice && (
-                        <div className="flex items-center gap-1 text-[10px] ml-auto">
-                          <span className="text-text-dim">目標:</span>
-                          <span className="text-text-bright font-bold">¥{memo.targetPrice}</span>
-                        </div>
-                      )}
                     </div>
 
-                    {/* Company Description / Overview Preview (or Memo fallback) */}
+                    {/* 4. Company Description / Overview / Memo (Controlled clamping and smooth expansion) */}
                     {(() => {
                       const isExpanded = expandedDescIds.has(st.id);
-                      const hasText = Boolean(st.description || (memo && memo.text));
-                      const textLength = (st.description || memo?.text || '').length;
+                      const text = st.description || memo?.text || '';
+                      const isOverview = Boolean(st.description);
+                      const textLength = text.length;
+
+                      const clampClass = isExpanded 
+                        ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' 
+                        : (isCompact || cardColumns === 5)
+                          ? 'line-clamp-2' 
+                          : isLarge 
+                            ? 'line-clamp-4' 
+                            : 'line-clamp-3';
+
+                      const minHeightClass = isCompact ? 'min-h-[44px]' : isLarge ? 'min-h-[72px]' : 'min-h-[56px]';
+                      const paddingClass = isCompact ? 'p-2 mb-2' : isLarge ? 'p-3 mb-3' : 'p-2.5 mb-2.5';
 
                       return (
-                        <div 
-                          className="bg-base-bg/40 border border-border-main/50 p-2.5 mb-3 min-h-[64px] transition-colors rounded-xs flex flex-col justify-center relative group/desc"
-                        >
-                          {st.description ? (
+                        <div className={`bg-base-bg/40 border border-border-main/50 transition-colors rounded-xs flex flex-col justify-center relative group/desc ${minHeightClass} ${paddingClass}`}>
+                          {text ? (
                             <div>
-                              <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
+                              <div className="flex items-center justify-between gap-1 mb-1" style={{ fontSize: `${Math.max(9, memoFontSize - 2)}px` }}>
                                 <div 
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1129,19 +1253,19 @@ export default function StockList({
                                   }}
                                   onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
                                   onMouseLeave={handleDetailMouseLeave}
-                                  className="text-text-bright font-bold tracking-wider flex items-center gap-1 cursor-pointer hover:underline"
+                                  className={`font-bold tracking-wider flex items-center gap-1 cursor-pointer hover:underline truncate min-w-0 ${isOverview ? 'text-text-bright' : 'text-text-dim'}`}
                                   title="マウスオーバーで全文ポップアップ / クリックで詳細モーダル"
                                 >
-                                  <span>[ 企業概要・詳細情報 ]</span>
+                                  <span className="truncate">[ {isOverview ? '企業概要・詳細情報' : 'メモ・考察'} ]</span>
                                 </div>
-                                {textLength > 60 && (
+                                {textLength > (isCompact ? 40 : 60) && (
                                   <button
                                     type="button"
                                     onClick={(e) => toggleExpandDesc(st.id, e)}
-                                    className="text-[9px] font-mono text-text-dim hover:text-text-bright px-1 py-0.5 border border-border-main/60 bg-base-bg rounded-xs transition-colors shrink-0"
-                                    title={isExpanded ? '3行表示に戻す' : 'カード内で全文を表示する'}
+                                    className="text-[9px] font-mono text-text-dim hover:text-text-bright px-1 py-0.2 border border-border-main/60 bg-base-bg rounded-xs transition-colors shrink-0"
+                                    title={isExpanded ? '省略表示に戻す' : 'カード内で全文を表示する'}
                                   >
-                                    {isExpanded ? '折りたたむ' : '全文読む'}
+                                    {isExpanded ? '閉じる' : '全文'}
                                   </button>
                                 )}
                               </div>
@@ -1151,58 +1275,18 @@ export default function StockList({
                                   setSelectedStockForDetail(st);
                                   setHoveredDetail(null);
                                 }}
-                                className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
-                                style={{ fontSize: `${memoFontSize}px` }}
+                                className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${clampClass}`}
+                                style={{ fontSize: `${isCompact ? Math.max(11, memoFontSize - 1) : memoFontSize}px` }}
                                 title="クリックで詳細モーダルを開く"
                               >
-                                {st.description}
-                              </p>
-                            </div>
-                          ) : memo && memo.text ? (
-                            <div>
-                              <div className="flex items-center justify-between mb-1" style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}>
-                                <div 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedStockForDetail(st);
-                                    setHoveredDetail(null);
-                                  }}
-                                  onMouseEnter={(e) => handleDetailMouseEnter(st, e)}
-                                  onMouseLeave={handleDetailMouseLeave}
-                                  className="text-text-dim font-bold tracking-wider flex items-center gap-1 cursor-pointer hover:underline"
-                                  title="マウスオーバーで全文ポップアップ / クリックで詳細モーダル"
-                                >
-                                  <span>[ メモ・考察 ]</span>
-                                </div>
-                                {textLength > 60 && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => toggleExpandDesc(st.id, e)}
-                                    className="text-[9px] font-mono text-text-dim hover:text-text-bright px-1 py-0.5 border border-border-main/60 bg-base-bg rounded-xs transition-colors shrink-0"
-                                    title={isExpanded ? '3行表示に戻す' : 'カード内で全文を表示する'}
-                                  >
-                                    {isExpanded ? '折りたたむ' : '全文読む'}
-                                  </button>
-                                )}
-                              </div>
-                              <p 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedStockForDetail(st);
-                                  setHoveredDetail(null);
-                                }}
-                                className={`text-text-bright leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? 'line-clamp-none max-h-96 overflow-y-auto pr-1' : 'line-clamp-3'}`}
-                                style={{ fontSize: `${memoFontSize}px` }}
-                                title="クリックで詳細モーダルを開く"
-                              >
-                                {memo.text}
+                                {text}
                               </p>
                             </div>
                           ) : (
                             <div 
                               onClick={() => setSelectedStockForDetail(st)}
-                              className="h-full flex items-center justify-center text-text-dim/60 italic cursor-pointer hover:text-text-dim"
-                              style={{ fontSize: `${Math.max(10, memoFontSize - 2)}px` }}
+                              className="h-full flex items-center justify-center text-text-dim/60 italic cursor-pointer hover:text-text-dim py-1"
+                              style={{ fontSize: `${Math.max(9, memoFontSize - 2)}px` }}
                               title="クリックして詳細情報・メモを登録"
                             >
                               詳細情報・メモ未登録
@@ -1213,21 +1297,21 @@ export default function StockList({
                     })()}
                   </div>
 
-                  {/* Card Footer (Char count, Category, and "開く →" action) */}
-                  <div className="flex items-center justify-between border-t border-border-main pt-2.5 mt-1 text-[10px] text-text-dim">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono">
+                  {/* 5. Card Footer (Char count, Category, and Non-breaking "詳細" action) */}
+                  <div className="flex items-center justify-between gap-1.5 border-t border-border-main pt-2 mt-auto text-[10px] text-text-dim min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0 overflow-hidden flex-1">
+                      <span className="font-mono shrink-0">
                         {st.description 
                           ? `${st.description.length} ${t.charCount}` 
                           : (memo?.text ? `${memo.text.length} ${t.charCount}` : `0 ${t.charCount}`)}
                       </span>
-                      <span>•</span>
+                      <span className="shrink-0 opacity-40">•</span>
                       <span 
                         onClick={() => {
                           setMovingMode('move');
                           setMovingStocks([st]);
                         }}
-                        className="truncate max-w-[110px] hover:text-text-bright cursor-pointer hover:underline"
+                        className="truncate hover:text-text-bright cursor-pointer hover:underline min-w-0"
                         title={language === 'EN' ? 'Click to move category / shortcut' : 'クリックしてカテゴリー移動・ショートカット'}
                       >
                         {getCategoryName(st.categoryId)}
@@ -1236,9 +1320,9 @@ export default function StockList({
 
                     <button
                       onClick={() => setSelectedStockForDetail(st)}
-                      className="text-text-dim hover:text-text-bright font-bold flex items-center gap-1 transition-colors px-2 py-0.5 border border-transparent hover:border-border-main bg-base-bg/50"
+                      className="text-text-dim hover:text-text-bright font-bold flex items-center gap-1 transition-colors px-1.5 py-0.5 border border-transparent hover:border-border-main bg-base-bg/50 shrink-0 text-[10px]"
                     >
-                      <span>{t.openDetail}</span>
+                      <span>{isCompact ? '詳細' : t.openDetail}</span>
                     </button>
                   </div>
                 </div>
@@ -1246,12 +1330,12 @@ export default function StockList({
             })}
           </div>
         ) : (
-          /* LIST VIEW (Resizable Columns Header & Rows) */
-          <div className="flex flex-col pb-4 overflow-x-auto scrollbar-thin">
-            {/* Resizable Column Header Bar */}
+          /* LIST VIEW (Resizable Columns Header & Rows - Pinned Sticky Header) */
+          <div className="flex-1 flex flex-col min-h-0 overflow-auto scrollbar-thin pb-4">
+            {/* Resizable Column Header Bar (Always pinned at top on vertical scroll) */}
             <div 
               style={{ minWidth: totalTableWidth }}
-              className="flex items-stretch bg-panel-bg border-b border-border-main text-[10px] font-mono text-text-dim sticky top-0 z-20 py-0 pl-2 pr-0 select-none min-w-full"
+              className="flex items-stretch bg-panel-bg border-b border-border-main shadow-xs text-[10px] font-mono text-text-dim sticky top-0 z-20 py-0 pl-2 pr-0 select-none min-w-full"
             >
               {/* Col 1: Code & Checkbox */}
               <div 
